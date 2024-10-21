@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">PushOfLife</string>
+    <string name="main_title">Push Of Life</string>
+    <string name="main_components">components</string>
 </resources>

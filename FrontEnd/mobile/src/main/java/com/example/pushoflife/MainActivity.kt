@@ -5,8 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,6 +14,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.pushoflife.ui.serviceguide.ServiceScreen
 import com.example.pushoflife.ui.theme.PushOfLifeTheme
 
 class MainActivity : ComponentActivity() {
@@ -23,10 +27,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PushOfLifeTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainScreen(
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                val navController = rememberNavController() // Navigation Controller 생성
+                NavHost(navController = navController, startDestination = "main_screen") {
+                    composable("main_screen") { MainScreen(navController) }  // 메인 화면
+                    composable("service_screen") { ServiceScreen() }          // 서비스 가이드 화면
                 }
             }
         }
@@ -34,28 +38,34 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
-    // Column을 사용하여 상단과 하단에 텍스트를 배치
+fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceBetween,  // 상단과 하단을 각각 나누어 배치
-        horizontalAlignment = Alignment.CenterHorizontally  // 수평 중앙 정렬
+//        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 상단의 'Push of Life' 텍스트
         Text(
             text = stringResource(id = R.string.main_title),
-            fontSize = 32.sp,  // 글자 크기
-            textAlign = TextAlign.Center
+            fontSize = 32.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 25.dp)
         )
 
-        // 하단의 'components' 텍스트
-        Text(
-            text = stringResource(id = R.string.main_components),
-            fontSize = 24.sp,  // 글자 크기
-            textAlign = TextAlign.Center
-        )
+        Spacer(modifier = Modifier.height(50.dp)) // 원하는 만큼 높이를 설정 (여기선 24.dp)
+
+        // '서비스 가이드' 버튼
+        Card(
+            onClick = { navController.navigate("service_screen") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+        ) {
+            Text(text = "서비스 가이드", fontSize = 20.sp)
+        }
+
     }
 }
 
@@ -63,6 +73,6 @@ fun MainScreen(modifier: Modifier = Modifier) {
 @Composable
 fun MainScreenPreview() {
     PushOfLifeTheme {
-        MainScreen()
+        MainScreen(navController = rememberNavController())
     }
 }

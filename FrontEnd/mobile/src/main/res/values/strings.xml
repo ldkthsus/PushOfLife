@@ -2,4 +2,5 @@
     <string name="app_name">PushOfLife</string>
     <string name="main_title">Push Of Life</string>
     <string name="service_screen_text">Service Screen</string>
+    <string name="profile_edit_screen_text">Profile edit Screen</string>
 </resources>

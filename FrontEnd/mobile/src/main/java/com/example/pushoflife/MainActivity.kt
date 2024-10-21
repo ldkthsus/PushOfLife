@@ -25,6 +25,15 @@ import androidx.navigation.compose.rememberNavController
 import com.example.pushoflife.ui.serviceguide.ServiceScreen
 import com.example.pushoflife.ui.user.ProfileEditScreen
 import com.example.pushoflife.ui.theme.PushOfLifeTheme
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import com.example.pushoflife.R
+
+// 폰트 정의
+val PoppinsExtraLight = FontFamily(
+    Font(R.font.poppins_extralight, FontWeight.ExtraLight) // res/font/Poppins-ExtraLight.ttf 파일 참조
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,13 +67,14 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // 'Push of Life' 텍스트
-            Text(
-                text = stringResource(id = R.string.main_title),
-                fontSize = 32.sp,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.weight(1f)  // 텍스트와 이미지 균등하게 공간 분배
-            )
+
+        Text(
+            text = stringResource(id = R.string.main_title),
+            fontFamily = PoppinsExtraLight,
+            fontSize = 32.sp,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.weight(1f)
+        )
 
             // 이미지 클릭 시 프로필 수정 화면으로 이동
             Image(

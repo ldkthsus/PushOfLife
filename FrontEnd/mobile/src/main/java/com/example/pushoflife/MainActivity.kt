@@ -20,6 +20,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.pushoflife.ui.serviceguide.ServiceScreen
 import com.example.pushoflife.ui.theme.PushOfLifeTheme
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import com.example.pushoflife.R
+
+// 폰트 정의
+val PoppinsExtraLight = FontFamily(
+    Font(R.font.poppins_extralight, FontWeight.ExtraLight) // res/font/Poppins-ExtraLight.ttf 파일 참조
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +58,7 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
         // 상단의 'Push of Life' 텍스트
         Text(
             text = stringResource(id = R.string.main_title),
+            fontFamily = PoppinsExtraLight,
             fontSize = 32.sp,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 25.dp)

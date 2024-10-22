@@ -4,7 +4,7 @@
  * changes to the libraries and their usages.
  */
 
-package com.example.pushoflife.presentation
+package com.example.pushoflife
 
 import android.content.Intent
 import android.os.Bundle
@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.*
-import com.example.pushoflife.presentation.theme.PushOfLifeTheme
+import com.example.pushoflife.theme.PushOfLifeTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -38,7 +38,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".presentation.CPRGuideActivity"
+            android:name=".CPRGuideActivity"
             android:label="CPR Guide"
             android:taskAffinity=""
             android:launchMode="singleTask"

@@ -310,7 +310,7 @@ fun CardComponent2() {
 
             // 하단 텍스트
             Text(
-                text = "심장 발작 시 전기 충격을 주어\n정상 리듬으로 되돌리기 위해 사용됩니다.",
+                text = "심장 발작 시 전기 충격을 주어\n정상 리듬으로 되돌리기 위해 사용됩니다",
                 fontSize = 14.sp,
                 fontFamily = PretendardRegular,
                 letterSpacing = (-0.5).sp,
@@ -359,7 +359,7 @@ fun CardComponent3() {
 
             // 하단 텍스트
             Text(
-                text = "심장과 뇌에 산소가 포함된 혈액을 공급해주는 CPR!\n 뇌에 피를 공급해 뇌 손상을 방지하려는 목적입니다!",
+                text = "심장과 뇌에 산소가 포함된 혈액을 공급해주는 CPR!\n 뇌에 피를 공급해 뇌 손상을 방지하려는 목적입니다",
                 fontSize = 14.sp,
                 fontFamily = PretendardRegular,
                 letterSpacing = (-0.5).sp,

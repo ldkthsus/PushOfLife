@@ -2,9 +2,13 @@ package com.example.pushoflife.ui.user
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
@@ -15,8 +19,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pushoflife.MainScreenPreview
 import com.example.pushoflife.R
+import com.example.pushoflife.data.datastore.UserPreferences
 import com.example.pushoflife.ui.theme.PushOfLifeTheme
+import com.example.pushoflife.utils.GetLocation
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileEditScreen() {
@@ -30,6 +40,22 @@ fun ProfileEditScreen() {
     val PretendardRegualr = FontFamily(
         Font(R.font.pretendard_regular, FontWeight.Normal) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
+    val context = LocalContext.current
+    val address = GetLocation(context)
+    val userPreferences = UserPreferences(context)
+    var showModal by remember { mutableStateOf(false) }
+    // LaunchedEffect를 사용하여 초기화 시 DataStore에서 데이터를 불러옴
+    LaunchedEffect(Unit) {
+        userPreferences.getUserProfile().collect { userProfile ->
+            user_name = TextFieldValue(userProfile.name)
+            user_birthdate = TextFieldValue(userProfile.birthdate)
+            user_gender = TextFieldValue(userProfile.gender)
+            user_disease = TextFieldValue(userProfile.disease)
+            hospital = TextFieldValue(userProfile.hospital)
+            pill = TextFieldValue(userProfile.pill)
+            user_protector = TextFieldValue(userProfile.protector)
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -172,7 +198,8 @@ fun ProfileEditScreen() {
         // 저장 버튼
         Button(
             onClick = {
-                // 저장 로직 처리
+                showModal = true
+
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -187,6 +214,79 @@ fun ProfileEditScreen() {
             modifier = Modifier.fillMaxWidth()
 
         )
+        // 모달(다이얼로그) 표시
+
+        if (showModal) {
+
+            AlertDialog(
+                containerColor= MaterialTheme.colorScheme.background,
+                onDismissRequest = { showModal = false },
+                title = {
+                    Text(
+                        text = "해당 내용을 저장하시겠습니까?",
+                        fontSize = 18.sp
+
+                    )
+                },
+                text = {
+                    // Column으로 Text와 Box를 함께 배치
+                    Column {
+                        Text(
+                            text = "119 신고 문자 메시지 예시",
+
+                        )
+                        Spacer(modifier = Modifier.height(5.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.tertiary), // Box의 배경색을 파란색으로 설정
+                            contentAlignment = Alignment.CenterStart // Box의 중앙이지만 왼쪽 정렬
+                            ) {
+                            Column(
+
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text(text = "[WEB 발신]", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                                Text(text = "심정지 환자 발생", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                                Text(text = "위치: ${address}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                                Text(text = "인적사항", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                                Text(text = "- 이름: ${user_name.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                                Text(text = "- 생년월일: ${user_birthdate.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                                Text(text = "- 성별: ${user_gender.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                                Text(text = "기저질환: ${user_disease.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                                Text(text = "자주 가는 병원: ${hospital.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background,)
+                                Text(text = "복용 약: ${pill.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                                Text(text = "비상 연락처: ${user_protector.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showModal = false
+                            CoroutineScope(Dispatchers.IO).launch {
+                                userPreferences.saveUserProfile(
+                                    name = user_name.text,
+                                    birthdate = user_birthdate.text,
+                                    gender = user_gender.text,
+                                    disease = user_disease.text,
+                                    hospital = hospital.text,
+                                    pill = pill.text,
+                                    protector = user_protector.text
+                                )
+                            }
+                        }
+                    ) {
+                        Text(
+                            text = "저장"
+                        )
+                    }
+                }
+            )
+        }
+
     }
 }
 

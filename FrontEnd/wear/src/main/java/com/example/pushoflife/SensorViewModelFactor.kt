@@ -1,4 +1,4 @@
-package com.example.pushoflife.presentation
+package com.example.pushoflife
 
 import android.content.Context
 import androidx.lifecycle.ViewModel

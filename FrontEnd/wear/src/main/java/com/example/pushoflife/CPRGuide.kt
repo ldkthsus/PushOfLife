@@ -1,4 +1,4 @@
-package com.example.pushoflife.presentation
+package com.example.pushoflife
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

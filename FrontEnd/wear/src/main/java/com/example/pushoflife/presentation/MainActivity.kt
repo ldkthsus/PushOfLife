@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.*
 import com.example.pushoflife.presentation.theme.PushOfLifeTheme
+import android.util.Log
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,6 +69,17 @@ fun SensorDisplay(
     heartRateData: String,
     onCPRButtonClick: () -> Unit
 ) {
+    // 로그 출력 추가
+    LaunchedEffect(accelerometerData, gyroscopeData, heartRateData) {
+        // accelerometerData 로그 출력
+        Log.d("SensorDisplay", "Accelerometer Data: $accelerometerData")
+
+        // gyroscopeData 로그 출력
+        Log.d("SensorDisplay", "Gyroscope Data: $gyroscopeData")
+
+        // heartRateData 로그 출력
+        Log.d("SensorDisplay", "Heart Rate Data: $heartRateData")
+    }
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,

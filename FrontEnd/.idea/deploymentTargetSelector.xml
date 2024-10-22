@@ -2,6 +2,12 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
+<<<<<<< HEAD
+=======
+      <SelectionState runConfigName="wear">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+>>>>>>> 0e71e1ba90d2526688a9b1d6513f795d60798202
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2024-10-21T07:54:21.791562100Z">
@@ -13,6 +19,7 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
+<<<<<<< HEAD
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2024-10-22T05:45:39.418797900Z">
@@ -24,6 +31,8 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
+=======
+>>>>>>> 0e71e1ba90d2526688a9b1d6513f795d60798202
     </selectionStates>
   </component>
 </project>

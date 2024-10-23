@@ -14,12 +14,15 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import kotlinx.coroutines.*
+import com.example.pushoflife.sensor.FallSensor
 
 class SensorForegroundService : Service(), SensorEventListener {
 
     private val serviceScope = CoroutineScope(Dispatchers.Default + Job())
 
     private lateinit var sensorManager: SensorManager
+    private val fallSensor = FallSensor()
+    private var possibleFall = false
     private var accelerometer: Sensor? = null
     private var gyroscope: Sensor? = null
     private var heartRateSensor: Sensor? = null
@@ -66,16 +69,27 @@ class SensorForegroundService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent) {
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
-                val x = String.format("%.2f", event.values[0])
-                val y = String.format("%.2f", event.values[1])
-                val z = String.format("%.2f", event.values[2])
-                Log.d("SensorData", "Accelerometer: x=$x, y=$y, z=$z")
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+                //Log.d("SensorData", "Accelerometer: x=$x, y=$y, z=$z")
+                if (fallSensor.checkFall(x, y, z)) {
+                    Log.d("FallDetection", "낙상감지됨")
+                    possibleFall = true
+                    // 5초 후 possibleFall을 false로 설정
+                    serviceScope.launch {
+                        delay(5000L)  // 5초 대기
+                        possibleFall = false
+                        Log.d("possibleFall", possibleFall.toString())
+                        Log.d("FallDetection", "possibleFall 초기화됨")
+                    }
+                }
             }
             Sensor.TYPE_GYROSCOPE -> {
                 val x = String.format("%.2f", event.values[0])
                 val y = String.format("%.2f", event.values[1])
                 val z = String.format("%.2f", event.values[2])
-                Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
+                //Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])

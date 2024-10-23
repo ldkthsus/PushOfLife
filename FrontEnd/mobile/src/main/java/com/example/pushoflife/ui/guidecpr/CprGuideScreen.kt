@@ -25,12 +25,12 @@ import com.example.pushoflife.R
 import com.example.pushoflife.ui.theme.PushOfLifeTheme
 import androidx.compose.foundation.Image
 import com.example.pushoflife.PretendardRegular
+import com.example.pushoflife.PretendardSemiBold
 import androidx.compose.material3.Icon
-
-// Pretendard 폰트 정의
-val PretendardSemiBold = FontFamily(
-    Font(R.font.pretendard_semibold, FontWeight.SemiBold)
-)
+import androidx.compose.material3.IconButton
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.pushoflife.ui.aedLocation.AedLocationScreen
 
 val PretendardExtraBold = FontFamily(
     Font(R.font.pretendard_extrabold, FontWeight.ExtraBold)
@@ -41,26 +41,45 @@ val PretendardMedium = FontFamily(
 )
 
 @Composable
-fun CprGuideScreen(modifier: Modifier = Modifier) {
+fun CprGuideScreen(navController: NavController, modifier: Modifier = Modifier) {
     val pagerState = rememberPagerState(pageCount = { 5 }) // Pager 상태 관리
     val coroutineScope = rememberCoroutineScope() // CoroutineScope 사용
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(start = 20.dp, top = 40.dp, end = 20.dp, bottom = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top
     ) {
-        // 상단의 'CPR 가이드' 텍스트
         Row(
-            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+
         ) {
+            // 뒤로 가기 버튼
+            IconButton(
+                onClick = { navController.popBackStack() }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.backicon),
+                    contentDescription = "뒤로 가기",
+                    modifier = Modifier
+                        .size(25.dp) // 아이콘 크기
+                )
+            }
+
+            // 타이틀 텍스트
             Text(
                 text = "CPR 가이드",
-                fontFamily = PretendardSemiBold,
-                fontSize = 27.sp,
+                fontSize = 24.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
-                letterSpacing = (-1).sp
+                fontFamily = com.example.pushoflife.PretendardSemiBold,
+                modifier = Modifier
+                    .weight(1f) // 남은 공간을 차지하도록 설정
+                    .padding(end = 40.dp)
             )
         }
 
@@ -260,6 +279,7 @@ fun CardComponent1() {
 @Composable
 fun CprGuideScreenPreview() {
     PushOfLifeTheme {
-        CprGuideScreen()
+        val navController = rememberNavController()
+        CprGuideScreen(navController = navController)
     }
 }

@@ -177,7 +177,7 @@ fun SignUpScreen(navController: NavController) {
 
                 .clickable {
                     // 로그인 페이지로 이동
-                    navController.navigate("LoginScreen")
+                    navController.navigate("login_screen")
                 }
             )
         }

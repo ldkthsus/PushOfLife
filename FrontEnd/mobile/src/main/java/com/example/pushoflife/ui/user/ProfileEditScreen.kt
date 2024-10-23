@@ -41,7 +41,7 @@ fun ProfileEditScreen(navController: NavController) {
     var pill by remember { mutableStateOf(TextFieldValue("")) } // 복용 약 상태
     var user_protector by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
     val PretendardBold = FontFamily(
-        Font(R.font.pretendard_bold, FontWeight.Bold) // res/font/Poppins-ExtraLight.ttf 파일 참조
+        Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
     val context = LocalContext.current
     val address = GetLocation(context)
@@ -86,7 +86,7 @@ fun ProfileEditScreen(navController: NavController) {
             // 타이틀 텍스트
             Text(
                 text = stringResource(id = R.string.profile_edit_screen_text),
-                fontSize = 28.sp,  // 글자 크기
+                fontSize = 24.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,
                 modifier = Modifier
@@ -99,7 +99,7 @@ fun ProfileEditScreen(navController: NavController) {
 
         Text(
             text = stringResource(id=R.string.profile_edit_screen_description),
-            fontSize = 12.sp,
+            fontSize = 14.sp,
             textAlign = TextAlign.Left,
             modifier = Modifier.fillMaxWidth()
         )
@@ -234,17 +234,32 @@ fun ProfileEditScreen(navController: NavController) {
             Text(text = stringResource(id = R.string.save))
         }
         Spacer(modifier = Modifier.height(5.dp))  // 간격 추가
-        Text(
-            text = stringResource(id = R.string.profile_edit_screen_to_sign_up),
-            fontSize = 12.sp,  // 글자 크기
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
 
-                .clickable {
-                    // 회원가입 페이지로 이동
-                    navController.navigate("SignUpScreen")
-                }
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+
+        ){
+            Text(
+                text = stringResource(id = R.string.profile_edit_screen_to_sign_up),
+                fontSize = 16.sp,  // 글자 크기
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
+            Text(
+                text = stringResource(id = R.string.sign_up),
+                fontSize = 16.sp,  // 글자 크기
+                textAlign = TextAlign.Center,
+                fontFamily = PretendardBold,
+                modifier = Modifier
+
+                    .clickable {
+                        // 로그인 페이지로 이동
+                        navController.navigate("SignUpScreen")
+                    }
+            )
+        }
         // 모달(다이얼로그) 표시
 
         if (showModal) {

@@ -35,7 +35,7 @@ fun SignUpScreen(navController: NavController) {
     var user_password1 by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
     var user_password2 by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
     val PretendardBold = FontFamily(
-        Font(R.font.pretendard_bold, FontWeight.Bold) // res/font/Poppins-ExtraLight.ttf 파일 참조
+        Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
 
     Column(
@@ -65,7 +65,7 @@ fun SignUpScreen(navController: NavController) {
             // 타이틀 텍스트
             Text(
                 text = stringResource(id = R.string.sign_up),
-                fontSize = 28.sp,  // 글자 크기
+                fontSize = 24.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,
                 modifier = Modifier
@@ -74,8 +74,25 @@ fun SignUpScreen(navController: NavController) {
 
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))  // 간격 추가
+        Spacer(modifier = Modifier.height(64.dp))  // 간격 추가
+        Text(
+            text = "환영합니다!",
+            fontSize = 28.sp,  // 글자 크기
+            textAlign = TextAlign.Left,
+            fontFamily = PretendardBold,
 
+
+
+        )
+        Text(
+            text = "회원가입을 도와드릴게요",
+            fontSize = 28.sp,  // 글자 크기
+            textAlign = TextAlign.Left,
+            fontFamily = PretendardBold,
+
+
+        )
+        Spacer(modifier = Modifier.height(32.dp))  // 간격 추가
 
         // 전화번호 입력 필드 (아이콘 포함)
         TextField(
@@ -126,7 +143,7 @@ fun SignUpScreen(navController: NavController) {
             colors = OutlinedTextFieldDefaults.colors( unfocusedContainerColor = MaterialTheme.colorScheme.background )
         )
 
-        Spacer(modifier = Modifier.height(32.dp))  // 간격 추가
+        Spacer(modifier = Modifier.height(64.dp))  // 간격 추가
 
         // 저장 버튼
         Button(

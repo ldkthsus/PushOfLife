@@ -41,6 +41,10 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
 	implementation 'io.github.cdimascio:dotenv-java:3.0.0'
+
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	implementation 'org.apache.commons:commons-csv:1.9.0'
 }
 
 tasks.named('test') {

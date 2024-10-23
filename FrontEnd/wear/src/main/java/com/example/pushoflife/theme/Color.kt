@@ -1,4 +1,4 @@
-package com.example.pushoflife.presentation.theme
+package com.example.pushoflife.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material.Colors

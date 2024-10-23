@@ -1,39 +1,32 @@
 package com.example.pushoflife.ui.aedLocation
 
+import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.pushoflife.ui.theme.PushOfLifeTheme
 import com.example.pushoflife.R
 import com.example.pushoflife.PretendardSemiBold
-import com.example.pushoflife.ui.user.ProfileEditScreen
-
+import com.example.pushoflife.ui.theme.PushOfLifeTheme
+import com.kakao.vectormap.MapView
+import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
 fun AedLocationScreen(navController: NavController, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -47,7 +40,6 @@ fun AedLocationScreen(navController: NavController, modifier: Modifier = Modifie
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
-
         ) {
             // 뒤로 가기 버튼
             IconButton(
@@ -74,6 +66,17 @@ fun AedLocationScreen(navController: NavController, modifier: Modifier = Modifie
         }
 
         Spacer(modifier = Modifier.height(16.dp))  // 간격 추가
+
+        // Kakao MapView 추가
+        AndroidView(
+            factory = { ctx: Context ->
+                MapView(ctx).apply {
+                    // 줌 컨트롤 활성화 등 기본 옵션 설정 가능
+                }
+            },
+            modifier = Modifier
+                .fillMaxSize()  // 맵이 전체 화면을 차지하게 설정
+        )
     }
 }
 

@@ -18,6 +18,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val kakaoMapKey = project.findProperty("KAKAO_MAP_KEY") as String? ?: ""
+        buildConfigField("String", "KAKAO_MAP_KEY", "\"$kakaoMapKey\"")
+        manifestPlaceholders["KAKAO_MAP_KEY"] = kakaoMapKey
     }
 
     buildTypes {
@@ -40,6 +44,7 @@ android {
     // Jetpack Compose 활성화
     buildFeatures {
         compose = true
+        buildConfig = true  // BuildConfig 기능 활성화
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -81,5 +86,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
+    implementation(libs.kakao.maps)
 
 }

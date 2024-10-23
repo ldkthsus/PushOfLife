@@ -39,6 +39,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.example.pushoflife.ui.aedLocation.AedLocationScreen
 import com.example.pushoflife.ui.user.LoginScreen
 import com.example.pushoflife.ui.user.SignUpScreen
 
@@ -66,7 +67,8 @@ class MainActivity : ComponentActivity() {
                     composable("profile_edit_screen") { ProfileEditScreen(navController) } // 프로필 수정 화면
                     composable("signUpScreen") { SignUpScreen(navController) }
                     composable("loginScreen") { LoginScreen(navController) }
-                    composable("cpr_guide_screen") { CprGuideScreen() } // CPR 가이드 스크린
+                    composable("cpr_guide_screen") { CprGuideScreen(navController) } // CPR 가이드 스크린
+                    composable("aed_location_screen") { AedLocationScreen(navController) } // CPR 가이드 스크린
                 }
             }
         }
@@ -138,10 +140,10 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 .clickable { navController.navigate("service_screen") }  // 스크린 이동
         ) {
             Image(
-
                 painter = painterResource(id = R.drawable.watch_guide),
                 contentDescription = "워치 가이드",
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
 
@@ -165,6 +167,7 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 .fillMaxWidth()
                 .height(110.dp)
                 .clip(RoundedCornerShape(12.dp))
+                .clickable { navController.navigate("aed_location_screen") },
         ) {
             Image(
                 painter = painterResource(id = R.drawable.aed_location),

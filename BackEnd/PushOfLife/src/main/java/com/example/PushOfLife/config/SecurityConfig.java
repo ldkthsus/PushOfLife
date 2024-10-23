@@ -53,7 +53,8 @@ public class SecurityConfig {
                 .requestMatchers( "/login/**",
                         "/h2-console/**",
                         "/swagger-ui/**", "swagger-resources/**", "/faviocn.ico","/error","/v3/api-docs/**" ).permitAll()
-                .anyRequest().authenticated() // 그 외 요청은 인증 필요
+//                .anyRequest().authenticated() // 그 외 요청은 인증 필요
+                .anyRequest().permitAll() // 개발용(전체 요청 허용)
         );
 
         // 세션 사용 안 함 (JWT 사용 시 필요)

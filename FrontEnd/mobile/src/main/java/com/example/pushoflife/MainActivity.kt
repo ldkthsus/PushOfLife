@@ -24,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.pushoflife.ui.serviceguide.ServiceScreen
 import com.example.pushoflife.ui.user.ProfileEditScreen
+import com.example.pushoflife.ui.guidecpr.CprGuideScreen
 import com.example.pushoflife.ui.theme.PushOfLifeTheme
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -32,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
-
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +49,6 @@ val PoppinsExtraLight = FontFamily(
 val PretendardSemiBold = FontFamily(
     Font(R.font.pretendard_semibold, FontWeight.SemiBold)
 )
-
 val PretendardRegular = FontFamily(
     Font(R.font.pretendard_regular, FontWeight.Normal)
 )
@@ -67,6 +66,7 @@ class MainActivity : ComponentActivity() {
                     composable("profile_edit_screen") { ProfileEditScreen(navController) } // 프로필 수정 화면
                     composable("signUpScreen") { SignUpScreen(navController) }
                     composable("loginScreen") { LoginScreen(navController) }
+                    composable("cpr_guide_screen") { CprGuideScreen() } // CPR 가이드 스크린
                 }
             }
         }
@@ -167,7 +167,6 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 .clip(RoundedCornerShape(12.dp))
         ) {
             Image(
-
                 painter = painterResource(id = R.drawable.aed_location),
                 contentDescription = "AED 위치",
                 modifier = Modifier.fillMaxSize(),
@@ -194,14 +193,13 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 .fillMaxWidth()
                 .height(110.dp)
                 .clip(RoundedCornerShape(12.dp))
+                .clickable { navController.navigate("cpr_guide_screen") }  // 스크린 이동
         ) {
             Image(
-
                 painter = painterResource(id = R.drawable.cpr_guide),
                 contentDescription = "CPR 가이드",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
-
             )
 
             Text(

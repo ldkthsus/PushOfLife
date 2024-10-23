@@ -29,6 +29,9 @@ public class UserEntity {
     @Column(name = "user_password")
     private String password;
 
+    @Column(name = "user_birthday")
+    private String userBirthday;
+
     @Column(name = "user_gender")
     private String userGender;
 
@@ -86,5 +89,7 @@ public class UserEntity {
             this.profileUrl = profileUrl;
         }
     }
+    @OneToMany(mappedBy = "user")
+    private List<ReservationEntity> reservation;
 
 }

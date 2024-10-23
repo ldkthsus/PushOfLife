@@ -39,6 +39,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.example.pushoflife.ui.user.LoginScreen
+import com.example.pushoflife.ui.user.SignUpScreen
 
 // 폰트 정의
 val PoppinsExtraLight = FontFamily(
@@ -61,7 +63,9 @@ class MainActivity : ComponentActivity() {
                 NavHost(navController = navController, startDestination = "main_screen") {
                     composable("main_screen") { MainScreen(navController) }  // 메인 화면
                     composable("service_screen") { ServiceScreen() }          // 서비스 가이드 화면
-                    composable("profile_edit_screen") { ProfileEditScreen() } // 프로필 수정 화면
+                    composable("profile_edit_screen") { ProfileEditScreen(navController) } // 프로필 수정 화면
+                    composable("signUpScreen") { SignUpScreen(navController) }
+                    composable("loginScreen") { LoginScreen(navController) }
                     composable("cpr_guide_screen") { CprGuideScreen() } // CPR 가이드 스크린
                 }
             }

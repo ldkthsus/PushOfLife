@@ -21,7 +21,13 @@ android {
 
         val kakaoMapKey = project.findProperty("KAKAO_MAP_KEY") as String? ?: ""
         buildConfigField("String", "KAKAO_MAP_KEY", "\"$kakaoMapKey\"")
+        println("KAKAO_MAP_KEY: ${kakaoMapKey}")
         manifestPlaceholders["KAKAO_MAP_KEY"] = kakaoMapKey
+        ndk {
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("armeabi-v7a")
+        }
+
     }
 
     buildTypes {
@@ -87,5 +93,4 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.kakao.maps)
-
 }

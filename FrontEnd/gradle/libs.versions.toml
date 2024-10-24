@@ -18,7 +18,7 @@ coreSplashscreen = "1.0.1"
 lifecycleRuntimeKtx = "2.8.6"
 lifecycleRuntimeComposeAndroid = "2.8.6"
 navigation = "2.8.3"
-retrofit = "2.9.0"
+retrofit = "2.11.0"
 gson = "2.10.1"
 datastore = "1.1.1"
 playServicesLocation = "21.3.0"
@@ -58,7 +58,7 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }  # Accompanist Pager 추가
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
-
+kakao-maps = { group = "com.kakao.maps.open", name = "android", version = "2.12.8" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

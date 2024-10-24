@@ -1,22 +1,29 @@
 package com.example.PushOfLife.controller;
 
+import com.example.PushOfLife.dto.aed.AedRequestDTO;
+import com.example.PushOfLife.dto.aed.AedResponseDTO;
+import com.example.PushOfLife.entity.UserEntity;
+import com.example.PushOfLife.service.AedLocationService;
 import com.example.PushOfLife.service.AedService;
 import com.example.PushOfLife.service.CsvToDataBaseService;
+import com.example.PushOfLife.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/aed")
+@RequestMapping("/POL/aed")
 @RequiredArgsConstructor
 public class AedController {
 
     private final AedService aedService;
     private final CsvToDataBaseService csvToDataBaseService;
+    private final UserService userService;
+    private final AedLocationService aedLocationService;
 
     @GetMapping("/list")
     public ResponseEntity<?> getAedLoList() {
@@ -36,5 +43,18 @@ public class AedController {
         catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/within-bounds")
+    public ResponseEntity<?> getAedWithinBounds(HttpServletRequest request, @RequestBody AedRequestDTO requestDTO) {
+        UserEntity user = userService.findByRequest(request);
+        if (user == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        List<AedResponseDTO> responseDTO= aedLocationService.getAedLocation(requestDTO);
+        if (responseDTO == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("AED not found");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 }

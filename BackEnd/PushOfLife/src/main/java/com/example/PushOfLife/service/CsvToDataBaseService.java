@@ -30,8 +30,8 @@ public class CsvToDataBaseService {
                 try {
                     // CSVRecord를 통해 각 필드를 가져옴, 필드가 없는 경우 기본값 처리
                     String aedAddress = record.get("buildAddress"); // 설치 기관 주소
-                    String aedPlace = record.get("buildPlace");  // 설치 위치
-                    String aedLocation = record.get("org");
+                    String aedLocation = record.get("buildPlace");  // 설치 위치
+                    String aedPlace = record.get("org");
                     Double longitude = parseDoubleSafe(record.get("wgs84Lon")); // 경도
                     Double latitude = parseDoubleSafe(record.get("wgs84Lat"));  // 위도
                     String aedNumber = record.get("clerkTel");   // 설치 기관 전화번호

@@ -24,6 +24,9 @@ public class UpdateRequestDTO {
     @JsonProperty(value = "user_name", required = false)
     private String userName;
 
+    @JsonProperty(value = "user_birthday", required = false)
+    private String userBirthday;
+
     @JsonProperty(value = "user_gender", required = false)
     private String userGender;
 

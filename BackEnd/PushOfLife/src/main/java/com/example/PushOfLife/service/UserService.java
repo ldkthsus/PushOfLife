@@ -3,6 +3,7 @@ package com.example.PushOfLife.service;
 import com.example.PushOfLife.dto.user.UpdateRequestDTO;
 import com.example.PushOfLife.dto.user.UpdateResponseDTO;
 import com.example.PushOfLife.dto.user.UserJoinDTO;
+import com.example.PushOfLife.dto.user.UserListDTO;
 import com.example.PushOfLife.entity.UserEntity;
 import com.example.PushOfLife.jwt.JwtUtil;
 import com.example.PushOfLife.repository.UserRepository;
@@ -12,6 +13,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -62,5 +66,16 @@ public class UserService {
        else {
            throw new RuntimeException("User not found");
        }
+    }
+
+    public List<UserListDTO> getUserList(){
+        List<UserEntity> findUserList = userRepository.findAll();
+        List<UserListDTO> allUsers = new ArrayList<>();
+        for (UserEntity user : findUserList) {
+            UserListDTO userInfo = new UserListDTO();
+            userInfo.fromEntity(user);
+            allUsers.add(userInfo);
+        }
+        return allUsers;
     }
 }

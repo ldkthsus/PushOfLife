@@ -3,6 +3,7 @@ package com.example.PushOfLife.controller;
 import com.example.PushOfLife.dto.user.UpdateRequestDTO;
 import com.example.PushOfLife.dto.user.UpdateResponseDTO;
 import com.example.PushOfLife.dto.user.UserJoinDTO;
+import com.example.PushOfLife.dto.user.UserListDTO;
 import com.example.PushOfLife.entity.UserEntity;
 import com.example.PushOfLife.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/POL/users")
@@ -44,5 +47,15 @@ public class UserController {
         }
         UpdateResponseDTO responseDTO = userService.updateUserInfo(findUser, updateDTO);
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+    }
+
+    @GetMapping()
+    public ResponseEntity<?> getAllUsers(HttpServletRequest request) {
+        UserEntity findUser = userService.findByRequest(request);
+        if (findUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        List<UserListDTO> userList = userService.getUserList();
+        return ResponseEntity.status(HttpStatus.OK).body(userList);
     }
 }

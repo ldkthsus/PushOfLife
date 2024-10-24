@@ -12,10 +12,11 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.util.Log
 import kotlinx.coroutines.*
 import com.example.pushoflife.sensor.FallSensor
-
+import com.example.pushoflife.SecondActivity
 class SensorForegroundService : Service(), SensorEventListener {
 
     private val serviceScope = CoroutineScope(Dispatchers.Default + Job())
@@ -76,6 +77,9 @@ class SensorForegroundService : Service(), SensorEventListener {
                 if (fallSensor.checkFall(x, y, z)) {
                     Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
+                    // 낙상 감지 후 앱 실행 및 화면 켜기
+                    launchApp()
+                    turnOnScreen()
                     // 5초 후 possibleFall을 false로 설정
                     serviceScope.launch {
                         delay(5000L)  // 5초 대기
@@ -131,5 +135,23 @@ class SensorForegroundService : Service(), SensorEventListener {
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }
+    }
+
+    // 앱을 강제로 실행하는 메서드
+    private fun launchApp() {
+        val intent = Intent(this, SecondActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        startActivity(intent)
+    }
+
+    // 화면을 강제로 켜는 메서드
+    private fun turnOnScreen() {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        val wakeLock = powerManager.newWakeLock(
+            PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+            "MyApp::MyWakeLock"
+        )
+        wakeLock.acquire(10 * 60 * 1000L /*10분 동안 화면을 유지*/)
     }
 }

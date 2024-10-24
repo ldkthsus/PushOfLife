@@ -14,13 +14,13 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
 
     public void registerUser(UserJoinDTO joinDTO){
         UserEntity user = UserEntity.builder()
                 .userName(joinDTO.getUserName())
-                .password(passwordEncoder.encode(joinDTO.getUserPassword1()))
+                .password(bCryptPasswordEncoder.encode(joinDTO.getUserPassword1()))
                 .userBirthday(joinDTO.getUserBirthday())
                 .userGender(joinDTO.getUserGender())
                 .userDisease(joinDTO.getUserDisease())

@@ -78,4 +78,8 @@ public class UserService {
         }
         return allUsers;
     }
+
+    public void deleteUser(UserEntity user){
+        userRepository.delete(user);
+    }
 }

@@ -49,7 +49,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 
-    @GetMapping()
+    @GetMapping
     public ResponseEntity<?> getAllUsers(HttpServletRequest request) {
         UserEntity findUser = userService.findByRequest(request);
         if (findUser == null) {
@@ -57,5 +57,15 @@ public class UserController {
         }
         List<UserListDTO> userList = userService.getUserList();
         return ResponseEntity.status(HttpStatus.OK).body(userList);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteUser(HttpServletRequest request) {
+        UserEntity findUser = userService.findByRequest(request);
+        if (findUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        userService.deleteUser(findUser);
+        return ResponseEntity.status(HttpStatus.OK).body("User deleted successfully.");
     }
 }

@@ -30,6 +30,9 @@ import com.kakao.vectormap.MapLifeCycleCallback
 import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
 import androidx.compose.ui.viewinterop.AndroidView
+import com.kakao.vectormap.LatLng
+import com.kakao.vectormap.camera.CameraPosition
+import com.kakao.vectormap.camera.CameraUpdateFactory
 
 @Composable
 fun AedLocationScreen(navController: NavController, modifier: Modifier = Modifier) {
@@ -68,6 +71,20 @@ fun AedLocationScreen(navController: NavController, modifier: Modifier = Modifie
         }, object : KakaoMapReadyCallback() {
             override fun onMapReady(kakaoMap: KakaoMap) {
                 // 지도 인증 후 정상적으로 지도가 출력될 때 호출
+                val seoulLocation = LatLng.from(37.5665, 126.9780) // 서울의 위도와 경도
+//
+                // CameraPosition 생성 (Builder 대신 from 메서드 사용)
+                val cameraPosition = CameraPosition.from(
+                    37.5665,
+                    126.9780,
+                    3,            // 줌 레벨
+                    0.0,         // 카메라 기울기 각도
+                     0.0,      // 카메라 회전 각도
+                    100.0            // 카메라 높이
+                )
+
+                // 카메라 위치를 설정하여 지도 이동
+                kakaoMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
             }
         })
 

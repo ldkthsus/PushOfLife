@@ -1,6 +1,7 @@
 package com.example.PushOfLife.entity;
 
 import com.example.PushOfLife.dto.user.UpdateRequestDTO;
+import com.example.PushOfLife.dto.user.UpdateResponseDTO;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -67,16 +68,8 @@ public class UserEntity {
             this.userGender = updateRequest.getUserGender();
         }
 
-        if (updateRequest.getUserPhone() != null) {
-            this.userPhone = updateRequest.getUserPhone();
-        }
-
         if (updateRequest.getUserProtector() != null) {
             this.userProtector = updateRequest.getUserProtector();
-        }
-
-        if (updateRequest.getUserFcm() != null) {
-            this.userFcm = updateRequest.getUserFcm();
         }
 
         if (updateRequest.getUserDisease() != null) {

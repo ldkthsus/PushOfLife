@@ -30,13 +30,7 @@ public class UpdateRequestDTO {
     @JsonProperty(value = "user_disease", required = false)
     private String userDisease;
 
-    @JsonProperty(value = "user_phone", required = false)
-    private String userPhone;
-
     @JsonProperty(value = "user_protector", required = false)
     private String userProtector;
-
-    @JsonProperty(value = "user_fcm", required = false)
-    private String userFcm;
 
 }

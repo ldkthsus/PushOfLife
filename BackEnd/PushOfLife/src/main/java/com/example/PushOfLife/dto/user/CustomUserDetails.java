@@ -12,6 +12,7 @@ public class CustomUserDetails implements UserDetails {
     private final UserEntity userEntity;
 
     public CustomUserDetails(UserEntity userEntity) {
+
         this.userEntity = userEntity;
     }
 
@@ -31,10 +32,6 @@ public class CustomUserDetails implements UserDetails {
         });
 
         return collection;
-    }
-
-    public int getId() {
-        return userEntity.getId();
     }
 
     @Override
@@ -73,7 +70,7 @@ public class CustomUserDetails implements UserDetails {
         return true;
     }
 
-    public String getPhone(){
+    public String getUserPhone(){
         return userEntity.getUserPhone();
     }
 }

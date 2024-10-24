@@ -1,8 +1,6 @@
 package com.example.PushOfLife.jwt;
 
 import com.example.PushOfLife.dto.user.CustomUserDetails;
-import com.example.PushOfLife.entity.UserEntity;
-import com.example.PushOfLife.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,12 +21,10 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
-    public LoginFilter(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserRepository userRepository) {
+    public LoginFilter(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
     }
 
     @Override
@@ -36,7 +32,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, String> credentials = objectMapper.readValue(request.getInputStream(), Map.class);
-            String phone = credentials.get("phone");
+            String phone = credentials.get("user_phone");
             String password = credentials.get("password");
 
             //검증을 위한 토큰 생성
@@ -56,7 +52,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         System.out.println("successfulAuthentication");
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        String phone = customUserDetails.getPhone();
+        String phone = customUserDetails.getUserPhone();
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();

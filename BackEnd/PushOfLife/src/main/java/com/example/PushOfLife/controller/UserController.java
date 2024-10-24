@@ -1,15 +1,16 @@
 package com.example.PushOfLife.controller;
 
+import com.example.PushOfLife.dto.user.UpdateRequestDTO;
+import com.example.PushOfLife.dto.user.UpdateResponseDTO;
 import com.example.PushOfLife.dto.user.UserJoinDTO;
+import com.example.PushOfLife.entity.UserEntity;
 import com.example.PushOfLife.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/POL/users")
@@ -21,7 +22,7 @@ public class UserController {
     @PostMapping("/join")
     public ResponseEntity<?> registerUser(@RequestBody UserJoinDTO joinDTO) {
         try{
-            Boolean result = userService.checkPassword(joinDTO);
+            Boolean result = userService.checkPassword(joinDTO.getUserPassword1(), joinDTO.getUserPassword2());
             if(!result){
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("password incorrect");
             }
@@ -33,5 +34,15 @@ public class UserController {
         catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
+    }
+
+    @PutMapping("/info")
+    public ResponseEntity<?> updateUser(HttpServletRequest request, @RequestBody UpdateRequestDTO updateDTO) {
+        UserEntity findUser = userService.findByRequest(request);
+        if (findUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        UpdateResponseDTO responseDTO = userService.updateUserInfo(findUser, updateDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 }

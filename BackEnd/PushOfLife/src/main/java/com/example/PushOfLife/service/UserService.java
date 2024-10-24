@@ -1,8 +1,12 @@
 package com.example.PushOfLife.service;
 
+import com.example.PushOfLife.dto.user.UpdateRequestDTO;
+import com.example.PushOfLife.dto.user.UpdateResponseDTO;
 import com.example.PushOfLife.dto.user.UserJoinDTO;
 import com.example.PushOfLife.entity.UserEntity;
+import com.example.PushOfLife.jwt.JwtUtil;
 import com.example.PushOfLife.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,6 +19,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtUtil jwtUtil;
 
 
     public void registerUser(UserJoinDTO joinDTO){
@@ -32,10 +37,30 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public boolean checkPassword(UserJoinDTO joinDTO){
-        if (joinDTO.getUserPassword1() == null && joinDTO.getUserPassword2() == null){
+    public boolean checkPassword(String password1, String password2){
+        if (password1 == null && password2 == null){
             return true;
         }
-        return joinDTO.getUserPassword1().equals(joinDTO.getUserPassword2());
+        return password1.equals(password2);
+    }
+
+    public UserEntity findByRequest(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        UserEntity user = userRepository.findByUserPhone(jwtUtil.getPhone(token));
+        return user;
+    }
+
+    public UpdateResponseDTO updateUserInfo(UserEntity user, UpdateRequestDTO updateDTO){
+       Boolean result = checkPassword(updateDTO.getPassword1(), updateDTO.getPassword2());
+       if (result){
+           user.updateInfo(updateDTO, bCryptPasswordEncoder.encode(updateDTO.getPassword1()));
+           userRepository.save(user);
+           UpdateResponseDTO updateResponseDTO = new UpdateResponseDTO();
+           updateResponseDTO.fromEntity(user);
+           return updateResponseDTO;
+       }
+       else {
+           throw new RuntimeException("User not found");
+       }
     }
 }

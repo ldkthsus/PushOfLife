@@ -22,6 +22,9 @@ public class AedEntity {
     @Column(name = "aed_address")
     private String aedAddress;
 
+    @Column(name = "aed_place")
+    private String aedPlace;
+
     @Column(name = "aed_location")
     private String aedLocation;
 

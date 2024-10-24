@@ -24,76 +24,64 @@ public class CsvToDataBaseService {
     public void processCsv(String csvFilePath) {
         try (Reader reader = new FileReader(csvFilePath)) {
             // CSV 데이터를 파싱, 첫 번째 줄을 헤더로 처리
-//            Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(reader);
             Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().withQuote('"').parse(reader);
 
-
             for (CSVRecord record : records) {
-                // CSVRecord를 통해 각 필드를 가져옴, 필드가 없는 경우 기본값 처리
-                String aedAddress = record.get("buildAddress"); // 설치 기관 주소
-                String aedLocation = record.get("buildPlace");  // 설치 위치
-//                String aedDetail = Optional.ofNullable(record.get("detail")).orElse(null);  // detail 필드, 없으면 null
-                Double longitude = parseDoubleSafe(record.get("wgs84Lon")); // 경도
-                Double latitude = parseDoubleSafe(record.get("wgs84Lat"));  // 위도
-                String aedNumber = record.get("clerkTel");   // 설치 기관 전화번호
+                try {
+                    // CSVRecord를 통해 각 필드를 가져옴, 필드가 없는 경우 기본값 처리
+                    String aedAddress = record.get("buildAddress"); // 설치 기관 주소
+                    String aedPlace = record.get("buildPlace");  // 설치 위치
+                    String aedLocation = record.get("org");
+                    Double longitude = parseDoubleSafe(record.get("wgs84Lon")); // 경도
+                    Double latitude = parseDoubleSafe(record.get("wgs84Lat"));  // 위도
+                    String aedNumber = record.get("clerkTel");   // 설치 기관 전화번호
 
-                // AedEntity에 데이터를 매핑
-                AedEntity aedEntity = AedEntity.builder()
-                        .aedAddress(aedAddress)
-                        .aedLocation(aedLocation)
-//                        .aedDetail(aedDetail)  // detail 필드, 없으면 null
-                        .aedLongitude(longitude)
-                        .aedLatitude(latitude)
-                        .aedNumber(aedNumber)
-                        .build();
+                    // AedEntity에 데이터를 매핑
+                    AedEntity aedEntity = AedEntity.builder()
+                            .aedAddress(aedAddress)
+                            .aedPlace(aedPlace)
+                            .aedLocation(aedLocation)
+                            .aedLongitude(longitude)
+                            .aedLatitude(latitude)
+                            .aedNumber(aedNumber)
+                            .build();
 
-                // AedEntity를 데이터베이스에 저장
-                aedEntity = aedRepository.save(aedEntity);
-                System.out.println("AedEntity 저장됨");
+                    // AedEntity를 데이터베이스에 저장
+                    aedEntity = aedRepository.save(aedEntity);
+                    System.out.println("AedEntity 저장됨");
 
-                System.out.println("1 : " + record.get("buildAddress"));
-                System.out.println("2 : " + record.get("buildPlace"));
-//                System.out.println("3 : " + record.get("detail"));
-                System.out.println("4 : " + record.get("wgs84Lon"));
-                System.out.println("5 : " + record.get("wgs84Lat"));
-                System.out.println("6 : " + record.get("clerkTel"));
-                System.out.println("7 : " + record.get("monSttTme"));
-                System.out.println("8 : " + record.get("monEndTme"));
-                System.out.println("9 : " + record.get("tueSttTme"));
-                System.out.println("10 : " + record.get("tueEndTme"));
-                System.out.println("11 : " + record.get("wedSttTme"));
-                System.out.println("12 : " + record.get("wedEndTme"));
-                System.out.println("13 : " + record.get("thuSttTme"));
-                System.out.println("14 : " + record.get("thuEndTme"));
+                    // AedAvailableEntity에 데이터를 매핑
+                    AedAvailableEntity aedAvailableEntity = AedAvailableEntity.builder()
+                            .aedMonStTime(safeParseTime(record.get("monSttTme")))   // 월요일 시작 시간
+                            .aedMonEndTime(safeParseTime(record.get("monEndTme")))  // 월요일 종료 시간
+                            .aedTueStTime(safeParseTime(record.get("tueSttTme")))   // 화요일 시작 시간
+                            .aedTueEndTime(safeParseTime(record.get("tueEndTme")))  // 화요일 종료 시간
+                            .aedWedStTime(safeParseTime(record.get("wedSttTme")))   // 수요일 시작 시간
+                            .aedWedEndTime(safeParseTime(record.get("wedEndTme")))  // 수요일 종료 시간
+                            .aedThuStTime(safeParseTime(record.get("thuSttTme")))   // 목요일 시작 시간
+                            .aedThuEndTime(safeParseTime(record.get("thuEndTme")))  // 목요일 종료 시간
+                            .aedFriStTime(safeParseTime(record.get("friSttTme")))   // 금요일 시작 시간
+                            .aedFriEndTime(safeParseTime(record.get("friEndTme")))  // 금요일 종료 시간
+                            .aedSatStTime(safeParseTime(record.get("satSttTme")))   // 토요일 시작 시간
+                            .aedSatEndTime(safeParseTime(record.get("satEndTme")))  // 토요일 종료 시간
+                            .aedSunStTime(safeParseTime(record.get("sunSttTme")))   // 일요일 시작 시간
+                            .aedSunEndTime(safeParseTime(record.get("sunEndTme")))  // 일요일 종료 시간
+                            .aedHolStTime(safeParseTime(record.get("holSttTme")))   // 공휴일 시작 시간
+                            .aedHolEndTime(safeParseTime(record.get("holEndTme")))  // 공휴일 종료 시간
+                            .aedFirSun(parsePossibleValue(record.get("sunFrtYon")))  // 일요일 첫 번째 가용 여부
+                            .aedSecSun(parsePossibleValue(record.get("sunScdYon")))  // 일요일 두 번째 가용 여부
+                            .aedThiSun(parsePossibleValue(record.get("sunThiYon")))  // 일요일 세 번째 가용 여부
+                            .aedFouSun(parsePossibleValue(record.get("sunFurYon")))  // 일요일 네 번째 가용 여부
+                            .aedEntity(aedEntity)
+                            .build();
 
+                    // AedAvailableEntity를 데이터베이스에 저장
+                    aedAvailableRepository.save(aedAvailableEntity);
 
-                // AedAvailableEntity에 데이터를 매핑
-                AedAvailableEntity aedAvailableEntity = AedAvailableEntity.builder()
-                        .aedMonStTime(safeParseTime(record.get("monSttTme")))   // 월요일 시작 시간
-                        .aedMonEndTime(safeParseTime(record.get("monEndTme")))  // 월요일 종료 시간
-                        .aedTueStTime(safeParseTime(record.get("tueSttTme")))   // 화요일 시작 시간
-                        .aedTueEndTime(safeParseTime(record.get("tueEndTme")))  // 화요일 종료 시간
-                        .aedWedStTime(safeParseTime(record.get("wedSttTme")))   // 수요일 시작 시간
-                        .aedWedEndTime(safeParseTime(record.get("wedEndTme")))  // 수요일 종료 시간
-                        .aedThuStTime(safeParseTime(record.get("thuSttTme")))   // 목요일 시작 시간
-                        .aedThuEndTime(safeParseTime(record.get("thuEndTme")))  // 목요일 종료 시간
-                        .aedFriStTime(safeParseTime(record.get("friSttTme")))   // 금요일 시작 시간
-                        .aedFriEndTime(safeParseTime(record.get("friEndTme")))  // 금요일 종료 시간
-                        .aedSatStTime(safeParseTime(record.get("satSttTme")))   // 토요일 시작 시간
-                        .aedSatEndTime(safeParseTime(record.get("satEndTme")))  // 토요일 종료 시간
-                        .aedSunStTime(safeParseTime(record.get("sunSttTme")))   // 일요일 시작 시간
-                        .aedSunEndTime(safeParseTime(record.get("sunEndTme")))  // 일요일 종료 시간
-                        .aedHolStTime(safeParseTime(record.get("holSttTme")))   // 공휴일 시작 시간
-                        .aedHolEndTime(safeParseTime(record.get("holEndTme")))  // 공휴일 종료 시간
-                        .aedFirSun(parsePossibleValue(record.get("sunFrtYon")))  // 일요일 첫 번째 가용 여부
-                        .aedSecSun(parsePossibleValue(record.get("sunScdYon")))  // 일요일 두 번째 가용 여부
-                        .aedThiSun(parsePossibleValue(record.get("sunThiYon")))  // 일요일 세 번째 가용 여부
-                        .aedFouSun(parsePossibleValue(record.get("sunFurYon")))  // 일요일 네 번째 가용 여부
-                        .aedEntity(aedEntity)
-                        .build();
-
-                // AedAvailableEntity를 데이터베이스에 저장
-                aedAvailableRepository.save(aedAvailableEntity);
+                } catch (Exception e) {
+                    // 레코드 처리 중 오류 발생 시 해당 레코드 건너뜀
+                    System.err.println("레코드 처리 중 오류 발생, 레코드 건너뜀: " + e.getMessage());
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException("CSV 파일 처리 중 오류가 발생했습니다.", e);
@@ -130,8 +118,6 @@ public class CsvToDataBaseService {
         }
     }
 
-
-    // 문자열을 안전하게 Double로 변환하는 유틸리티 메서드
     private Double parseDoubleSafe(String value) {
         try {
             return Double.parseDouble(value);

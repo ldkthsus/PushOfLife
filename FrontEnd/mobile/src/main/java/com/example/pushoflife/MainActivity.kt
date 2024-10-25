@@ -57,7 +57,7 @@ import com.example.pushoflife.ui.user.LoginScreen
 import com.example.pushoflife.ui.user.SignUpScreen
 import android.content.Context
 import android.util.Base64
-import android.util.Log
+//import android.util.Log
 import com.kakao.vectormap.KakaoMapSdk
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException

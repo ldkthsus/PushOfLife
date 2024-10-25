@@ -26,7 +26,9 @@ public class LocationController {
         }
     }
 
+
     @GetMapping()
+    // 확인용 코드
     public ResponseEntity<?> getNearLocation(@RequestBody LocationDTO locationDTO) {
         try{
             List<String> result = locationService.findUsersNearby(locationDTO.getFcmToken(), 300);

@@ -21,12 +21,15 @@ android {
 
         val kakaoMapKey = project.findProperty("KAKAO_MAP_KEY") as String? ?: ""
         buildConfigField("String", "KAKAO_MAP_KEY", "\"$kakaoMapKey\"")
-        println("KAKAO_MAP_KEY: ${kakaoMapKey}")
         manifestPlaceholders["KAKAO_MAP_KEY"] = kakaoMapKey
         ndk {
             abiFilters.add("arm64-v8a")
             abiFilters.add("armeabi-v7a")
         }
+        val twilioAccountSID = project.findProperty("TWILIO_ACCOUNT_SID") as String? ?: ""
+        val twilioAuthToken = project.findProperty("TWILIO_AUTH_TOKEN") as String? ?: ""
+        buildConfigField ("String", "TWILIO_ACCOUNT_SID", "\"${twilioAccountSID}\"")
+        buildConfigField ("String", "TWILIO_AUTH_TOKEN", "\"${twilioAuthToken}\"")
 
     }
 
@@ -50,7 +53,7 @@ android {
     // Jetpack Compose 활성화
     buildFeatures {
         compose = true
-        buildConfig = true  // BuildConfig 기능 활성화
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -58,8 +61,11 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
+
         }
     }
+
 }
 
 dependencies {
@@ -93,4 +99,5 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.kakao.maps)
+    implementation(libs.twilio.sdk)
 }

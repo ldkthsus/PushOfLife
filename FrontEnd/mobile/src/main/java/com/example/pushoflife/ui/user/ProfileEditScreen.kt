@@ -30,6 +30,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pushoflife.BuildConfig
+import com.example.pushoflife.utils.TwilioUtils
+
 
 @Composable
 fun ProfileEditScreen(navController: NavController) {
@@ -322,6 +325,10 @@ fun ProfileEditScreen(navController: NavController) {
                                     pill = pill.text,
                                     protector = user_protector.text
                                 )
+                            }
+                            // Twilio로 문자 발송하는 코루틴
+                            CoroutineScope(Dispatchers.IO).launch {
+                                TwilioUtils.sendSmsWithRetrofit("+8201099135931", "+17035968457", "테스트용", BuildConfig.TWILIO_ACCOUNT_SID, BuildConfig.TWILIO_AUTH_TOKEN)
                             }
                         }
                     ) {

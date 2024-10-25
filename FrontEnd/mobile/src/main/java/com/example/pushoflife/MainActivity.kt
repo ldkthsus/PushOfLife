@@ -55,7 +55,27 @@ import androidx.compose.runtime.setValue
 import com.example.pushoflife.ui.aedLocation.AedLocationScreen
 import com.example.pushoflife.ui.user.LoginScreen
 import com.example.pushoflife.ui.user.SignUpScreen
+import android.content.Context
+import android.util.Base64
+import android.util.Log
+import com.kakao.vectormap.KakaoMapSdk
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
+import kotlin.contracts.contract
 
+fun getKeyHash(context: Context): String? {
+    try {
+        val info = context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_SIGNATURES)
+        for (signature in info.signatures) {
+            val md = MessageDigest.getInstance("SHA")
+            md.update(signature.toByteArray())
+            return Base64.encodeToString(md.digest(), Base64.NO_WRAP)
+        }
+    } catch (e: Exception) {
+        Log.e("KeyHash", "Unable to get KeyHash.", e)
+    }
+    return null
+}
 // 폰트 정의
 val PoppinsExtraLight = FontFamily(
     Font(R.font.poppins_extralight, FontWeight.ExtraLight)
@@ -137,6 +157,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        val keyHash = getKeyHash(this)
+        Log.d("KeyHash", keyHash ?: "KeyHash not found")
+        // 로그 출력으로 값 확인
+        Log.d("KakaoMapKey", "API Key: ${BuildConfig.KAKAO_MAP_KEY}")
+        // 카카오 지도 SDK 초기화
+        KakaoMapSdk.init(this, BuildConfig.KAKAO_MAP_KEY)
     }
 }
 

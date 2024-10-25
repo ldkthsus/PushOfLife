@@ -18,12 +18,13 @@ coreSplashscreen = "1.0.1"
 lifecycleRuntimeKtx = "2.8.6"
 lifecycleRuntimeComposeAndroid = "2.8.6"
 navigation = "2.8.3"
-retrofit = "2.9.0"
+retrofit = "2.11.0"
 gson = "2.10.1"
 datastore = "1.1.1"
 playServicesLocation = "21.3.0"
 #playServicesWearable = "17.1.0"
 accompanist = "0.28.0"
+twilio = "10.6.1"
 
 gson = "2.9.0"
 firebase-bom = "32.0.0"
@@ -62,9 +63,14 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }  # Accompanist Pager 추가
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
+
+kakao-maps = { group = "com.kakao.maps.open", name = "android", version = "2.12.8" }
+twilio-sdk = { group = "com.twilio.sdk", name = "twilio", version.ref = "twilio" }
+
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebase-messaging" }
 firebase-analytics = "com.google.firebase:firebase-analytics-ktx:{firebase-analytics}"
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -24,19 +24,16 @@ public class UpdateRequestDTO {
     @JsonProperty(value = "user_name", required = false)
     private String userName;
 
+    @JsonProperty(value = "user_birthday", required = false)
+    private String userBirthday;
+
     @JsonProperty(value = "user_gender", required = false)
     private String userGender;
 
     @JsonProperty(value = "user_disease", required = false)
     private String userDisease;
 
-    @JsonProperty(value = "user_phone", required = false)
-    private String userPhone;
-
     @JsonProperty(value = "user_protector", required = false)
     private String userProtector;
-
-    @JsonProperty(value = "user_fcm", required = false)
-    private String userFcm;
 
 }

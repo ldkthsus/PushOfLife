@@ -137,7 +137,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                 // 자이로스코프 데이터를 콜백으로 전달
                 gyroscopeDataCallback?.invoke(gyroscopeData)
                 // PushSensor로 자이로스코프 데이터 전달
-                pushSensor.processGyroscopeData(gyroscopeData)
+//                pushSensor.processGyroscopeData(gyroscopeData)
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])

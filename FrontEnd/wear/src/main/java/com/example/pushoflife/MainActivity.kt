@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
         // Foreground Service 시작
         sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
         startForegroundService(sensorServiceIntent)  // Foreground Service를 시작
+
     }
 
     override fun onDestroy() {

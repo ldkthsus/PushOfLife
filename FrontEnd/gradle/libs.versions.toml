@@ -20,7 +20,9 @@ lifecycleRuntimeComposeAndroid = "2.8.6"
 navigation = "2.6.0"
 retrofit = "2.9.0"
 gson = "2.9.0"
-
+firebase-bom = "32.0.0"
+firebase-messaging = "23.0.5"
+firebase-analytics = "21.4.0"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -50,6 +52,9 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebase-messaging" }
+firebase-analytics = "com.google.firebase:firebase-analytics-ktx:{firebase-analytics}"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

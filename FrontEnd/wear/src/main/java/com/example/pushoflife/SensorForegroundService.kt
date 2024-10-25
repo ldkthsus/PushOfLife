@@ -27,7 +27,10 @@ class SensorForegroundService : Service(), SensorEventListener {
     private var accelerometer: Sensor? = null
     private var gyroscope: Sensor? = null
     private var heartRateSensor: Sensor? = null
-
+    private var gravitySensor: Sensor? = null
+    private var linearAccelerationSensor: Sensor? = null
+    var gravityValues: FloatArray? = null
+    private var totalAccelation: Float = 0.0f
     override fun onCreate() {
         super.onCreate()
 
@@ -43,9 +46,12 @@ class SensorForegroundService : Service(), SensorEventListener {
 
         // SensorManager 초기화
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        // 센서 등록 (TYPE_GRAVITY와 TYPE_LINEAR_ACCELERATION 추가)
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+        gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
+        linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
 
         // 센서 리스너 등록
         accelerometer?.also {
@@ -55,6 +61,12 @@ class SensorForegroundService : Service(), SensorEventListener {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
         heartRateSensor?.also {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+        gravitySensor?.also {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+        linearAccelerationSensor?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
@@ -69,12 +81,24 @@ class SensorForegroundService : Service(), SensorEventListener {
     // 센서 이벤트 리스너
     override fun onSensorChanged(event: SensorEvent) {
         when (event.sensor.type) {
-            Sensor.TYPE_ACCELEROMETER -> {
+            Sensor.TYPE_GRAVITY -> {
+                val x = String.format("%.2f", event.values[0])
+                val y = String.format("%.2f", event.values[1])
+                val z = String.format("%.2f", event.values[2])
+                //Log.d("SensorData", "gravity: x=$x, y=$y, z=$z")
+                gravityValues = event.values.clone()
+            }
+            Sensor.TYPE_LINEAR_ACCELERATION -> {
                 val x = event.values[0]
                 val y = event.values[1]
                 val z = event.values[2]
+                //Log.d("acceleration", "acceleration : x=$x, y=$y, z=$z")
+                gravityValues?.let { gravity ->
+                    totalAccelation = fallSensor.calculateAcceleration(event.values, gravity)
+                    //Log.d("밑 가속도", "total gravity : $totalAccelation")
+                }
                 //Log.d("SensorData", "Accelerometer: x=$x, y=$y, z=$z")
-                if (fallSensor.checkFall(x, y, z)) {
+                if (!possibleFall && fallSensor.checkFall(totalAccelation)) {
                     Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
                     // 낙상 감지 후 앱 실행 및 화면 켜기
@@ -97,7 +121,10 @@ class SensorForegroundService : Service(), SensorEventListener {
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])
-                Log.d("SensorData", "Heart Rate: $heartRate bpm")
+                if(possibleFall && fallSensor.checkHeart(event.values[0])){
+
+                }
+                //Log.d("SensorData", "Heart Rate: $heartRate bpm")
             }
         }
     }

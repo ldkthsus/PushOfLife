@@ -259,7 +259,7 @@ fun ProfileEditScreen(navController: NavController) {
 
                     .clickable {
                         // 로그인 페이지로 이동
-                        navController.navigate("SignUpScreen")
+                        navController.navigate("sign_up_screen")
                     }
             )
         }

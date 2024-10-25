@@ -9,7 +9,7 @@
     <string name="pill">복약중인 약</string>
     <string name="disease">기저질환</string>
     <string name="save">저장하기</string>
-    <string name="service_screen_text">Service Screen</string>
+    <string name="service_screen_text">워치 가이드</string>
     <string name="profile_edit_screen_text">정보 추가</string>
     <string name="profile_edit_screen_description">위급상황 시 아래 정보를 구급대에 같이 전달합니다.</string>
     <string name="profile_edit_screen_to_sign_up">로그아웃해도 정보를 기억할래요!</string>

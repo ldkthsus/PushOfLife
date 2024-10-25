@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.google.gms.google-services")
+
 }
 
 android {
@@ -52,6 +54,10 @@ android {
 }
 
 dependencies {
+    implementation(platform(libs.firebase.bom)) // BOM을 사용해 의존성 버전 관리
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.play.services.wearable)
     implementation(libs.material)

@@ -29,6 +29,19 @@ import com.example.pushoflife.ui.theme.PushOfLifeTheme
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
+import android.os.Build
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
+import android.Manifest
+import com.google.firebase.messaging.FirebaseMessaging
+import android.util.Log
+import com.google.android.gms.tasks.Task
+
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -55,9 +68,61 @@ val PretendardRegular = FontFamily(
 )
 
 class MainActivity : ComponentActivity() {
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    // Toast.makeText(this, "Permission already granted", Toast.LENGTH_SHORT)
+                }
+
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // Show an educational UI and request permission again
+                    Toast.makeText(this, "Notification permission is required for notifications", Toast.LENGTH_LONG).show()
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+
+                else -> {
+                    // Directly request permission
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        askNotificationPermission()
+
+        FirebaseMessaging.getInstance().token
+            .addOnCompleteListener { task: Task<String> ->
+                if (!task.isSuccessful) {
+                    Log.w("MainActivity", "Fetching FCM registration token failed", task.exception)
+                    return@addOnCompleteListener
+                }
+
+                // Get new FCM registration token
+                val token = task.result
+                Log.d("MainActivity", "FCM Registration Token: $token")
+
+        }
+        firebaseAnalytics = Firebase.analytics
+
         enableEdgeToEdge()
+
         setContent {
             PushOfLifeTheme {
                 val navController = rememberNavController() // Navigation Controller 생성

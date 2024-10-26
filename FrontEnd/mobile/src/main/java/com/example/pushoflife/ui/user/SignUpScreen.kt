@@ -32,8 +32,8 @@ import androidx.navigation.compose.rememberNavController
 @Composable
 fun SignUpScreen(navController: NavController) {
     var user_phone by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
-    var user_password1 by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
-    var user_password2 by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
+    var user_password1 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호1 상태
+    var user_password2 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호2 상태
     val PretendardBold = FontFamily(
         Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
@@ -64,7 +64,7 @@ fun SignUpScreen(navController: NavController) {
 
             // 타이틀 텍스트
             Text(
-                text = stringResource(id = R.string.sign_up),
+                text = "회원가입",
                 fontSize = 24.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,
@@ -98,7 +98,7 @@ fun SignUpScreen(navController: NavController) {
         TextField(
             value = user_phone,
             onValueChange = { user_phone = it },
-            label = { Text(text = stringResource(id = R.string.phone)) },  // "전화번호" 레이블
+            label = { Text(text = "전화번호") },  // "전화번호" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.phoneicon),
@@ -115,11 +115,11 @@ fun SignUpScreen(navController: NavController) {
         TextField(
             value = user_password1,
             onValueChange = { user_password1 = it },
-            label = { Text(text = stringResource(id = R.string.password)) },  // "비밀번호" 레이블
+            label = { Text(text = "비밀번호") },  // "비밀번호" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.passwordicon),
-                    contentDescription = "Phone Icon"
+                    contentDescription = "Password Icon"
                 )
             },
             visualTransformation =  PasswordVisualTransformation(),
@@ -131,11 +131,11 @@ fun SignUpScreen(navController: NavController) {
         TextField(
             value = user_password2,
             onValueChange = { user_password2 = it },
-            label = { Text(text = stringResource(id = R.string.passwordconfirm)) },  // "비밀번호 확인" 레이블
+            label = { Text(text = "비밀번호 확인") },  // "비밀번호 확인" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.passwordicon),
-                    contentDescription = "Phone Icon"
+                    contentDescription = "Password Icon"
                 )
             },
             visualTransformation =  PasswordVisualTransformation(),
@@ -153,7 +153,7 @@ fun SignUpScreen(navController: NavController) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = stringResource(id = R.string.sign_up))
+            Text(text = "회원가입")
         }
         Spacer(modifier = Modifier.height(5.dp))  // 간격 추가
         Row(
@@ -163,13 +163,13 @@ fun SignUpScreen(navController: NavController) {
 
         ){
             Text(
-                text = stringResource(id = R.string.sign_up_screen_to_login),
+                text = "이미 회원이신가요?",
                 fontSize = 16.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
             Text(
-                    text = stringResource(id = R.string.login),
+                    text = "로그인",
             fontSize = 16.sp,  // 글자 크기
             textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,

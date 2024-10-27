@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
@@ -28,15 +29,35 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pushoflife.network.RetrofitClient.apiService
+import com.example.pushoflife.network.SignUpRequest
 
 @Composable
 fun SignUpScreen(navController: NavController) {
     var user_phone by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
-    var user_password1 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호1 상태
-    var user_password2 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호2 상태
+    var password1 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호1 상태
+    var password2 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호2 상태
     val PretendardBold = FontFamily(
         Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
+    // Optional fields with initial empty values
+    var user_name by remember { mutableStateOf(TextFieldValue("")) }
+    var user_birthdate by remember { mutableStateOf(TextFieldValue("")) }
+    var user_gender by remember { mutableStateOf(TextFieldValue("")) }
+    var user_disease by remember { mutableStateOf(TextFieldValue("")) }
+    var user_protector by remember { mutableStateOf(TextFieldValue("")) }
+    val context = LocalContext.current
+    val userPreferences = UserPreferences(context)
+    // 데이터 불러오기
+    LaunchedEffect(Unit) {
+        userPreferences.getUserProfile().collect { userProfile ->
+            user_name = TextFieldValue(userProfile.name ?: "")
+            user_birthdate = TextFieldValue(userProfile.birthdate ?: "")
+            user_gender = TextFieldValue(userProfile.gender ?: "")
+            user_disease = TextFieldValue(userProfile.disease ?: "")
+            user_protector = TextFieldValue(userProfile.protector ?: "")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -113,8 +134,8 @@ fun SignUpScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
         // 비밀번호 입력 필드 (아이콘 포함)
         TextField(
-            value = user_password1,
-            onValueChange = { user_password1 = it },
+            value = password1,
+            onValueChange = { password1 = it },
             label = { Text(text = "비밀번호") },  // "비밀번호" 레이블
             leadingIcon = {
                 Icon(
@@ -129,8 +150,8 @@ fun SignUpScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
         // 비밀번호 확인 입력 필드 (아이콘 포함)
         TextField(
-            value = user_password2,
-            onValueChange = { user_password2 = it },
+            value = password2,
+            onValueChange = { password2 = it },
             label = { Text(text = "비밀번호 확인") },  // "비밀번호 확인" 레이블
             leadingIcon = {
                 Icon(
@@ -148,8 +169,27 @@ fun SignUpScreen(navController: NavController) {
         // 저장 버튼
         Button(
             onClick = {
+                CoroutineScope(Dispatchers.IO).launch {
+                    val signUpRequest = SignUpRequest(
+                        user_name = if (user_name.text.isNotEmpty()) user_name.text else null,
+                        password1 = password1.text,
+                        password2 = password2.text,
+                        user_birthday = user_birthdate.text.toIntOrNull(),
+                        user_gender = if (user_gender.text.isNotEmpty()) user_gender.text else null,
+                        user_disease = if (user_disease.text.isNotEmpty()) user_disease.text else null,
+                        user_phone = user_phone.text,
+                        user_protector = if (user_protector.text.isNotEmpty()) user_protector.text else null
+                    )
 
-
+                    // API 요청 보내기
+                    val response = apiService.signUpUser(signUpRequest).execute()
+                    if (response.isSuccessful) {
+                        // 회원가입 성공 시 처리
+                        navController.navigate("next_screen")  // 다음 화면으로 이동 예시
+                    } else {
+                        // 에러 처리
+                    }
+                }
             },
             modifier = Modifier.fillMaxWidth()
         ) {

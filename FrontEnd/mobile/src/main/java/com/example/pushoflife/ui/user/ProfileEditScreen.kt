@@ -32,13 +32,19 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.pushoflife.BuildConfig
 import com.example.pushoflife.utils.TwilioUtils
-
+import java.util.Calendar
+import android.app.DatePickerDialog
+import androidx.compose.ui.viewinterop.AndroidView
+import java.text.SimpleDateFormat
+import java.util.Locale
+import android.widget.DatePicker
 
 @Composable
 fun ProfileEditScreen(navController: NavController) {
     var user_name by remember { mutableStateOf(TextFieldValue("")) }  // 사용자 이름 상태
     var user_birthdate by remember { mutableStateOf(TextFieldValue("")) } // 생년월일 상태
     var user_gender by remember { mutableStateOf(TextFieldValue("")) } // 성별 상태
+    var expandedGender by remember { mutableStateOf(false) } // 성별 메뉴 확장 상태
     var user_disease by remember { mutableStateOf(TextFieldValue("")) } // 질환 상태
     var hospital by remember { mutableStateOf(TextFieldValue("")) } // 병원 상태
     var pill by remember { mutableStateOf(TextFieldValue("")) } // 복용 약 상태
@@ -47,7 +53,12 @@ fun ProfileEditScreen(navController: NavController) {
     val PretendardBold = FontFamily(
         Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
+
     val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    var showDatePicker by remember { mutableStateOf(false) }
+
+
     val address = GetLocation(context)
     val userPreferences = UserPreferences(context)
     var showModal by remember { mutableStateOf(false) }
@@ -126,37 +137,78 @@ fun ProfileEditScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
 
-        // 생년월일 입력 필드 (아이콘 포함)
-        TextField(
-            value = user_birthdate,
-            onValueChange = { user_birthdate = it },
-            label = { Text(text = "나이") },  // "생년월일" 레이블
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.dateicon),
-                    contentDescription = "Birthdate Icon"
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors( unfocusedContainerColor = MaterialTheme.colorScheme.background )
-        )
+        // 생년월일 입력 필드 (DatePicker)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true }
+        ) {
+            TextField(
+                value = user_birthdate,
+                onValueChange = { user_birthdate = it },
+                label = { Text(text = "생년월일") },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.dateicon),
+                        contentDescription = "Birthdate Icon"
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                    disabledTextColor = MaterialTheme.colorScheme.primary,
+                    disabledBorderColor=MaterialTheme.colorScheme.primary,
+                    disabledLeadingIconColor = MaterialTheme.colorScheme.primary,
+                    disabledLabelColor = MaterialTheme.colorScheme.primary,
+                ),
+                enabled = false
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
 
-        // 성별 입력 필드 (아이콘 포함)
-        TextField(
-            value = user_gender,
-            onValueChange = { user_gender = it },
-            label = { Text(text = "성별") },  // "성별" 레이블
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.gendericon),
-                    contentDescription = "Gender Icon"
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors( unfocusedContainerColor = MaterialTheme.colorScheme.background )
-        )
+        // 성별 선택 드롭다운 메뉴
+        Box(modifier = Modifier.fillMaxWidth()) {
+            TextField(
+                value = user_gender,
+                onValueChange = { },
+                label = { Text(text = "성별") },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.gendericon),
+                        contentDescription = "Gender Icon"
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expandedGender = true },
+                readOnly = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                    disabledTextColor = MaterialTheme.colorScheme.primary,
+                    disabledBorderColor=MaterialTheme.colorScheme.primary,
+                    disabledLeadingIconColor = MaterialTheme.colorScheme.primary,
+                    disabledLabelColor = MaterialTheme.colorScheme.primary,
+                ),
+                enabled = false
+            )
+
+            DropdownMenu(
+                expanded = expandedGender,
+                onDismissRequest = { expandedGender = false },
+                modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background) // 배경색 흰색으로 설정
+
+            ) {
+
+                DropdownMenuItem(onClick = {
+                    user_gender = TextFieldValue("여") // TextFieldValue로 감싸기
+                    expandedGender = false
+                }, text = { Text("여") })
+                DropdownMenuItem(onClick = {
+                    user_gender = TextFieldValue("남") // TextFieldValue로 감싸기
+                    expandedGender = false
+                }, text = { Text("남") })
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
 
@@ -282,6 +334,55 @@ fun ProfileEditScreen(navController: NavController) {
             )
         }
         // 모달(다이얼로그) 표시
+        if (showDatePicker) {
+            AlertDialog(
+                onDismissRequest = { showDatePicker = false },
+                title = {
+                    Text(
+                        text = "날짜 선택",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 20.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                },
+                text = {
+                    AndroidView(
+                        modifier = Modifier.fillMaxWidth(),
+                        factory = { context ->
+                            DatePicker(context).apply {
+                                init(
+                                    calendar.get(Calendar.YEAR),
+                                    calendar.get(Calendar.MONTH),
+                                    calendar.get(Calendar.DAY_OF_MONTH)
+                                ) { _, year, month, dayOfMonth ->
+                                    calendar.set(year, month, dayOfMonth)
+                                }
+                            }
+                        }
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val formattedDate = SimpleDateFormat("yyyy.MM.dd", Locale.KOREA).format(calendar.time)
+                            user_birthdate = TextFieldValue(formattedDate)
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text(text = "확인", color = MaterialTheme.colorScheme.primary) // 보라색 확인 버튼
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDatePicker = false }
+                    ) {
+                        Text(text = "취소", color =  MaterialTheme.colorScheme.primary) // 회색 취소 버튼
+                    }
+                },
+                containerColor =  MaterialTheme.colorScheme.background // 다이얼로그 배경 흰색
+            )
+        }
 
         if (showModal) {
 

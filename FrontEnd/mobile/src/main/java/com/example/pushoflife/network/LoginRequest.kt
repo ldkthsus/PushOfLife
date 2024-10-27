@@ -1,6 +1,6 @@
 package com.example.pushoflife.network
 
 data class LoginRequest(
-    val username: String,
+    val user_phone: String,
     val password: String
 )

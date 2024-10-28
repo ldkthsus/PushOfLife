@@ -1,5 +1,6 @@
 package com.example.PushOfLife.dto.user;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
@@ -13,12 +14,13 @@ import java.sql.Timestamp;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UpdateRequestDTO {
 
-    @JsonProperty(value = "password1", required = false)
+    @JsonProperty(value = "user_password1", required = false)
     private String userPassword1;
 
-    @JsonProperty(value = "password2", required = false)
+    @JsonProperty(value = "user_password2", required = false)
     private String userPassword2;
 
     @JsonProperty(value = "user_name", required = false)

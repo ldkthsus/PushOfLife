@@ -55,9 +55,9 @@ public class UserService {
     }
 
     public UpdateResponseDTO updateUserInfo(UserEntity user, UpdateRequestDTO updateDTO){
-       Boolean result = checkPassword(updateDTO.getPassword1(), updateDTO.getPassword2());
+       Boolean result = checkPassword(updateDTO.getUserPassword1(), updateDTO.getUserPassword2());
        if (result){
-           user.updateInfo(updateDTO, bCryptPasswordEncoder.encode(updateDTO.getPassword1()));
+           user.updateInfo(updateDTO, bCryptPasswordEncoder.encode(updateDTO.getUserPassword1()));
            userRepository.save(user);
            UpdateResponseDTO updateResponseDTO = new UpdateResponseDTO();
            updateResponseDTO.fromEntity(user);
@@ -77,6 +77,18 @@ public class UserService {
             allUsers.add(userInfo);
         }
         return allUsers;
+    }
+
+    public UpdateResponseDTO getUserInfo(UserEntity user){
+        UserEntity findUser = userRepository.findByUserPhone(user.getUserPhone());
+        if (findUser == null){
+            throw new RuntimeException("User not found");
+        }
+        else{
+            UpdateResponseDTO responseDTO = new UpdateResponseDTO();
+            responseDTO.fromEntity(findUser);
+            return responseDTO;
+        }
     }
 
     public void deleteUser(UserEntity user){

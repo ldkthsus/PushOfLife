@@ -50,13 +50,19 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllUsers(HttpServletRequest request) {
+    public ResponseEntity<?> getAllUsers() {
+        List<UserListDTO> userList = userService.getUserList();
+        return ResponseEntity.status(HttpStatus.OK).body(userList);
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<?> userInfo(HttpServletRequest request) {
         UserEntity findUser = userService.findByRequest(request);
         if (findUser == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
-        List<UserListDTO> userList = userService.getUserList();
-        return ResponseEntity.status(HttpStatus.OK).body(userList);
+        UpdateResponseDTO responseDTO = userService.getUserInfo(findUser);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 
     @DeleteMapping

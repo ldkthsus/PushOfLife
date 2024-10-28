@@ -63,7 +63,7 @@ fun LoginScreen(navController: NavController) {
 
             // 타이틀 텍스트
             Text(
-                text = stringResource(id = R.string.login),
+                text = "로그인",
                 fontSize = 24.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,
@@ -98,7 +98,7 @@ fun LoginScreen(navController: NavController) {
         TextField(
             value = user_phone,
             onValueChange = { user_phone = it },
-            label = { Text(text = stringResource(id = R.string.phone)) },  // "전화번호" 레이블
+            label = { Text(text = "전화번호") },  // "전화번호" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.phoneicon),
@@ -114,11 +114,11 @@ fun LoginScreen(navController: NavController) {
         TextField(
             value = user_password,
             onValueChange = { user_password = it },
-            label = { Text(text = stringResource(id = R.string.password)) },  // "비밀번호" 레이블
+            label = { Text(text = "비밀번호") },  // "비밀번호" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.passwordicon),
-                    contentDescription = "Phone Icon"
+                    contentDescription = "Password Icon"
                 )
             },
             visualTransformation =  PasswordVisualTransformation(),
@@ -136,7 +136,7 @@ fun LoginScreen(navController: NavController) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = stringResource(id = R.string.login))
+            Text(text = "로그인")
         }
         Spacer(modifier = Modifier.height(5.dp))  // 간격 추가
         Row(
@@ -146,13 +146,13 @@ fun LoginScreen(navController: NavController) {
 
         ){
             Text(
-                text = stringResource(id = R.string.login_screen_to_sign_up),
+                text = "아직 회원이 아니신가요?",
                 fontSize = 16.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
             Text(
-                text = stringResource(id = R.string.sign_up),
+                text = "회원가입",
                 fontSize = 16.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,

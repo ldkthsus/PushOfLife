@@ -21,6 +21,7 @@ object UserPreferencesKeys {
     val HOSPITAL_KEY = stringPreferencesKey("hospital")
     val PILL_KEY = stringPreferencesKey("pill")
     val USER_PROTECTOR_KEY = stringPreferencesKey("user_protector")
+    val USER_ADDRESS_KEY = stringPreferencesKey("user_address")
 }
 
 // UserPreferences 클래스 정의
@@ -34,7 +35,8 @@ class UserPreferences(private val context: Context) {
         disease: String,
         hospital: String,
         pill: String,
-        protector: String
+        protector: String,
+        address: String
     ) {
         context.dataStore.edit { preferences ->
             preferences[UserPreferencesKeys.USER_NAME_KEY] = name
@@ -44,6 +46,7 @@ class UserPreferences(private val context: Context) {
             preferences[UserPreferencesKeys.HOSPITAL_KEY] = hospital
             preferences[UserPreferencesKeys.PILL_KEY] = pill
             preferences[UserPreferencesKeys.USER_PROTECTOR_KEY] = protector
+            preferences[UserPreferencesKeys.USER_ADDRESS_KEY] = address
         }
     }
 
@@ -57,7 +60,8 @@ class UserPreferences(private val context: Context) {
             val hospital = preferences[UserPreferencesKeys.HOSPITAL_KEY] ?: ""
             val pill = preferences[UserPreferencesKeys.PILL_KEY] ?: ""
             val protector = preferences[UserPreferencesKeys.USER_PROTECTOR_KEY] ?: ""
-            UserProfile(name, birthdate, gender, disease, hospital, pill, protector)
+            val address = preferences[UserPreferencesKeys.USER_ADDRESS_KEY] ?: ""
+            UserProfile(name, birthdate, gender, disease, hospital, pill, protector,address)
         }
     }
 }
@@ -70,5 +74,6 @@ data class UserProfile(
     val disease: String,
     val hospital: String,
     val pill: String,
-    val protector: String
+    val protector: String,
+    val address: String
 )

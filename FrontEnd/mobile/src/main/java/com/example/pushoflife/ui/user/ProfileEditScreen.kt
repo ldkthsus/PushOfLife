@@ -30,20 +30,35 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pushoflife.BuildConfig
+import com.example.pushoflife.utils.TwilioUtils
+import java.util.Calendar
+import android.app.DatePickerDialog
+import androidx.compose.ui.viewinterop.AndroidView
+import java.text.SimpleDateFormat
+import java.util.Locale
+import android.widget.DatePicker
 
 @Composable
 fun ProfileEditScreen(navController: NavController) {
     var user_name by remember { mutableStateOf(TextFieldValue("")) }  // 사용자 이름 상태
     var user_birthdate by remember { mutableStateOf(TextFieldValue("")) } // 생년월일 상태
     var user_gender by remember { mutableStateOf(TextFieldValue("")) } // 성별 상태
+    var expandedGender by remember { mutableStateOf(false) } // 성별 메뉴 확장 상태
     var user_disease by remember { mutableStateOf(TextFieldValue("")) } // 질환 상태
     var hospital by remember { mutableStateOf(TextFieldValue("")) } // 병원 상태
     var pill by remember { mutableStateOf(TextFieldValue("")) } // 복용 약 상태
     var user_protector by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
+    var user_address by remember { mutableStateOf(TextFieldValue("")) } // 자택주소 상태
     val PretendardBold = FontFamily(
         Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
+
     val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    var showDatePicker by remember { mutableStateOf(false) }
+
+
     val address = GetLocation(context)
     val userPreferences = UserPreferences(context)
     var showModal by remember { mutableStateOf(false) }
@@ -57,6 +72,7 @@ fun ProfileEditScreen(navController: NavController) {
             hospital = TextFieldValue(userProfile.hospital)
             pill = TextFieldValue(userProfile.pill)
             user_protector = TextFieldValue(userProfile.protector)
+            user_address = TextFieldValue(userProfile.address)
         }
     }
     Column(
@@ -85,7 +101,7 @@ fun ProfileEditScreen(navController: NavController) {
 
             // 타이틀 텍스트
             Text(
-                text = stringResource(id = R.string.profile_edit_screen_text),
+                text = "정보 추가",
                 fontSize = 24.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,
@@ -98,7 +114,7 @@ fun ProfileEditScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))  // 간격 추가
 
         Text(
-            text = stringResource(id=R.string.profile_edit_screen_description),
+            text = "위급상황 시 아래 정보를 구급대에 같이 전달합니다.",
             fontSize = 14.sp,
             textAlign = TextAlign.Left,
             modifier = Modifier.fillMaxWidth()
@@ -108,7 +124,7 @@ fun ProfileEditScreen(navController: NavController) {
         TextField(
             value = user_name,
             onValueChange = { user_name = it },
-            label = { Text(text = stringResource(id = R.string.name)) },  // "이름" 레이블
+            label = { Text(text = "이름") },  // "이름" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.peopleicon),
@@ -121,37 +137,78 @@ fun ProfileEditScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
 
-        // 생년월일 입력 필드 (아이콘 포함)
-        TextField(
-            value = user_birthdate,
-            onValueChange = { user_birthdate = it },
-            label = { Text(text = stringResource(id = R.string.age)) },  // "생년월일" 레이블
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.dateicon),
-                    contentDescription = "Birthdate Icon"
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors( unfocusedContainerColor = MaterialTheme.colorScheme.background )
-        )
+        // 생년월일 입력 필드 (DatePicker)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true }
+        ) {
+            TextField(
+                value = user_birthdate,
+                onValueChange = { user_birthdate = it },
+                label = { Text(text = "생년월일") },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.dateicon),
+                        contentDescription = "Birthdate Icon"
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                    disabledTextColor = MaterialTheme.colorScheme.primary,
+                    disabledBorderColor=MaterialTheme.colorScheme.primary,
+                    disabledLeadingIconColor = MaterialTheme.colorScheme.primary,
+                    disabledLabelColor = MaterialTheme.colorScheme.primary,
+                ),
+                enabled = false
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
 
-        // 성별 입력 필드 (아이콘 포함)
-        TextField(
-            value = user_gender,
-            onValueChange = { user_gender = it },
-            label = { Text(text = stringResource(id = R.string.gender)) },  // "성별" 레이블
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.gendericon),
-                    contentDescription = "Gender Icon"
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors( unfocusedContainerColor = MaterialTheme.colorScheme.background )
-        )
+        // 성별 선택 드롭다운 메뉴
+        Box(modifier = Modifier.fillMaxWidth()) {
+            TextField(
+                value = user_gender,
+                onValueChange = { },
+                label = { Text(text = "성별") },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.gendericon),
+                        contentDescription = "Gender Icon"
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expandedGender = true },
+                readOnly = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                    disabledTextColor = MaterialTheme.colorScheme.primary,
+                    disabledBorderColor=MaterialTheme.colorScheme.primary,
+                    disabledLeadingIconColor = MaterialTheme.colorScheme.primary,
+                    disabledLabelColor = MaterialTheme.colorScheme.primary,
+                ),
+                enabled = false
+            )
+
+            DropdownMenu(
+                expanded = expandedGender,
+                onDismissRequest = { expandedGender = false },
+                modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background) // 배경색 흰색으로 설정
+
+            ) {
+
+                DropdownMenuItem(onClick = {
+                    user_gender = TextFieldValue("여") // TextFieldValue로 감싸기
+                    expandedGender = false
+                }, text = { Text("여") })
+                DropdownMenuItem(onClick = {
+                    user_gender = TextFieldValue("남") // TextFieldValue로 감싸기
+                    expandedGender = false
+                }, text = { Text("남") })
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
 
@@ -159,7 +216,7 @@ fun ProfileEditScreen(navController: NavController) {
         TextField(
             value = user_disease,
             onValueChange = { user_disease = it },
-            label = { Text(text = stringResource(id = R.string.disease)) },  // "질환" 레이블
+            label = { Text(text = "기저질환") },  // "질환" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.bandageicon),
@@ -176,7 +233,7 @@ fun ProfileEditScreen(navController: NavController) {
         TextField(
             value = hospital,
             onValueChange = { hospital = it },
-            label = { Text(text = stringResource(id = R.string.hospital)) },  // "병원" 레이블
+            label = { Text(text = "병원") },  // "병원" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.hospitalicon),
@@ -193,7 +250,7 @@ fun ProfileEditScreen(navController: NavController) {
         TextField(
             value = pill,
             onValueChange = { pill = it },
-            label = { Text(text = stringResource(id = R.string.pill)) },  // "복용 약" 레이블
+            label = { Text(text = "복용중인 약") },  // "복용 약" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.pillicon),
@@ -210,11 +267,27 @@ fun ProfileEditScreen(navController: NavController) {
         TextField(
             value = user_protector,
             onValueChange = { user_protector = it },
-            label = { Text(text = stringResource(id = R.string.protector)) },  // "전화번호" 레이블
+            label = { Text(text = "비상 연락처") },  // "전화번호" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.phoneicon),
                     contentDescription = "Phone Icon"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors( unfocusedContainerColor = MaterialTheme.colorScheme.background )
+        )
+        Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
+
+        // 전화번호 입력 필드 (아이콘 포함)
+        TextField(
+            value = user_address,
+            onValueChange = { user_address = it },
+            label = { Text(text = "자택 주소" )},  // "자택 주소" 레이블
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.homeicon),
+                    contentDescription = "Address Icon"
                 )
             },
             modifier = Modifier.fillMaxWidth(),
@@ -231,7 +304,7 @@ fun ProfileEditScreen(navController: NavController) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = stringResource(id = R.string.save))
+            Text(text = "저장하기")
         }
         Spacer(modifier = Modifier.height(5.dp))  // 간격 추가
 
@@ -242,13 +315,13 @@ fun ProfileEditScreen(navController: NavController) {
 
         ){
             Text(
-                text = stringResource(id = R.string.profile_edit_screen_to_sign_up),
+                text = "로그아웃해도 정보를 기억할래요!",
                 fontSize = 16.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
             Text(
-                text = stringResource(id = R.string.sign_up),
+                text = "회원가입",
                 fontSize = 16.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,
@@ -261,6 +334,55 @@ fun ProfileEditScreen(navController: NavController) {
             )
         }
         // 모달(다이얼로그) 표시
+        if (showDatePicker) {
+            AlertDialog(
+                onDismissRequest = { showDatePicker = false },
+                title = {
+                    Text(
+                        text = "날짜 선택",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 20.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                },
+                text = {
+                    AndroidView(
+                        modifier = Modifier.fillMaxWidth(),
+                        factory = { context ->
+                            DatePicker(context).apply {
+                                init(
+                                    calendar.get(Calendar.YEAR),
+                                    calendar.get(Calendar.MONTH),
+                                    calendar.get(Calendar.DAY_OF_MONTH)
+                                ) { _, year, month, dayOfMonth ->
+                                    calendar.set(year, month, dayOfMonth)
+                                }
+                            }
+                        }
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val formattedDate = SimpleDateFormat("yyyy.MM.dd", Locale.KOREA).format(calendar.time)
+                            user_birthdate = TextFieldValue(formattedDate)
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text(text = "확인", color = MaterialTheme.colorScheme.primary) // 보라색 확인 버튼
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDatePicker = false }
+                    ) {
+                        Text(text = "취소", color =  MaterialTheme.colorScheme.primary) // 회색 취소 버튼
+                    }
+                },
+                containerColor =  MaterialTheme.colorScheme.background // 다이얼로그 배경 흰색
+            )
+        }
 
         if (showModal) {
 
@@ -304,6 +426,7 @@ fun ProfileEditScreen(navController: NavController) {
                                 if (hospital.text.isNotEmpty()) {Text(text = "자주 가는 병원: ${hospital.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background,)}
                                 if (pill.text.isNotEmpty()) {Text(text = "복용 약: ${pill.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)}
                                 if (user_protector.text.isNotEmpty()) {Text(text = "비상 연락처: ${user_protector.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)}
+                                if (user_address.text.isNotEmpty()) {Text(text = "자택 주소: ${user_address.text}", fontSize = 14.sp, color = MaterialTheme.colorScheme.background)}
                             }
                         }
                     }
@@ -320,8 +443,13 @@ fun ProfileEditScreen(navController: NavController) {
                                     disease = user_disease.text,
                                     hospital = hospital.text,
                                     pill = pill.text,
-                                    protector = user_protector.text
+                                    protector = user_protector.text,
+                                    address = user_address.text
                                 )
+                            }
+                            // Twilio로 문자 발송하는 코루틴
+                            CoroutineScope(Dispatchers.IO).launch {
+                                TwilioUtils.sendSmsWithRetrofit("+8201099135931", "+17035968457", "테스트용", BuildConfig.TWILIO_ACCOUNT_SID, BuildConfig.TWILIO_AUTH_TOKEN)
                             }
                         }
                     ) {

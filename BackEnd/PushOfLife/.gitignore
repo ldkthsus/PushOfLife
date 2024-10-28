@@ -24,6 +24,9 @@ bin/
 *.iws
 *.iml
 *.ipr
+
+/FrontEnd/mobile/.idea/
+
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/

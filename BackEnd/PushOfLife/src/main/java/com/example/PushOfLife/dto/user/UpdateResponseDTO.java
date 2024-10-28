@@ -19,6 +19,9 @@ public class UpdateResponseDTO {
     @JsonProperty(value = "user_gender", required = false)
     private String userGender;
 
+    @JsonProperty(value = "user_birthday", required = false)
+    private String userBirthday;
+
     @JsonProperty(value = "user_disease", required = false)
     private String userDisease;
 
@@ -31,7 +34,9 @@ public class UpdateResponseDTO {
     public void fromEntity(UserEntity user) {
         this.userName = user.getUserName();
         this.userGender = user.getUserGender();
+        this.userBirthday = user.getUserBirthday();
         this.userDisease = user.getUserDisease();
+        this.userPhone = user.getUserPhone();
         this.userProtector = user.getUserProtector();
     }
 }

@@ -16,10 +16,10 @@ import java.sql.Timestamp;
 public class UpdateRequestDTO {
 
     @JsonProperty(value = "password1", required = false)
-    private String password1;
+    private String userPassword1;
 
     @JsonProperty(value = "password2", required = false)
-    private String password2;
+    private String userPassword2;
 
     @JsonProperty(value = "user_name", required = false)
     private String userName;

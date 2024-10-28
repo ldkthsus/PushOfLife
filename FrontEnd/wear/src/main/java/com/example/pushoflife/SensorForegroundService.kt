@@ -35,6 +35,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     private var linearAccelerationSensor: Sensor? = null
     var gravityValues: FloatArray? = null
     private var totalAccelation: Float = 0.0f
+    private var pressure: Sensor? = null
 
     // 가속도계 데이터를 전달하는 콜백
     var linearAccelerationSensorDataCallback: ((FloatArray)->Unit)? = null
@@ -62,6 +63,7 @@ class SensorForegroundService : Service(), SensorEventListener {
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
         linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
 
         // 센서 리스너 등록
         gyroscope?.also {
@@ -74,6 +76,9 @@ class SensorForegroundService : Service(), SensorEventListener {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
         linearAccelerationSensor?.also {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+        pressure?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
@@ -146,6 +151,10 @@ class SensorForegroundService : Service(), SensorEventListener {
                     Log.d("심정지 감지","Heartrate : $heartRate 심정지 가능성")
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
+            }
+            Sensor.TYPE_PRESSURE -> {
+                val millibarsOfPressure = event.values[0]
+                    Log.d("고도","고도 : $millibarsOfPressure" )
             }
         }
     }

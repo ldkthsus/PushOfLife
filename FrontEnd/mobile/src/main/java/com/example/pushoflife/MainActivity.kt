@@ -29,6 +29,19 @@ import com.example.pushoflife.ui.theme.PushOfLifeTheme
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
+import android.os.Build
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
+import android.Manifest
+import com.google.firebase.messaging.FirebaseMessaging
+import android.util.Log
+import com.google.android.gms.tasks.Task
+
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,7 +55,27 @@ import androidx.compose.runtime.setValue
 import com.example.pushoflife.ui.aedLocation.AedLocationScreen
 import com.example.pushoflife.ui.user.LoginScreen
 import com.example.pushoflife.ui.user.SignUpScreen
+import android.content.Context
+import android.util.Base64
+//import android.util.Log
+import com.kakao.vectormap.KakaoMapSdk
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
+import kotlin.contracts.contract
 
+fun getKeyHash(context: Context): String? {
+    try {
+        val info = context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_SIGNATURES)
+        for (signature in info.signatures) {
+            val md = MessageDigest.getInstance("SHA")
+            md.update(signature.toByteArray())
+            return Base64.encodeToString(md.digest(), Base64.NO_WRAP)
+        }
+    } catch (e: Exception) {
+        Log.e("KeyHash", "Unable to get KeyHash.", e)
+    }
+    return null
+}
 // 폰트 정의
 val PoppinsExtraLight = FontFamily(
     Font(R.font.poppins_extralight, FontWeight.ExtraLight)
@@ -55,9 +88,61 @@ val PretendardRegular = FontFamily(
 )
 
 class MainActivity : ComponentActivity() {
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    // Toast.makeText(this, "Permission already granted", Toast.LENGTH_SHORT)
+                }
+
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // Show an educational UI and request permission again
+                    Toast.makeText(this, "Notification permission is required for notifications", Toast.LENGTH_LONG).show()
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+
+                else -> {
+                    // Directly request permission
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        askNotificationPermission()
+
+        FirebaseMessaging.getInstance().token
+            .addOnCompleteListener { task: Task<String> ->
+                if (!task.isSuccessful) {
+                    Log.w("MainActivity", "Fetching FCM registration token failed", task.exception)
+                    return@addOnCompleteListener
+                }
+
+                // Get new FCM registration token
+                val token = task.result
+                Log.d("MainActivity", "FCM Registration Token: $token")
+
+        }
+        firebaseAnalytics = Firebase.analytics
+
         enableEdgeToEdge()
+
         setContent {
             PushOfLifeTheme {
                 val navController = rememberNavController() // Navigation Controller 생성
@@ -72,6 +157,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        val keyHash = getKeyHash(this)
+        Log.d("KeyHash", keyHash ?: "KeyHash not found")
+        // 로그 출력으로 값 확인
+        Log.d("KakaoMapKey", "API Key: ${BuildConfig.KAKAO_MAP_KEY}")
+        // 카카오 지도 SDK 초기화
+        KakaoMapSdk.init(this, BuildConfig.KAKAO_MAP_KEY)
     }
 }
 

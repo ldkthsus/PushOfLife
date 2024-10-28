@@ -1,3 +1,4 @@
+
 package com.example.pushoflife
 
 import android.app.Notification
@@ -16,45 +17,77 @@ import android.os.PowerManager
 import android.util.Log
 import kotlinx.coroutines.*
 import com.example.pushoflife.sensor.FallSensor
+import com.example.pushoflife.sensor.PushSensor
+import com.example.pushoflife.network.MessageSender
 import com.example.pushoflife.SecondActivity
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.wearable.Node
+import com.google.android.gms.wearable.NodeClient
+import com.google.android.gms.wearable.Wearable
+
 class SensorForegroundService : Service(), SensorEventListener {
 
+    private lateinit var messageSender: MessageSender // lateinit으로 변경하여 지연 초기화
     private val serviceScope = CoroutineScope(Dispatchers.Default + Job())
 
     private lateinit var sensorManager: SensorManager
     private val fallSensor = FallSensor()
+    private val pushSensor = PushSensor()
     private var possibleFall = false
-    private var accelerometer: Sensor? = null
+    private var possibleHeart = false
     private var gyroscope: Sensor? = null
     private var heartRateSensor: Sensor? = null
+    private var gravitySensor: Sensor? = null
+    private var linearAccelerationSensor: Sensor? = null
+    var gravityValues: FloatArray? = null
+    private var totalAccelation: Float = 0.0f
+
+    // 가속도계 데이터를 전달하는 콜백
+    var linearAccelerationSensorDataCallback: ((FloatArray)->Unit)? = null
+    // 자이로스코프 데이터를 전달하는 콜백
+    var gyroscopeDataCallback: ((FloatArray)->Unit)? = null
+    private var nodeId: String? = null
+
 
     override fun onCreate() {
         super.onCreate()
 
+        // 이제 onCreate 내에서 초기화합니다.
+        messageSender = MessageSender(applicationContext)
+        // nodeId 가져오기
+        getConnectedNodeId(applicationContext) { id ->
+            nodeId = id
+            Log.d("NodeID", "Connected node ID: $nodeId")
+        }
         // Foreground 알림 생성
         createNotificationChannel()
         val notification: Notification = Notification.Builder(this, "sensor_channel")
             .setContentTitle("Sensor Service")
             .setContentText("백그라운드에서 센서 데이터를 수집 중")
-            .setSmallIcon(android.R.drawable.ic_menu_info_details)
+            .setSmallIcon(com.example.pushoflife.R.mipmap.ic_launcher_round)
             .build()
 
         startForeground(1, notification)
 
         // SensorManager 초기화
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        // 센서 등록 (TYPE_GRAVITY와 TYPE_LINEAR_ACCELERATION 추가)
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+        gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
+        linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
 
         // 센서 리스너 등록
-        accelerometer?.also {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
-        }
         gyroscope?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
         heartRateSensor?.also {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+        gravitySensor?.also {
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+        }
+        linearAccelerationSensor?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
@@ -69,12 +102,31 @@ class SensorForegroundService : Service(), SensorEventListener {
     // 센서 이벤트 리스너
     override fun onSensorChanged(event: SensorEvent) {
         when (event.sensor.type) {
-            Sensor.TYPE_ACCELEROMETER -> {
+            Sensor.TYPE_GRAVITY -> {
+                val x = String.format("%.2f", event.values[0])
+                val y = String.format("%.2f", event.values[1])
+                val z = String.format("%.2f", event.values[2])
+                //Log.d("SensorData", "gravity: x=$x, y=$y, z=$z")
+                gravityValues = event.values.clone()
+            }
+            Sensor.TYPE_LINEAR_ACCELERATION -> {
                 val x = event.values[0]
                 val y = event.values[1]
                 val z = event.values[2]
+                //Log.d("acceleration", "acceleration : x=$x, y=$y, z=$z")
+                val linearAccelerationSensorData = event.values.clone()
+
+                // 가속도계 데이터를 콜백으로 전달
+                linearAccelerationSensorDataCallback?.invoke(linearAccelerationSensorData)
+                // PushSensor로 가속도계 데이터 전달
+                pushSensor.processlinearAccelerationSensorData(linearAccelerationSensorData)
+
+                gravityValues?.let { gravity ->
+                    totalAccelation = fallSensor.calculateAcceleration(event.values, gravity)
+                    //Log.d("밑 가속도", "total gravity : $totalAccelation")
+                }
                 //Log.d("SensorData", "Accelerometer: x=$x, y=$y, z=$z")
-                if (fallSensor.checkFall(x, y, z)) {
+                if (!possibleFall && fallSensor.checkFall(totalAccelation)) {
                     Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
                     // 낙상 감지 후 앱 실행 및 화면 켜기
@@ -94,10 +146,28 @@ class SensorForegroundService : Service(), SensorEventListener {
                 val y = String.format("%.2f", event.values[1])
                 val z = String.format("%.2f", event.values[2])
                 //Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
+                val gyroscopeData = event.values.clone()
+
+                // 자이로스코프 데이터를 콜백으로 전달
+                gyroscopeDataCallback?.invoke(gyroscopeData)
+                // PushSensor로 자이로스코프 데이터 전달
+//                pushSensor.processGyroscopeData(gyroscopeData)
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])
-                Log.d("SensorData", "Heart Rate: $heartRate bpm")
+                Log.d("SensorData", "Heartrate: $heartRate")
+                if(possibleFall && fallSensor.checkHeart(event.values[0])){
+                    possibleHeart = true
+                    nodeId?.let {
+                        messageSender.sendEmergency(
+                            nodeId = it,
+                            path = "/emergency_path",
+                            message = "긴급 상황 발생"
+                        )
+                    }
+                    Log.d("심정지 감지","Heartrate : $heartRate 심정지 가능성")
+                }
+                //Log.d("SensorData", "Heart Rate: $heartRate bpm")
             }
         }
     }
@@ -127,13 +197,17 @@ class SensorForegroundService : Service(), SensorEventListener {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                "sensor_channel",
-                "Sensor Service Channel",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+            val channelId = "notification_channel_id"
+            val channelName = "Watch Notification Channel"
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel(channelId, channelName, importance)
+
+            // NotificationManager에 채널을 등록
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+
+            // 채널 생성 확인용 로그
+            Log.d("NotificationChannel", "Notification channel created with ID: $channelId")
         }
     }
 
@@ -154,4 +228,18 @@ class SensorForegroundService : Service(), SensorEventListener {
         )
         wakeLock.acquire(10 * 60 * 1000L /*10분 동안 화면을 유지*/)
     }
+    fun getConnectedNodeId(context: Context, onNodeIdReceived: (String?) -> Unit) {
+        val nodeClient: NodeClient = Wearable.getNodeClient(context)
+        val nodeListTask: Task<List<Node>> = nodeClient.connectedNodes
+
+        nodeListTask.addOnSuccessListener { nodes ->
+            // 첫 번째 노드의 ID를 사용하거나, 연결된 모든 노드의 목록을 확인할 수 있습니다.
+            val nodeId = nodes.firstOrNull()?.id
+            onNodeIdReceived(nodeId) // nodeId를 콜백으로 전달
+        }.addOnFailureListener {
+            Log.e("NodeID", "Failed to get connected node ID", it)
+            onNodeIdReceived(null)
+        }
+    }
 }
+

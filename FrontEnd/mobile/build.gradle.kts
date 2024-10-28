@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.google.gms.google-services")
+
 }
 
 android {
@@ -18,6 +20,19 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val kakaoMapKey = project.findProperty("KAKAO_MAP_KEY") as String? ?: ""
+        buildConfigField("String", "KAKAO_MAP_KEY", "\"$kakaoMapKey\"")
+        manifestPlaceholders["KAKAO_MAP_KEY"] = kakaoMapKey
+        ndk {
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("armeabi-v7a")
+        }
+        val twilioAccountSID = project.findProperty("TWILIO_ACCOUNT_SID") as String? ?: ""
+        val twilioAuthToken = project.findProperty("TWILIO_AUTH_TOKEN") as String? ?: ""
+        buildConfigField ("String", "TWILIO_ACCOUNT_SID", "\"${twilioAccountSID}\"")
+        buildConfigField ("String", "TWILIO_AUTH_TOKEN", "\"${twilioAuthToken}\"")
+
     }
 
     buildTypes {
@@ -40,6 +55,7 @@ android {
     // Jetpack Compose 활성화
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -47,11 +63,18 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
+
         }
     }
+
 }
 
 dependencies {
+    implementation(platform(libs.firebase.bom)) // BOM을 사용해 의존성 버전 관리
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.play.services.wearable)
     implementation(libs.material)
@@ -81,5 +104,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
-
+    implementation(libs.kakao.maps)
+    implementation(libs.twilio.sdk)
 }

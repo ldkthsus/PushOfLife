@@ -55,17 +55,25 @@ public class UserService {
     }
 
     public UpdateResponseDTO updateUserInfo(UserEntity user, UpdateRequestDTO updateDTO){
-       Boolean result = checkPassword(updateDTO.getUserPassword1(), updateDTO.getUserPassword2());
-       if (result){
-           user.updateInfo(updateDTO, bCryptPasswordEncoder.encode(updateDTO.getUserPassword1()));
-           userRepository.save(user);
-           UpdateResponseDTO updateResponseDTO = new UpdateResponseDTO();
-           updateResponseDTO.fromEntity(user);
-           return updateResponseDTO;
-       }
-       else {
-           throw new RuntimeException("User not found");
-       }
+        // 우선 비밀번호가 null인지 확인합니다.
+        if (updateDTO.getUserPassword1() == null && updateDTO.getUserPassword2() == null) {
+            user.updateInfo(updateDTO, null); // 비밀번호 변경 없이 다른 정보만 업데이트
+            userRepository.save(user);
+        } else {
+            // 비밀번호가 null이 아닌 경우에만 일치하는지 확인
+            Boolean result = checkPassword(updateDTO.getUserPassword1(), updateDTO.getUserPassword2());
+            if (result) {
+                String password = bCryptPasswordEncoder.encode(updateDTO.getUserPassword1());
+                user.updateInfo(updateDTO, password); // 인코딩된 비밀번호로 업데이트
+                userRepository.save(user);
+            } else {
+                throw new RuntimeException("password incorrect");
+            }
+        }
+
+        UpdateResponseDTO updateResponseDTO = new UpdateResponseDTO();
+        updateResponseDTO.fromEntity(user);
+        return updateResponseDTO;
     }
 
     public List<UserListDTO> getUserList(){

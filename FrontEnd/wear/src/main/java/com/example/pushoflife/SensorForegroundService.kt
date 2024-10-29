@@ -1,6 +1,7 @@
 
 package com.example.pushoflife
 
+import android.os.Binder
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -24,12 +25,11 @@ import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.Wearable
-
 class SensorForegroundService : Service(), SensorEventListener {
 
     private lateinit var messageSender: MessageSender // lateinit으로 변경하여 지연 초기화
     private val serviceScope = CoroutineScope(Dispatchers.Default + Job())
-
+    private val binder = SensorBinder()
     private lateinit var sensorManager: SensorManager
     private val fallSensor = FallSensor()
     private val pushSensor = PushSensor()
@@ -204,7 +204,9 @@ class SensorForegroundService : Service(), SensorEventListener {
         serviceScope.cancel()  // 백그라운드 작업 취소
         stopForeground(true)
     }
-
+    inner class SensorBinder : Binder() {
+        fun getService(): SensorForegroundService = this@SensorForegroundService
+    }
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
@@ -254,6 +256,10 @@ class SensorForegroundService : Service(), SensorEventListener {
             Log.e("NodeID", "Failed to get connected node ID", it)
             onNodeIdReceived(null)
         }
+    }
+
+    fun getTotalAcceleration(): Float {
+        return totalAccelation
     }
 }
 

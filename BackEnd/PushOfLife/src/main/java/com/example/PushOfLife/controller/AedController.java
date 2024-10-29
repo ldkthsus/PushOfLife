@@ -46,11 +46,7 @@ public class AedController {
     }
 
     @GetMapping("/within-bounds")
-    public ResponseEntity<?> getAedWithinBounds(HttpServletRequest request, @RequestBody AedRequestDTO requestDTO) {
-        UserEntity user = userService.findByRequest(request);
-        if (user == null){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-        }
+    public ResponseEntity<?> getAedWithinBounds(@RequestBody AedRequestDTO requestDTO) {
         List<AedResponseDTO> responseDTO= aedLocationService.getAedLocation(requestDTO);
         if (responseDTO == null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("AED not found");

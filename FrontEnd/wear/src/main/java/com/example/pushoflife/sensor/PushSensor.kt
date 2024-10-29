@@ -1,6 +1,7 @@
 package com.example.pushoflife.sensor
 
 import android.util.Log
+import com.example.pushoflife.sensor.IntegralAcceleration
 
 class PushSensor {
 

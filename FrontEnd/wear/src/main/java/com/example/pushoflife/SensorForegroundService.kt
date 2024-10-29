@@ -40,7 +40,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     private var gravitySensor: Sensor? = null
     private var linearAccelerationSensor: Sensor? = null
     var gravityValues: FloatArray? = null
-    private var totalAccelation: Float = 0.0f
+    private var totalAcceleration: Float = 0.0f
     private var pressure: Sensor? = null
 
     // 가속도계 데이터를 전달하는 콜백
@@ -130,12 +130,12 @@ class SensorForegroundService : Service(), SensorEventListener {
 //                // PushSensor로 가속도계 데이터 전달
 
                 gravityValues?.let { gravity ->
-                    totalAccelation = fallSensor.calculateAcceleration(event.values, gravity)
-                    //Log.d("밑 가속도", "total gravity : $totalAccelation"
+                    totalAcceleration = fallSensor.calculateAcceleration(event.values, gravity)
+                    //Log.d("밑 가속도", "total gravity : $totalAcceleration"
                 }
-                Log.d("SensorData", "Accelerometer: $totalAccelation")
-                pushSensor.integrateAcceleration(totalAccelation)
-                if (!possibleFall && fallSensor.checkFall(totalAccelation)) {
+                Log.d("SensorData", "Accelerometer: $totalAcceleration")
+                pushSensor.integrateAcceleration(totalAcceleration)
+                if (!possibleFall && fallSensor.checkFall(totalAcceleration)) {
                     Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
                     // 낙상 감지 후 앱 실행 및 화면 켜기
@@ -256,7 +256,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     }
 
     fun getTotalAcceleration(): Float {
-        return totalAccelation
+        return totalAcceleration
     }
 }
 

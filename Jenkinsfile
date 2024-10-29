@@ -3,11 +3,6 @@ sh pipeline {
 
     stages {
         stage('Build Backend') {
-            steps {
-                script {
-                    echo "aaaaaa"
-                }
-            }
         }
     }
 

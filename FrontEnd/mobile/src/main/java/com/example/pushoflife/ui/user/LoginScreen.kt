@@ -1,5 +1,6 @@
 package com.example.pushoflife.ui.user
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
@@ -28,11 +30,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pushoflife.data.datastore.TokenPreferences
+import com.example.pushoflife.network.LoginRequest
+import com.example.pushoflife.network.RetrofitClient.apiService
+import com.example.pushoflife.network.SignUpRequest
+import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginScreen(navController: NavController) {
     var user_phone by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
     var user_password by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호 상태
+    val context = LocalContext.current
+    val tokenPreferences = TokenPreferences(context)
     val PretendardBold = FontFamily(
         Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
@@ -63,7 +72,7 @@ fun LoginScreen(navController: NavController) {
 
             // 타이틀 텍스트
             Text(
-                text = stringResource(id = R.string.login),
+                text = "로그인",
                 fontSize = 24.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,
@@ -79,8 +88,6 @@ fun LoginScreen(navController: NavController) {
             fontSize = 28.sp,  // 글자 크기
             textAlign = TextAlign.Left,
             fontFamily = PretendardBold,
-
-
 
             )
         Text(
@@ -98,7 +105,7 @@ fun LoginScreen(navController: NavController) {
         TextField(
             value = user_phone,
             onValueChange = { user_phone = it },
-            label = { Text(text = stringResource(id = R.string.phone)) },  // "전화번호" 레이블
+            label = { Text(text = "전화번호") },  // "전화번호" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.phoneicon),
@@ -114,11 +121,11 @@ fun LoginScreen(navController: NavController) {
         TextField(
             value = user_password,
             onValueChange = { user_password = it },
-            label = { Text(text = stringResource(id = R.string.password)) },  // "비밀번호" 레이블
+            label = { Text(text = "비밀번호") },  // "비밀번호" 레이블
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.passwordicon),
-                    contentDescription = "Phone Icon"
+                    contentDescription = "Password Icon"
                 )
             },
             visualTransformation =  PasswordVisualTransformation(),
@@ -131,12 +138,35 @@ fun LoginScreen(navController: NavController) {
         // 저장 버튼
         Button(
             onClick = {
+                CoroutineScope(Dispatchers.IO).launch {
+                    val loginRequest = LoginRequest(
+                        user_password = user_password.text,
+                        user_phone = user_phone.text,
+                    )
 
+                    // API 요청 보내기
+                    val response = apiService.loginUser(loginRequest).execute()
+                    if (response.isSuccessful) {
+                        // Authorization 헤더에서 토큰 추출
+                        val authToken = response.headers()["Authorization"]
+
+                        // authToken이 null이 아닌 경우 DataStore에 저장
+                        authToken?.let { token ->
+                            tokenPreferences.saveAuthToken(token)
+                        }
+                        withContext(Dispatchers.Main) {
+                            navController.navigate("main_screen") // navigate 호출을 메인 스레드에서 실행
+                        }
+                    } else {
+                        // 로그인 실패 처리
+                        Log.d("Login failed: ", response.message())
+                    }
+                }
 
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = stringResource(id = R.string.login))
+            Text(text = "로그인")
         }
         Spacer(modifier = Modifier.height(5.dp))  // 간격 추가
         Row(
@@ -146,13 +176,13 @@ fun LoginScreen(navController: NavController) {
 
         ){
             Text(
-                text = stringResource(id = R.string.login_screen_to_sign_up),
+                text = "아직 회원이 아니신가요?",
                 fontSize = 16.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
             Text(
-                text = stringResource(id = R.string.sign_up),
+                text = "회원가입",
                 fontSize = 16.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
                 fontFamily = PretendardBold,

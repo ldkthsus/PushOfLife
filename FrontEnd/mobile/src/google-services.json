@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "579329343166",
+    "project_id": "pushoflife-4b73b",
+    "storage_bucket": "pushoflife-4b73b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:579329343166:android:433fa17a0aab3acdc7e8ef",
+        "android_client_info": {
+          "package_name": "com.example.pushoflife"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDw5jUfFaNSBN3bgPA55QxOm4SvsS75orw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

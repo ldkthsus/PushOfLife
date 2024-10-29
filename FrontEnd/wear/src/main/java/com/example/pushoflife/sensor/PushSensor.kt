@@ -8,11 +8,6 @@ class PushSensor {
     private var previousTime: Long = 0
     private var previousVelocity: Float = 0.0f
 
-    // 빈도 측정을 위한 변수
-    private var isIncreasing = false // 가속도 증감 여부 감지
-    private var cycleCount = 0
-    private var lastPeakTime: Long = 0L
-
 
     // 가속도를 시간에 대해 적분하여 변위를 계산하는 함수 (속도를 적분하고 변위 계산)
     fun integrateAcceleration(totalAcceleration: Float): Float {
@@ -36,10 +31,6 @@ class PushSensor {
         // 속도 갱신
         previousVelocity = velocity
 
-        // 새로 추가함 압박 빈도 측정 로직
-        // integrateAcceleration 함수가 주기적으로 가속도 데이터를 받아 주기를 감지하고, 빈도에 대한 피드백을 제공하기 위해 필요
-        trackCprCycle(totalAcceleration, currentTime)
-
         return Math.abs(displacement) // 변위(압박 깊이)를 반환
     }
 
@@ -47,37 +38,5 @@ class PushSensor {
     private fun isCprValid(pushDepth: Float): Boolean {
         val minValidDepth = 5.0f
         return pushDepth >= minValidDepth
-    }
-
-    // CPR 압박 빈도 측정 함수
-    private fun trackCprCycle(totalAcceleration: Float, currentTime: Long) {
-        // 가속도가 증가하는지, 감소하는지에 따라 시작/끝점 감지
-        if (totalAcceleration > previousVelocity) {
-            if (!isIncreasing) {
-                isIncreasing = true
-                // 새로운 사이클의 시작점을 감지
-                cycleCount++
-                Log.d("CPR_Cycle", "Cycle $cycleCount detected at ${currentTime - lastPeakTime} ms interval")
-
-                // 5초마다 cycleCount 평가 및 피드백 제공
-                if (currentTime - lastPeakTime >= 5000) {
-                    frequencyFeedback(cycleCount) // 피드백 제공 함수 호출
-                    cycleCount = 0 // 카운트 리셋
-                    lastPeakTime = currentTime // 피드백 제공 시간 갱신
-                }
-            }
-        } else {
-            isIncreasing = false
-        }
-    }
-
-    // CPR 빈도에 따라 피드백 제공
-    private fun frequencyFeedback(cycleCount: Int) {
-        val cprFrequencyFeedback = when {
-            cycleCount >= 12 -> "빠름"
-            cycleCount in 10..11 -> "정상 속도"
-            else -> "느림"
-        }
-        Log.d("CPR_Feedback", "$cprFrequencyFeedback cpr")
     }
 }

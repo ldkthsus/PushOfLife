@@ -58,10 +58,12 @@ import com.example.pushoflife.ui.user.SignUpScreen
 import android.content.Context
 import android.util.Base64
 //import android.util.Log
-import com.kakao.vectormap.KakaoMapSdk
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import kotlin.contracts.contract
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 
 fun getKeyHash(context: Context): String? {
     try {
@@ -157,12 +159,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        val keyHash = getKeyHash(this)
-        Log.d("KeyHash", keyHash ?: "KeyHash not found")
-        // 로그 출력으로 값 확인
-        Log.d("KakaoMapKey", "API Key: ${BuildConfig.KAKAO_MAP_KEY}")
-        // 카카오 지도 SDK 초기화
-        KakaoMapSdk.init(this, BuildConfig.KAKAO_MAP_KEY)
     }
 }
 
@@ -170,6 +166,7 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     // 현재 카드 인덱스를 저장하는 상태
     var currentCardIndex by remember { mutableStateOf(1) }
+    val context = LocalContext.current
 
     // 3초마다 카드 인덱스를 변경하는 LaunchedEffect
     LaunchedEffect(key1 = currentCardIndex) {
@@ -252,13 +249,18 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
 
         Spacer(modifier = Modifier.height(10.dp))
 
+// AED 컴포넌트
         // AED 컴포넌트
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(110.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { navController.navigate("aed_location_screen") },
+                .clickable {
+                    // XML Activity로 이동
+                    val intent = Intent(context, AedLocationActivity::class.java)
+                    context.startActivity(intent)
+                }
         ) {
             Image(
                 painter = painterResource(id = R.drawable.aed_location),
@@ -266,17 +268,14 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-
             Text(
                 text = "AED 위치",
                 fontSize = 20.sp,
                 fontFamily = PretendardSemiBold,
                 letterSpacing = (-0.5).sp,
                 color = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier
-                    .padding(top = 15.dp, start = 15.dp)
+                modifier = Modifier.padding(top = 15.dp, start = 15.dp)
             )
-
         }
 
         Spacer(modifier = Modifier.height(10.dp))

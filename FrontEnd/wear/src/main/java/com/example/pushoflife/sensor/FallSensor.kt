@@ -17,7 +17,7 @@ class FallSensor {
         return dotProduct / gravityMagnitude
     }
 
-    fun checkHeart(heartRate: Float): Boolean{
-        return heartRate < 30
+    fun checkHeart(heartRate: Float): Boolean {
+        return heartRate > 0 && heartRate < 30
     }
 }

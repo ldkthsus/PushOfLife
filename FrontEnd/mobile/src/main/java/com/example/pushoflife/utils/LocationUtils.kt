@@ -10,6 +10,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import com.google.android.gms.location.*
 import java.util.Locale
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import android.util.Log
+import android.widget.Toast
+
 
 @Composable
 fun GetLocation(context: Context): String {
@@ -20,12 +25,12 @@ fun GetLocation(context: Context): String {
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             if (isGranted) {
-                requestLocation(fusedLocationClient) { location ->
-                    // Geocoder를 한국어 설정으로 초기화
-                    val geocoder = Geocoder(context, Locale.KOREA)  // Locale을 KOREA로 설정
+                // 권한이 부여된 경우에만 위치 요청을 수행
+                requestLocation(fusedLocationClient, context) { location ->
+                    val geocoder = Geocoder(context, Locale.KOREA)
                     val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                     if (addresses != null && addresses.isNotEmpty()) {
-                        address = addresses[0].getAddressLine(0) // 도로명 주소
+                        address = addresses[0].getAddressLine(0)
                     }
                 }
             } else {
@@ -34,7 +39,6 @@ fun GetLocation(context: Context): String {
         }
     )
 
-    // 권한 요청 실행
     LaunchedEffect(Unit) {
         locationPermissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
@@ -42,26 +46,61 @@ fun GetLocation(context: Context): String {
     return address
 }
 
-fun requestLocation(fusedLocationClient: FusedLocationProviderClient, onLocationReceived: (Location) -> Unit) {
-    val locationRequest = LocationRequest.Builder(
-        Priority.PRIORITY_HIGH_ACCURACY,
-        1000L // 위치 업데이트 간격
-    ).build()
+// 새로운 함수: 현재 위치를 Location 객체로 반환
+@Composable
+fun GetCurrentLocationForMap(context: Context, onLocationReceived: (Location) -> Unit) {
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            super.onLocationResult(locationResult)
-            val location = locationResult.lastLocation
-            if (location != null) {
-                onLocationReceived(location)
-                fusedLocationClient.removeLocationUpdates(this) // 위치 정보를 받으면 콜백 종료
+    val locationPermissionRequest = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                requestLocation(fusedLocationClient, context, onLocationReceived)
+            } else {
+                Toast.makeText(context, "위치 권한이 필요합니다.", Toast.LENGTH_LONG).show()
             }
         }
-    }
-
-    fusedLocationClient.requestLocationUpdates(
-        locationRequest,
-        locationCallback,
-        Looper.getMainLooper()
     )
+
+    LaunchedEffect(Unit) {
+        locationPermissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
 }
+
+
+fun requestLocation(
+    fusedLocationClient: FusedLocationProviderClient,
+    context: Context,
+    onLocationReceived: (Location) -> Unit
+) {
+    // 권한이 있는지 확인
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+        == PackageManager.PERMISSION_GRANTED
+    ) {
+        val locationRequest = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            1000L
+        ).build()
+
+        val locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                super.onLocationResult(locationResult)
+                val location = locationResult.lastLocation
+                if (location != null) {
+                    onLocationReceived(location)
+                    fusedLocationClient.removeLocationUpdates(this)
+                }
+            }
+        }
+
+        fusedLocationClient.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            Looper.getMainLooper()
+        )
+    } else {
+        // 권한이 없는 경우 처리
+        throw SecurityException("위치 권한이 필요합니다.")
+    }
+}
+

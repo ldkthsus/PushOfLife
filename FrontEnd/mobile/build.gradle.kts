@@ -21,9 +21,16 @@ android {
             useSupportLibrary = true
         }
 
-        val kakaoMapKey = project.findProperty("KAKAO_MAP_KEY") as String? ?: ""
-        buildConfigField("String", "KAKAO_MAP_KEY", "\"$kakaoMapKey\"")
-        manifestPlaceholders["KAKAO_MAP_KEY"] = kakaoMapKey
+        // Google Map API 키 설정 추가
+        val googleMapKey = project.findProperty("GOOGLE_MAP_KEY") as String? ?: ""
+        buildConfigField("String", "GOOGLE_MAP_KEY", "\"$googleMapKey\"")
+        manifestPlaceholders["GOOGLE_MAP_KEY"] = googleMapKey
+
+        // TMap API 키 설정 추가
+        val tMapKey = project.findProperty("T_MAP_KEY") as String? ?: ""
+        buildConfigField("String", "T_MAP_KEY", "\"$tMapKey\"")
+        manifestPlaceholders["T_MAP_KEY"] = tMapKey
+
         ndk {
             abiFilters.add("arm64-v8a")
             abiFilters.add("armeabi-v7a")
@@ -104,6 +111,9 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
-    implementation(libs.kakao.maps)
     implementation(libs.twilio.sdk)
+    implementation(libs.gms.maps)
+    implementation(libs.gms.location)
+    implementation(files("libs/tmap-sdk-1.4.aar"))
+    implementation(files("libs/vsm-tmap-sdk-v2-android-1.6.60.aar"))
 }

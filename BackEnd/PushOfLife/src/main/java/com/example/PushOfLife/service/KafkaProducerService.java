@@ -28,7 +28,7 @@ public class KafkaProducerService {
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             String messageJson = objectMapper.writeValueAsString(messageMap);
-            System.out.printf("Error message sent : %s%n",messageJson);
+            System.out.printf("message sent : %s%n",messageJson);
             this.kafkaTemplate.send(topic, messageJson);
 
         } catch (JsonProcessingException e) {

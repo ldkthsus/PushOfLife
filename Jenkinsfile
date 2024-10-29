@@ -22,7 +22,9 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    sh 'sonar-scanner -Dsonar.projectKey=POLmain -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_TOKEN}'
+                    def scannerHome = tool 'SonarQube Scanner';
+                    sh '${scannerHome}/bin/sonar-scanner --version'
+                    // sh 'sonar-scanner -Dsonar.projectKey=POLmain -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_TOKEN}'
                 }
             }
         }

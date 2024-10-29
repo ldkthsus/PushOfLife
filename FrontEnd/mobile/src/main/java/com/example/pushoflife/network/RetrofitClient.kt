@@ -14,6 +14,7 @@ object RetrofitClient {
 
     // ApiService 인터페이스 구현체 생성
     val apiService: ApiService = retrofit.create(ApiService::class.java)
+
 }
 
 // Twilio Retrofit 클라이언트 생성

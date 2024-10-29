@@ -52,4 +52,8 @@ interface ApiService {
     fun getUserInfo(
         @Header("Authorization") token: String
     ): Call<UserInfoResponse>
+
+    // AED 위치 조회
+    @POST("POL/aed/within-bounds")
+    fun sendMapBounds(@Body bounds: MapBoundsRequest): Call<List<MapBoundsResponse>>
 }

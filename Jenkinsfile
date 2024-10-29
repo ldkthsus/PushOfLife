@@ -11,6 +11,13 @@ pipeline {
                         sh 'chmod +x gradlew'
                         sh './gradlew build'
                     }
+
+                    dir('BackEnd/notification') {
+                        // Gradle 빌드
+                        sh 'chmod +x gradlew'
+                        sh './gradlew build'
+                    }
+                    
                 }
             }
         }

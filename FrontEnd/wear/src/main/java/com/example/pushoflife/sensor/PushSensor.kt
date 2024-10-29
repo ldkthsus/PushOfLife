@@ -22,12 +22,12 @@ class PushSensor {
         // 가속도 성분을 적분하여 변위를 계산
         val pushDepth = integrateAcceleration(a_n)
 
-        Log.d("PushSensor", "CPR 압박 깊이(내적 및 적분 계산): $pushDepth")
+        //Log.d("PushSensor", "CPR 압박 깊이(내적 및 적분 계산): $pushDepth")
 
         if (isCprValid(pushDepth)) {
-            Log.d("PushSensor", "유효한 CPR 압박입니다.")
+            //Log.d("PushSensor", "유효한 CPR 압박입니다.")
         } else {
-            Log.d("PushSensor", "CPR 압박이 충분하지 않습니다.")
+            //Log.d("PushSensor", "CPR 압박이 충분하지 않습니다.")
         }
     }
 

@@ -41,6 +41,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     private var linearAccelerationSensor: Sensor? = null
     var gravityValues: FloatArray? = null
     private var totalAccelation: Float = 0.0f
+    private var pressure: Sensor? = null
 
     // 가속도계 데이터를 전달하는 콜백
     var linearAccelerationSensorDataCallback: ((FloatArray)->Unit)? = null
@@ -76,6 +77,7 @@ class SensorForegroundService : Service(), SensorEventListener {
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
         linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
 
         // 센서 리스너 등록
         gyroscope?.also {
@@ -88,6 +90,9 @@ class SensorForegroundService : Service(), SensorEventListener {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
         linearAccelerationSensor?.also {
+            sensorManager.registerListener(this, it, 10000)
+        }
+        pressure?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
@@ -110,6 +115,11 @@ class SensorForegroundService : Service(), SensorEventListener {
                 gravityValues = event.values.clone()
             }
             Sensor.TYPE_LINEAR_ACCELERATION -> {
+//                val currentTime = System.currentTimeMillis()
+//
+//                if (currentTime - lastLinearAccelerationUpdateTime >= 50 ){
+//                    lastLinearAccelerationUpdateTime = currentTime
+//                }
                 val x = event.values[0]
                 val y = event.values[1]
                 val z = event.values[2]
@@ -125,7 +135,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                     totalAccelation = fallSensor.calculateAcceleration(event.values, gravity)
                     //Log.d("밑 가속도", "total gravity : $totalAccelation")
                 }
-                //Log.d("SensorData", "Accelerometer: x=$x, y=$y, z=$z")
+                Log.d("SensorData", "Accelerometer: $totalAccelation")
                 if (!possibleFall && fallSensor.checkFall(totalAccelation)) {
                     Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
@@ -155,7 +165,7 @@ class SensorForegroundService : Service(), SensorEventListener {
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])
-                Log.d("SensorData", "Heartrate: $heartRate")
+                //Log.d("SensorData", "Heartrate: $heartRate")
                 if(possibleFall && fallSensor.checkHeart(event.values[0])){
                     possibleHeart = true
                     nodeId?.let {
@@ -168,6 +178,10 @@ class SensorForegroundService : Service(), SensorEventListener {
                     Log.d("심정지 감지","Heartrate : $heartRate 심정지 가능성")
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
+            }
+            Sensor.TYPE_PRESSURE -> {
+                val millibarsOfPressure = event.values[0]
+                    //Log.d("고도","고도 : $millibarsOfPressure" )
             }
         }
     }
@@ -199,7 +213,7 @@ class SensorForegroundService : Service(), SensorEventListener {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelId = "notification_channel_id"
+            val channelId = "sensor_channel"//"notification_channel_id"
             val channelName = "Watch Notification Channel"
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val channel = NotificationChannel(channelId, channelName, importance)

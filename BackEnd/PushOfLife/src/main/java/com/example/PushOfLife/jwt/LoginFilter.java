@@ -33,7 +33,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             ObjectMapper objectMapper = new ObjectMapper();
             Map<String, String> credentials = objectMapper.readValue(request.getInputStream(), Map.class);
             String phone = credentials.get("user_phone");
-            String password = credentials.get("password");
+            String password = credentials.get("user_password");
 
             //검증을 위한 토큰 생성
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(phone, password, null);

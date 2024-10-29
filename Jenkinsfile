@@ -22,12 +22,14 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-
-            dir('./BackEnd/PushOfLife'){
-                withSonarQubeEnv() {
-                    sh "./gradlew sonar"
+            steps{
+                dir('./BackEnd/PushOfLife'){
+                    withSonarQubeEnv() {
+                        sh "./gradlew sonar"
+                    }
                 }
             }
+
 
 
 

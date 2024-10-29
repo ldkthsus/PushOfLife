@@ -4,6 +4,7 @@ pipeline {
     environment {
         SONARQUBE_SERVER = 'SonarQube'  // SonarQube 서버의 이름
         scannerHome = tool name: 'SonarQube Scanner'
+        SONAR_TOKEN = credentials('SONAR_TOKEN')
     }
 
     stages {
@@ -21,12 +22,15 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh '${scannerHome}/bin/sonar-scanner --version'
-                    sh '${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=POLmain -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_TOKEN}'
+            script{
+                dir('./BackEnd/PushOfLife'){
+                    withSonarQubeEnv() {
+                        sh "./gradlew sonar"
+                    }
                 }
             }
+
+
         }
 
         stage('Quality Gate') {

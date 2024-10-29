@@ -24,7 +24,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh '${scannerHome}/bin/sonar-scanner --version'
-                    // sh 'sonar-scanner -Dsonar.projectKey=POLmain -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_TOKEN}'
+                    sh '${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=POLmain -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_TOKEN}'
                 }
             }
         }

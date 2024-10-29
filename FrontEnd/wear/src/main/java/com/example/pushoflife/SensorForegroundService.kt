@@ -125,17 +125,16 @@ class SensorForegroundService : Service(), SensorEventListener {
                 val z = event.values[2]
                 //Log.d("acceleration", "acceleration : x=$x, y=$y, z=$z")
                 val linearAccelerationSensorData = event.values.clone()
-
-                // 가속도계 데이터를 콜백으로 전달
-                linearAccelerationSensorDataCallback?.invoke(linearAccelerationSensorData)
-                // PushSensor로 가속도계 데이터 전달
-                pushSensor.processlinearAccelerationSensorData(linearAccelerationSensorData)
+//// 가속도계 데이터를 콜백으로 전달
+//                linearAccelerationSensorDataCallback?.invoke(linearAccelerationSensorData)
+//                // PushSensor로 가속도계 데이터 전달
 
                 gravityValues?.let { gravity ->
                     totalAccelation = fallSensor.calculateAcceleration(event.values, gravity)
-                    //Log.d("밑 가속도", "total gravity : $totalAccelation")
+                    //Log.d("밑 가속도", "total gravity : $totalAccelation"
                 }
                 Log.d("SensorData", "Accelerometer: $totalAccelation")
+                pushSensor.integrateAcceleration(totalAccelation)
                 if (!possibleFall && fallSensor.checkFall(totalAccelation)) {
                     Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
@@ -158,8 +157,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                 //Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
                 val gyroscopeData = event.values.clone()
 
-                // 자이로스코프 데이터를 콜백으로 전달
-                gyroscopeDataCallback?.invoke(gyroscopeData)
                 // PushSensor로 자이로스코프 데이터 전달
 //                pushSensor.processGyroscopeData(gyroscopeData)
             }

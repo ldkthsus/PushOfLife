@@ -51,6 +51,11 @@
             android:name=".SecondActivity"
             android:exported="true" />
 
+        <activity
+            android:name=".CprGuideActivity"
+            android:exported="true"/>
+
+
         <service
             android:name=".network.WatchListenerService"
             android:enabled="true"

@@ -8,9 +8,7 @@ import retrofit2.Response
 
 object TwilioUtils {
     fun sendSmsWithRetrofit(toPhoneNumber: String, fromPhoneNumber: String, messageBody: String, accountSid: String, authToken: String) {
-        val credentials = "$accountSid:$authToken"
-        val authHeader = "Basic " + Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
-
+        val authHeader = "Basic " + Base64.encodeToString((accountSid + ":" + authToken).toByteArray(), Base64.NO_WRAP)
         // Twilio API 호출
         TwilioRetrofitClient.apiService.sendSms(
             authHeader,
@@ -23,7 +21,14 @@ object TwilioUtils {
                 if (response.isSuccessful) {
                     println("SMS success")
                 } else {
-                    println("SMS fail: ${response.code()} ${response}, ${toPhoneNumber}")
+                    println("SMS fail: ${response.code()} ${response}")
+                    println("sid: $accountSid token : $authToken messageBody : $messageBody fromPhoneNumber : $fromPhoneNumber")
+                    println("toPhoneNumber : $toPhoneNumber")
+
+                    // errorBody()로 Twilio의 구체적인 오류 메시지를 출력
+                    val errorBody = response.errorBody()?.string()
+                    println("Detailed Error: $errorBody")
+
                 }
             }
 

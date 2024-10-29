@@ -348,7 +348,13 @@ fun ProfileEditScreen(navController: NavController) {
         Button(
             onClick = {
                 showModal = true
-
+//                TwilioUtils.sendSmsWithRetrofit(
+//                    "",
+//                    "",
+//                    "Test message",
+//                    BuildConfig.TWILIO_ACCOUNT_SID,
+//                    BuildConfig.TWILIO_AUTH_TOKEN
+//                )
             },
             modifier = Modifier.fillMaxWidth()
         ) {

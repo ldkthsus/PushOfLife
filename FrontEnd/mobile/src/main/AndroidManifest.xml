@@ -19,10 +19,12 @@
         android:theme="@style/Theme.PushOfLife"
         android:enableOnBackInvokedCallback="true"
         tools:targetApi="34">
-
         <meta-data
-            android:name="com.kakao.sdk.AppKey"
-            android:value="${KAKAO_MAP_KEY}" />
+            android:name="com.skt.tmap"
+            android:value="${T_MAP_KEY}" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${GOOGLE_MAP_KEY}" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -32,6 +34,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.aedLocation.AedLocationActivity"></activity>
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">

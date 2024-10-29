@@ -1,5 +1,8 @@
 pluginManagement {
     repositories {
+        flatDir {
+            dirs("libs")
+        }
         google()
         mavenCentral()
         gradlePluginPortal()

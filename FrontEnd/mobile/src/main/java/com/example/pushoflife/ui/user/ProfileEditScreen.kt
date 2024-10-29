@@ -38,6 +38,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import java.text.SimpleDateFormat
 import java.util.Locale
 import android.widget.DatePicker
+import com.example.pushoflife.data.datastore.TokenPreferences
+import com.example.pushoflife.network.RetrofitClient.apiService
+import com.example.pushoflife.network.UpdateUserRequest
+import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 
 @Composable
 fun ProfileEditScreen(navController: NavController) {
@@ -60,8 +65,13 @@ fun ProfileEditScreen(navController: NavController) {
 
 
     val address = GetLocation(context)
+    val tokenPreferences = TokenPreferences(context)
     val userPreferences = UserPreferences(context)
     var showModal by remember { mutableStateOf(false) }
+    var isLoggedIn by remember { mutableStateOf(false) }
+    var authToken by remember { mutableStateOf<String?>(null) }
+
+
     // LaunchedEffect를 사용하여 초기화 시 DataStore에서 데이터를 불러옴
     LaunchedEffect(Unit) {
         userPreferences.getUserProfile().collect { userProfile ->
@@ -73,6 +83,44 @@ fun ProfileEditScreen(navController: NavController) {
             pill = TextFieldValue(userProfile.pill)
             user_protector = TextFieldValue(userProfile.protector)
             user_address = TextFieldValue(userProfile.address)
+        }
+    }
+
+    // 토큰이 있는지 확인하고, 있으면 서버에서 데이터 불러오기
+    LaunchedEffect(Unit) {
+        tokenPreferences.getAuthToken().collect { token ->
+            authToken = token
+            isLoggedIn = !token.isNullOrEmpty()
+
+            if (isLoggedIn && authToken != null) {
+                // 서버에서 유저 정보 가져오기
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val response = apiService.getUserInfo("$authToken").execute()
+                        if (response.isSuccessful) {
+                            response.body()?.let { userInfo ->
+                                // 서버에서 가져온 데이터를 DataStore에 저장
+                                userPreferences.saveUserProfile(
+                                    name = userInfo.user_name ?: "",
+                                    birthdate = userInfo.user_birthday ?: "",
+                                    gender = userInfo.user_gender ?: "",
+                                    disease = userInfo.user_disease ?: "",
+                                    protector = userInfo.user_protector ?: "",
+                                    address = user_address.text,
+                                    hospital = hospital.text,
+                                    pill = pill.text
+                                )
+                            }
+                        } else {
+                            println("Failed to fetch user info: ${response.errorBody()?.string()}")
+                            println("Failed to fetch user info: ${authToken}")
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        println("Error fetching user info: ${e.message}")
+                    }
+                }
+            }
         }
     }
     Column(
@@ -300,38 +348,67 @@ fun ProfileEditScreen(navController: NavController) {
         Button(
             onClick = {
                 showModal = true
-
+//                TwilioUtils.sendSmsWithRetrofit(
+//                    "",
+//                    "",
+//                    "Test message",
+//                    BuildConfig.TWILIO_ACCOUNT_SID,
+//                    BuildConfig.TWILIO_AUTH_TOKEN
+//                )
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "저장하기")
         }
         Spacer(modifier = Modifier.height(5.dp))  // 간격 추가
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-
-        ){
-            Text(
-                text = "로그아웃해도 정보를 기억할래요!",
-                fontSize = 16.sp,  // 글자 크기
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
-            Text(
-                text = "회원가입",
-                fontSize = 16.sp,  // 글자 크기
-                textAlign = TextAlign.Center,
-                fontFamily = PretendardBold,
+        if (isLoggedIn) {
+            Row(
                 modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
 
-                    .clickable {
-                        // 로그인 페이지로 이동
-                        navController.navigate("sign_up_screen")
-                    }
-            )
+            ) {
+                Text(
+                    text = "로그아웃",
+                    fontSize = 16.sp,  // 글자 크기
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .clickable {
+                            // 로그아웃 기능
+                            CoroutineScope(Dispatchers.IO).launch {
+                                tokenPreferences.clearAuthToken()
+                                authToken = null
+                                isLoggedIn = false
+                            }
+                        }
+                )
+            }
+        }else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+
+            ) {
+                Text(
+                    text = "로그아웃해도 정보를 기억할래요!",
+                    fontSize = 16.sp,  // 글자 크기
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+                Text(
+                    text = "회원가입",
+                    fontSize = 16.sp,  // 글자 크기
+                    textAlign = TextAlign.Center,
+                    fontFamily = PretendardBold,
+                    modifier = Modifier
+
+                        .clickable {
+                            // 로그인 페이지로 이동
+                            navController.navigate("sign_up_screen")
+                        }
+                )
+            }
         }
         // 모달(다이얼로그) 표시
         if (showDatePicker) {
@@ -434,24 +511,71 @@ fun ProfileEditScreen(navController: NavController) {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            showModal = false
-                            CoroutineScope(Dispatchers.IO).launch {
-                                userPreferences.saveUserProfile(
-                                    name = user_name.text,
-                                    birthdate = user_birthdate.text,
-                                    gender = user_gender.text,
-                                    disease = user_disease.text,
-                                    hospital = hospital.text,
-                                    pill = pill.text,
-                                    protector = user_protector.text,
-                                    address = user_address.text
-                                )
+                            if (isLoggedIn && authToken != null) {
+                                // AccessToken이 존재하는 경우 서버 업데이트 요청
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    try {
+                                        val updateUserRequest = UpdateUserRequest(
+                                            user_name = if (user_name.text.isNotEmpty()) user_name.text else null,
+                                            user_birthday = if(user_birthdate.text.isNotEmpty())user_birthdate.text else null,
+                                            user_gender = if (user_gender.text.isNotEmpty()) user_gender.text else null,
+                                            user_disease = if (user_disease.text.isNotEmpty()) user_disease.text else null,
+                                            user_protector = if (user_protector.text.isNotEmpty()) user_protector.text else null,
+                                        )
+
+                                        // API 요청 보내기
+                                        val response = apiService.updateUser(
+                                            token = "$authToken",
+                                            updateUserRequest = updateUserRequest
+                                        ).execute()
+
+                                        if (response.isSuccessful) {
+                                            // 서버 업데이트 성공 처리
+                                            response.body()?.let { userInfo ->
+                                                // 서버에서 가져온 데이터를 DataStore에 저장
+                                                userPreferences.saveUserProfile(
+                                                    name = userInfo.user_name ?: "",
+                                                    birthdate = userInfo.user_birthday ?: "",
+                                                    gender = userInfo.user_gender ?: "",
+                                                    disease = userInfo.user_disease ?: "",
+                                                    protector = userInfo.user_protector ?: "",
+                                                    hospital = hospital.text,
+                                                    pill= pill.text,
+                                                    address=user_address.text
+                                                )
+                                            }
+                                            println("Profile updated successfully!")
+                                            withContext(Dispatchers.Main) {
+                                                navController.navigate("main_screen") // navigate 호출을 메인 스레드에서 실행
+                                            }
+                                        } else {
+                                            // 실패 처리
+                                            println("Update failed: ${response.errorBody()?.string()}")
+                                        }
+                                    }catch (e: HttpException) {
+                                    println("Exception during profile update: ${e.message}")
+                                }
+                                }
+                            } else {
+                                // AccessToken이 없는 경우 데이터 로컬 저장
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    userPreferences.saveUserProfile(
+                                        name = user_name.text,
+                                        birthdate = user_birthdate.text,
+                                        gender = user_gender.text,
+                                        disease = user_disease.text,
+                                        protector = user_protector.text,
+                                        hospital = hospital.text,
+                                        pill= pill.text,
+                                        address=user_address.text
+                                    )
+                                    println("Local profile updated")
+                                    withContext(Dispatchers.Main) {
+                                        navController.navigate("main_screen") // navigate 호출을 메인 스레드에서 실행
+                                    }
+                                }
                             }
-                            // Twilio로 문자 발송하는 코루틴
-                            CoroutineScope(Dispatchers.IO).launch {
-                                TwilioUtils.sendSmsWithRetrofit("+8201099135931", "+17035968457", "테스트용", BuildConfig.TWILIO_ACCOUNT_SID, BuildConfig.TWILIO_AUTH_TOKEN)
-                            }
-                        }
+                        },
                     ) {
                         Text(
                             text = "저장"

@@ -5,10 +5,6 @@ pipeline {
         SONARQUBE_SERVER = 'SonarQube'  // SonarQube 서버의 이름
     }
 
-    tools {
-        sonar 'SonarQube Scanner' // Jenkins에서 설치한 SonarQube Scanner 이름
-    }
-
     stages {
 
         stage('Checkout') {

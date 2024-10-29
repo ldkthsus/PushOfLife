@@ -1,9 +1,14 @@
-sh pipeline {
+pipeline {
     agent any
-
-    stages {
+stages {
         stage('Build Backend') {
+            steps {
+                script {
+                    echo 'Building Backend Docker Images...'
+                }
+            }
         }
+
     }
 
     post {

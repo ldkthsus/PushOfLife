@@ -45,7 +45,7 @@ public class AedController {
         }
     }
 
-    @GetMapping("/within-bounds")
+    @PostMapping("/within-bounds")
     public ResponseEntity<?> getAedWithinBounds(@RequestBody AedRequestDTO requestDTO) {
         List<AedResponseDTO> responseDTO= aedLocationService.getAedLocation(requestDTO);
         if (responseDTO == null){

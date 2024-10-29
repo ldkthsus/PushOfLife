@@ -1,10 +1,6 @@
 pipeline {
     agent any
     
-    tools {
-        hudson.plugins.sonar.SonarRunnerInstallation 'SonarQube Scanner'
-    }
-    
     environment {
         SONARQUBE_SERVER = 'SonarQube'  // SonarQube 서버의 이름
     }

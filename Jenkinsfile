@@ -1,5 +1,10 @@
 pipeline {
     agent any
+    
+    tools {
+        sonarQube 'SonarQube Scanner'
+    }
+    
     environment {
         SONARQUBE_SERVER = 'SonarQube'  // SonarQube 서버의 이름
     }
@@ -21,7 +26,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    sh 'mvn sonar:sonar -Dsonar.projectKey=POLmain -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_TOKEN}'
+                    sh 'sonar-scanner -Dsonar.projectKey=POLmain -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_TOKEN}'
                 }
             }
         }

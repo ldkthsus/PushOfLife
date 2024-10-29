@@ -22,13 +22,13 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            script{
-                dir('./BackEnd/PushOfLife'){
-                    withSonarQubeEnv() {
-                        sh "./gradlew sonar"
-                    }
+
+            dir('./BackEnd/PushOfLife'){
+                withSonarQubeEnv() {
+                    sh "./gradlew sonar"
                 }
             }
+
 
 
         }

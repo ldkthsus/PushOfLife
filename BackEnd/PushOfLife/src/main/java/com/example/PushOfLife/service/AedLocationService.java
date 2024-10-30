@@ -2,6 +2,7 @@ package com.example.PushOfLife.service;
 
 import com.example.PushOfLife.dto.aed.AedRequestDTO;
 import com.example.PushOfLife.dto.aed.AedDetailsResponseDTO;
+import com.example.PushOfLife.dto.aed.AedResponseDTO;
 import com.example.PushOfLife.entity.AedAvailableEntity;
 import com.example.PushOfLife.entity.AedEntity;
 import com.example.PushOfLife.repository.AedAvailableRepository;
@@ -19,13 +20,12 @@ public class AedLocationService {
     private final AedRepository aedRepository;
     private final AedAvailableRepository aedAvailableRepository;
 
-    public List<AedDetailsResponseDTO> getAedLocation(AedRequestDTO aedRequestDTO) {
-        List<AedEntity> findAed = aedRepository.findByAedLatitudeBetweenAndAedLongitudeBetween(aedRequestDTO.getSouLatitude(), aedRequestDTO.getNorLatitude(), aedRequestDTO.getSouLongitude(), aedRequestDTO.getNorLongitude());
-        List<AedDetailsResponseDTO> aedList = new ArrayList<>();
+    public List<AedResponseDTO> getAedLocation(Double norLatitude, Double norLongitude, Double southLatitude, Double southLongitude) {
+        List<AedEntity> findAed = aedRepository.findByAedLatitudeBetweenAndAedLongitudeBetween(southLatitude, norLatitude, southLongitude, norLongitude);
+        List<AedResponseDTO> aedList = new ArrayList<>();
         for (AedEntity aedEntity : findAed) {
-            AedAvailableEntity aedAvailableEntity = aedAvailableRepository.findById(aedEntity.getId()).orElseThrow(() -> new RuntimeException("Aed Not Found"));
-            AedDetailsResponseDTO aedResponseDTO = new AedDetailsResponseDTO();
-            aedResponseDTO.fromEntity(aedEntity, aedAvailableEntity);
+            AedResponseDTO aedResponseDTO = new AedResponseDTO();
+            aedResponseDTO.fromEntity(aedEntity);
             aedList.add(aedResponseDTO);
         }
         return aedList;

@@ -9,5 +9,10 @@
         <item name="fontFamily">@font/pretendard_regular</item>
     </style>
 
+    <!-- BottomSheet 테마 -->
+    <style name="Theme.TransparentBackgroundBottomSheet" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="android:backgroundDimAmount">0.1</item> <!-- 배경 투명도 -->
+    </style>
+
     <style name="Theme.PushOfLife" parent="Base.Theme.PushOfLife" />
 </resources>

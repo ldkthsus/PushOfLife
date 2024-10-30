@@ -2,6 +2,7 @@ package com.example.pushoflife.ui.aedLocation
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.PointF
 import android.os.Bundle
 import android.util.Log
 import android.widget.FrameLayout
@@ -13,7 +14,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.example.pushoflife.BuildConfig
 import com.example.pushoflife.R
-import com.example.pushoflife.network.MapBoundsRequest
 import com.example.pushoflife.network.RetrofitClient
 import com.google.android.gms.location.LocationServices
 import com.skt.tmap.TMapGpsManager
@@ -26,10 +26,12 @@ import retrofit2.Response
 import com.example.pushoflife.network.MapBoundsResponse
 import android.os.Handler
 import android.os.Looper
+import com.example.pushoflife.network.AedDetailResponse
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.skt.tmap.poi.TMapPOIItem
 
 
-class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChangedListener {
+class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChangedListener, TMapView.OnClickListenerCallback {
 
     private lateinit var tMapView: TMapView
     private lateinit var tMapGpsManager: TMapGpsManager
@@ -86,7 +88,72 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         // 줌/스크롤 변경 시마다 지연된 API 요청 실행
         tMapView.setOnDisableScrollWithZoomLevelListener { fl, tMapPoint -> onMapChanged(fl, tMapPoint) }
         tMapView.setOnEnableScrollWithZoomLevelListener { fl, tMapPoint -> onMapChanged(fl, tMapPoint) }
+
+        // 마커 클릭 이벤트 리스너 등록
+        tMapView.setOnClickListenerCallback(this)
     }
+
+    // TMapView.OnClickListenerCallback 인터페이스의 onPressDown 메서드 구현
+    override fun onPressDown(
+        markerList: ArrayList<TMapMarkerItem>?,
+        poiList: ArrayList<TMapPOIItem>?,
+        point: TMapPoint?,
+        pointf: PointF?
+    ) {
+        // 필요한 경우에만 구현
+    }
+
+    // TMapView.OnClickListenerCallback 인터페이스의 onPressUp 메서드 구현
+    override fun onPressUp(
+        markerList: ArrayList<TMapMarkerItem>?,
+        poiList: ArrayList<TMapPOIItem>?,
+        point: TMapPoint?,
+        pointf: PointF?
+    ) {
+        markerList?.firstOrNull()?.let { marker ->
+            val aedId = marker.id.toIntOrNull()
+            aedId?.let { id ->
+                Log.d("AED Marker Clicked", "Clicked AED ID: $id")
+
+                // API 요청 보내기
+                RetrofitClient.apiService.sendAedDetail(id).enqueue(object : Callback<AedDetailResponse> {
+                    override fun onResponse(call: Call<AedDetailResponse>, response: Response<AedDetailResponse>) {
+                        if (response.isSuccessful) {
+                            response.body()?.let { aedDetail ->
+                                // 응답 값 콘솔에 출력
+                                Log.d("AED Detail", """
+                                Address: ${aedDetail.aed_address}
+                                Place: ${aedDetail.aed_place}
+                                Location: ${aedDetail.aed_location}
+                                Latitude: ${aedDetail.aed_latitude}
+                                Longitude: ${aedDetail.aed_longitude}
+                                Number: ${aedDetail.aed_number}
+                            """.trimIndent())
+                            }
+                            response.body()?.let { aedDetail ->
+                                // 응답 값을 이용해 BottomSheetDialogFragment 표시
+                                val bottomSheet = AEDDetailBottomSheet(
+                                    address = aedDetail.aed_address,
+                                    place = aedDetail.aed_place,
+                                    location = aedDetail.aed_location,
+                                    number = aedDetail.aed_number
+                                )
+                                bottomSheet.show(supportFragmentManager, "AEDDetailBottomSheet")
+                            }
+                        } else {
+                            Log.d("AED Detail API", "요청 실패: ${response.code()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<AedDetailResponse>, t: Throwable) {
+                        Log.d("AED Detail API", "네트워크 오류: ${t.message}")
+                    }
+                })
+            }
+        }
+    }
+
+
 
     // 현재 위치를 지도에 업데이트하는 함수
     private fun updateUserLocationOnMap() {
@@ -124,7 +191,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         handler.removeCallbacks(delayedApiRequest)
         lastCenterPoint = centerPoint
         lastZoomLevel = zoomLevel
-        handler.postDelayed(delayedApiRequest, 2000)
+        handler.postDelayed(delayedApiRequest, 1000)
     }
 
     private fun checkAndRequestLocationPermission() {
@@ -161,6 +228,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         onMapChanged(tMapView.zoomLevel.toFloat(), tMapView.centerPoint)
     }
 
+    // AED 마커 API 호출
     private fun logMapBounds(zoomLevel: Float, centerPoint: TMapPoint) {
         val latitudeOffset = calculateLatitudeOffset(zoomLevel.toInt())
         val longitudeOffset = calculateLongitudeOffset(zoomLevel.toInt())
@@ -170,30 +238,34 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         val southWestLat = centerPoint.latitude - latitudeOffset
         val southWestLon = centerPoint.longitude - longitudeOffset
 
-        val boundsRequest = MapBoundsRequest(
-            nor_latitude = northEastLat,
-            nor_longitude = northEastLon,
-            sou_latitude = southWestLat,
-            sou_longitude = southWestLon
+        Log.d("CurrentBounds", "NE: ($northEastLat, $northEastLon), SW: ($southWestLat, $southWestLon)")
+
+        // GET 요청을 쿼리 파라미터와 함께 호출
+        val call = RetrofitClient.apiService.sendMapBounds(
+            norLatitude = northEastLat,
+            norLongitude = northEastLon,
+            souLatitude = southWestLat,
+            souLongitude = southWestLon
         )
 
-        Log.d("CurrentBounds", "$boundsRequest")
-
-        val call = RetrofitClient.apiService.sendMapBounds(boundsRequest)
         call.enqueue(object : Callback<List<MapBoundsResponse>> {
             override fun onResponse(call: Call<List<MapBoundsResponse>>, response: Response<List<MapBoundsResponse>>) {
                 if (response.isSuccessful) {
                     val aedLocations = response.body()
 
-                    // 모든 AED 마커 제거 전 사용자 위치 마커는 유지
+                    // 모든 AED 마커를 지우고, 사용자 위치 마커는 유지
                     tMapView.removeAllTMapMarkerItem()
                     userLocationMarker?.let { tMapView.addTMapMarkerItem(it) }
 
                     aedLocations?.forEach { location ->
-                        addAedMarker(location.aed_latitude, location.aed_longitude, location.aed_place, location.aed_location)
+                        // AED 정보 로그 출력
+                        Log.d("AED Info", "Address: ${location.aed_address}, Place: ${location.aed_place}, Location: ${location.aed_location}")
+
+                        // AED 마커 추가
+                        addAedMarker(location.aed_latitude, location.aed_longitude, location.aed_id, location.aed_place, location.aed_location)
                     }
                 } else {
-                    Log.d("MapBoundsAPI", "전송 실패: ${response.code()}")
+                    Log.d("MapBoundsAPI", "요청 실패: ${response.code()}")
                 }
             }
 
@@ -203,15 +275,18 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         })
     }
 
-    private fun addAedMarker(latitude: Double, longitude: Double, place: String, location: String) {
+
+
+    private fun addAedMarker(latitude: Double, longitude: Double, aedId: Int, place: String, location: String) {
         val aedMarker = TMapMarkerItem().apply {
             tMapPoint = TMapPoint(latitude, longitude)
             name = "$place ($location)"
             icon = ContextCompat.getDrawable(this@AedLocationActivity, R.drawable.aed_marker)?.toBitmap()
-            id = "aed_marker_${latitude}_${longitude}"
+            id = aedId.toString()  // aed_id를 마커 ID로 설정
         }
         tMapView.addTMapMarkerItem(aedMarker)
     }
+
 
     // Latitude 및 Longitude 계산 메서드
     private fun calculateLatitudeOffset(zoomLevel: Int): Double {

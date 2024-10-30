@@ -53,7 +53,17 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Call<UserInfoResponse>
 
-    // AED 위치 조회
-    @POST("POL/aed/within-bounds")
-    fun sendMapBounds(@Body bounds: MapBoundsRequest): Call<List<MapBoundsResponse>>
+    @GET("POL/aed/within-bounds")
+    fun sendMapBounds(
+        @Query("nor_latitude") norLatitude: Double,
+        @Query("nor_longitude") norLongitude: Double,
+        @Query("sou_latitude") souLatitude: Double,
+        @Query("sou_longitude") souLongitude: Double
+    ): Call<List<MapBoundsResponse>>
+
+    @GET("POL/aed/details/{aedId}")
+    fun sendAedDetail(
+        @Path("aedId") aedId: Int
+    ): Call<AedDetailResponse>
+
 }

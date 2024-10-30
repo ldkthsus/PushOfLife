@@ -2,6 +2,7 @@ package com.example.PushOfLife.controller;
 
 import com.example.PushOfLife.dto.aed.AedRequestDTO;
 import com.example.PushOfLife.dto.aed.AedDetailsResponseDTO;
+import com.example.PushOfLife.dto.aed.AedResponseDTO;
 import com.example.PushOfLife.service.AedLocationService;
 import com.example.PushOfLife.service.AedService;
 import com.example.PushOfLife.service.CsvToDataBaseService;
@@ -43,14 +44,15 @@ public class AedController {
         }
     }
 
-//    @GetMapping("/within-bounds")
-//    public ResponseEntity<?> getAedWithinBounds(@RequestBody AedRequestDTO requestDTO) {
-//        List<AedDetailsResponseDTO> responseDTO= aedLocationService.getAedLocation(requestDTO);
-//        if (responseDTO == null){
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("AED not found");
-//        }
-//        return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
-//    }
+    @GetMapping("/within-bounds")
+    public ResponseEntity<?> getAedWithinBounds(@RequestParam("nor_latitude") double norLatitude, @RequestParam("nor_longitude") double norLongitude,
+                                                @RequestParam("sou_latitude") double souLatitude,@RequestParam("sou_longitude")  double souLongitude) {
+        List<AedResponseDTO> responseDTO= aedLocationService.getAedLocation(norLatitude, norLongitude, souLatitude, souLongitude);
+        if (responseDTO == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("AED not found");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+    }
 
     @GetMapping("/details/{aedId}")
     public ResponseEntity<?> getAedDetails(@PathVariable Integer aedId) {

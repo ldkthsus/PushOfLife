@@ -51,6 +51,7 @@ class PushSensor {
     }
 
     // CPR 압박 빈도 측정 함수
+    // 여기서 CPR 시행 여부를 판단할 수 있음, 추후 자동 가이드 음악 시작 및 종료 조건도 여기서 걸 수 있을 듯
     private fun trackCprCycle(totalAcceleration: Float, currentTime: Long) {
         // 가속도가 증가하는지, 감소하는지에 따라 시작/끝점 감지
         if (totalAcceleration > previousVelocity) {
@@ -58,13 +59,13 @@ class PushSensor {
                 isIncreasing = true
                 // 새로운 사이클의 시작점을 감지
                 cycleCount++
-                Log.d(
-                    "CPR_Cycle",
-                    "Cycle $cycleCount detected at ${currentTime - lastPeakTime} ms interval"
-                )
+//                Log.d(
+//                    "CPR_Cycle",
+//                    "Cycle $cycleCount detected at ${currentTime - lastPeakTime} ms interval"
+//                )
 
-                // 5초마다 cycleCount 평가 및 피드백 제공
-                if (currentTime - lastPeakTime >= 5000) {
+                // 3초마다 cycleCount 평가 및 피드백 제공
+                if (currentTime - lastPeakTime >= 3000) {
                     frequencyFeedback(cycleCount) // 피드백 제공 함수 호출
                     cycleCount = 0 // 카운트 리셋
                     lastPeakTime = currentTime // 피드백 제공 시간 갱신
@@ -82,6 +83,6 @@ class PushSensor {
             cycleCount in 10..11 -> "정상 속도"
             else -> "느림"
         }
-        Log.d("CPR_Feedback", "$cprFrequencyFeedback cpr")
+//        Log.d("CPR_Feedback", "$cprFrequencyFeedback cpr")
     }
 }

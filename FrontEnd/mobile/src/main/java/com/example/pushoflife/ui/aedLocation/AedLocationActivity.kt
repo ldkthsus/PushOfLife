@@ -111,6 +111,8 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         pointf: PointF?
     ) {
         markerList?.firstOrNull()?.let { marker ->
+            // 지도 중심 이동
+            tMapView.setCenterPoint(marker.tMapPoint.latitude, marker.tMapPoint.longitude, true)
             val aedId = marker.id.toIntOrNull()
             aedId?.let { id ->
                 Log.d("AED Marker Clicked", "Clicked AED ID: $id")

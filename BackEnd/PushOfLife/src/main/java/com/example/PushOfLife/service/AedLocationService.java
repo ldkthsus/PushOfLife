@@ -79,4 +79,15 @@ public class AedLocationService {
                 .build();
         aedAvailableRepository.save(aedAvailableEntity);
     }
+
+    public List<AedResponseDTO> getAllAedList(){
+        List<AedEntity> findAedList = aedRepository.findAll();
+        List<AedResponseDTO> aedList = new ArrayList<>();
+        for (AedEntity aedEntity : findAedList) {
+            AedResponseDTO aedResponseDTO = new AedResponseDTO();
+            aedResponseDTO.fromEntity(aedEntity);
+            aedList.add(aedResponseDTO);
+        }
+        return aedList;
+    }
 }

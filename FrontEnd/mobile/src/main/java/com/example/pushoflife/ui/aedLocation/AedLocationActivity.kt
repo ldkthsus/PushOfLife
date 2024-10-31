@@ -2,6 +2,7 @@ package com.example.pushoflife.ui.aedLocation
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.PointF
 import android.os.Bundle
 import android.util.Log
@@ -26,6 +27,7 @@ import retrofit2.Response
 import com.example.pushoflife.network.MapBoundsResponse
 import android.os.Handler
 import android.os.Looper
+import android.widget.TextView
 import com.example.pushoflife.network.AedDetailResponse
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.skt.tmap.poi.TMapPOIItem
@@ -75,9 +77,28 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         }
         tmapViewContainer.addView(tMapView)
 
+        // 응급상황 조건부 코드
+        val isEmergency = intent.getBooleanExtra("emergency", false)
+        val titleText = findViewById<TextView>(R.id.titleText)
+        // emergency 값에 따라 텍스트 변경
+        titleText.text = if (isEmergency) {
+            "응급환자 및 AED 위치"
+        } else {
+            "AED 위치"
+        }
+        //응급상황 시 임시 위치 데이터
+        val patientLatitude = intent.getDoubleExtra("patient_latitude", 0.0)
+        val patientLongitude = intent.getDoubleExtra("patient_longitude", 0.0)
+
+        // TMapView 초기화가 완료된 후에 응급환자 마커를 추가
         tMapView.setOnMapReadyListener {
             tMapView.setZoomLevel(17)
             checkAndRequestLocationPermission()
+
+            // 지도 준비가 완료된 후 응급 상황일 경우 마커 추가
+            if (isEmergency) {
+                addPatientMarker(patientLatitude, patientLongitude)
+            }
         }
 
         tMapGpsManager = TMapGpsManager(this).apply {
@@ -174,7 +195,6 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
             }
         }
     }
-
 
 
     // 현재 위치를 지도에 업데이트하는 함수
@@ -274,9 +294,13 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
             override fun onResponse(call: Call<List<MapBoundsResponse>>, response: Response<List<MapBoundsResponse>>) {
                 if (response.isSuccessful) {
                     val aedLocations = response.body()
+                    val patientMarker = tMapView.getMarkerItemFromId("patient_marker")
 
                     // 모든 AED 마커를 지우고, 사용자 위치 마커는 유지
                     tMapView.removeAllTMapMarkerItem()
+
+                    patientMarker?.let { tMapView.addTMapMarkerItem(it) }
+
                     userLocationMarker?.let { tMapView.addTMapMarkerItem(it) }
 
                     aedLocations?.forEach { location ->
@@ -297,8 +321,6 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         })
     }
 
-
-
     private fun addAedMarker(latitude: Double, longitude: Double, aedId: Int, place: String, location: String) {
         val aedMarker = TMapMarkerItem().apply {
             tMapPoint = TMapPoint(latitude, longitude)
@@ -306,7 +328,25 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
             icon = ContextCompat.getDrawable(this@AedLocationActivity, R.drawable.aed_marker)?.toBitmap()
             id = aedId.toString()  // aed_id를 마커 ID로 설정
         }
+
         tMapView.addTMapMarkerItem(aedMarker)
+    }
+
+    // 응급환자 위치 마커
+    private fun addPatientMarker(latitude: Double, longitude: Double) {
+        val originalIcon = ContextCompat.getDrawable(this@AedLocationActivity, R.drawable.patient_marker)?.toBitmap()
+        val resizedIcon = originalIcon?.let {
+            // 원래 아이콘을 원하는 크기로 조정 (예: 100x100)
+            Bitmap.createScaledBitmap(it, 150, 150, false)
+        }
+        val patientMarker = TMapMarkerItem().apply {
+            tMapPoint = TMapPoint(latitude, longitude) // 위도, 경도 설정
+            name = "응급환자 위치" // 마커 이름 설정
+            icon = resizedIcon
+            id = "patient_marker" // 마커 ID 설정
+        }
+        tMapView.addTMapMarkerItem(patientMarker)
+        tMapView.setCenterPoint(latitude, longitude, true) // 지도 중심을 응급환자 위치로 설정
     }
 
 

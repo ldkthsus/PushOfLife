@@ -31,7 +31,7 @@ public class AedEntity {
     @Column(name = "aed_latitude")
     private Double aedLatitude;
 
-    @Column(name = "aed_logtitude")
+    @Column(name = "aed_longitude")
     private Double aedLongitude;
 
     @Column(name = "aed_number")

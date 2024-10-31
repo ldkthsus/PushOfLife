@@ -134,7 +134,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                     totalAcceleration = fallSensor.calculateAcceleration(event.values, gravity)
                     //Log.d("밑 가속도", "total gravity : $totalAccelation"
                 }
-                // Log.d("SensorData", "Accelerometer: $totalAccelation")
+                //Log.d("너를 통해 얻을거야", "Accelerometer: $totalAcceleration")
                 pushSensor.calculateCPRFeedback(totalAcceleration)
                 if (!possibleFall && fallSensor.checkFall(totalAcceleration)) {
                     //Log.d("FallDetection", "낙상감지됨")

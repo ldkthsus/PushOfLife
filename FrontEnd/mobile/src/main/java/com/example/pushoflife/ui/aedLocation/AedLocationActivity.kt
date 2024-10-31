@@ -130,6 +130,10 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
                                 Latitude: ${aedDetail.aed_latitude}
                                 Longitude: ${aedDetail.aed_longitude}
                                 Number: ${aedDetail.aed_number}
+                                MonStart: ${aedDetail.aed_mon_st_time}
+                                MonEnd: ${aedDetail.aed_mon_end_time}
+                                TueStart: ${aedDetail.aed_mon_st_time}
+                                TueEnd: ${aedDetail.aed_mon_end_time}
                             """.trimIndent())
                             }
                             response.body()?.let { aedDetail ->
@@ -138,7 +142,23 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
                                     address = aedDetail.aed_address,
                                     place = aedDetail.aed_place,
                                     location = aedDetail.aed_location,
-                                    number = aedDetail.aed_number
+                                    number = aedDetail.aed_number,
+                                    monStart = aedDetail.aed_mon_st_time,
+                                    monEnd = aedDetail.aed_mon_end_time,
+                                    tueStart = aedDetail.aed_tue_st_time,
+                                    tueEnd = aedDetail.aed_tue_end_time,
+                                    wedStart = aedDetail.aed_wed_st_time,
+                                    wedEnd = aedDetail.aed_wed_end_time,
+                                    thuStart = aedDetail.aed_thu_st_time,
+                                    thuEnd = aedDetail.aed_thu_end_time,
+                                    friStart = aedDetail.aed_fri_st_time,
+                                    friEnd = aedDetail.aed_fri_end_time,
+                                    satStart = aedDetail.aed_sat_st_time,
+                                    satEnd = aedDetail.aed_sat_end_time,
+                                    sunStart = aedDetail.aed_sun_st_time,
+                                    sunEnd = aedDetail.aed_sun_end_time,
+                                    holStart = aedDetail.aed_hol_st_time,
+                                    holEnd = aedDetail.aed_hol_end_time
                                 )
                                 bottomSheet.show(supportFragmentManager, "AEDDetailBottomSheet")
                             }

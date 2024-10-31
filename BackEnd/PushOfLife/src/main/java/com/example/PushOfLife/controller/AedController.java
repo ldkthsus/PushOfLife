@@ -22,7 +22,7 @@ public class AedController {
     private final UserService userService;
     private final AedLocationService aedLocationService;
 
-    @GetMapping("/list")
+    @GetMapping("/list/api")
     public ResponseEntity<?> getAedLoList() {
         try {
             aedService.fetchAllAedData();
@@ -40,6 +40,12 @@ public class AedController {
         catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<?> getAllAedLoList() {
+        List<AedResponseDTO> responseList = aedLocationService.getAllAedList();
+        return ResponseEntity.status(HttpStatus.OK).body(responseList);
     }
 
     @GetMapping("/within-bounds")

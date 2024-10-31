@@ -263,7 +263,6 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
 
         Spacer(modifier = Modifier.height(10.dp))
 
-// AED 컴포넌트
         // AED 컴포넌트
         Box(
             modifier = Modifier

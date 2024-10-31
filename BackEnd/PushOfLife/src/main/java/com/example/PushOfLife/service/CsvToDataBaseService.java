@@ -84,7 +84,8 @@ public class CsvToDataBaseService {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("CSV 파일 처리 중 오류가 발생했습니다.", e);
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
         }
     }
 

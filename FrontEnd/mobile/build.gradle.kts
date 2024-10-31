@@ -39,6 +39,10 @@ android {
         val twilioAuthToken = project.findProperty("TWILIO_AUTH_TOKEN") as String? ?: ""
         buildConfigField ("String", "TWILIO_ACCOUNT_SID", "\"${twilioAccountSID}\"")
         buildConfigField ("String", "TWILIO_AUTH_TOKEN", "\"${twilioAuthToken}\"")
+        val backServer = project.findProperty("BACK_SERVER") as String? ?: ""
+        val fromNumber = project.findProperty("FROM_NUMBER") as String? ?: ""
+        buildConfigField ("String", "BACK_SERVER", "\"${backServer}\"")
+        buildConfigField ("String", "FROM_NUMBER", "\"${fromNumber}\"")
 
     }
 

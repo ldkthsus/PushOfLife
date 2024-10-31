@@ -73,7 +73,12 @@ fun ProfileEditScreen(navController: NavController) {
     var showModal by remember { mutableStateOf(false) }
     var isLoggedIn by remember { mutableStateOf(false) }
     var authToken by remember { mutableStateOf<String?>(null) }
-
+    val messageContent = buildString {
+        if (user_name.text.isNotEmpty()) append("${user_name.text}님의 비상 연락처입니다.\n")
+        else append("비상 연락처입니다.\n")
+        append("환자가 쓰러져 자동 신고되었습니다.\n")
+        append("환자 위치: $address")
+    }
 
     // LaunchedEffect를 사용하여 초기화 시 DataStore에서 데이터를 불러옴
     LaunchedEffect(Unit) {
@@ -351,13 +356,7 @@ fun ProfileEditScreen(navController: NavController) {
         Button(
             onClick = {
                 showModal = true
-//                TwilioUtils.sendSmsWithRetrofit(
-//                    "",
-//                    "",
-//                    "Test message",
-//                    BuildConfig.TWILIO_ACCOUNT_SID,
-//                    BuildConfig.TWILIO_AUTH_TOKEN
-//                )
+
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -514,6 +513,13 @@ fun ProfileEditScreen(navController: NavController) {
                 confirmButton = {
                     TextButton(
                         onClick = {
+//                            TwilioUtils.sendSmsWithRetrofit(
+//                                "",
+//                                BuildConfig.FROM_NUMBER,
+//                                messageContent,
+//                                BuildConfig.TWILIO_ACCOUNT_SID,
+//                                BuildConfig.TWILIO_AUTH_TOKEN
+//                            )
                             if (isLoggedIn && authToken != null) {
                                 // AccessToken이 존재하는 경우 서버 업데이트 요청
                                 CoroutineScope(Dispatchers.IO).launch {

@@ -57,6 +57,7 @@ import com.example.pushoflife.ui.user.LoginScreen
 import com.example.pushoflife.ui.user.SignUpScreen
 import android.content.Context
 import android.util.Base64
+import com.kakao.vectormap.BuildConfig
 //import android.util.Log
 import com.kakao.vectormap.KakaoMapSdk
 import java.security.MessageDigest
@@ -160,9 +161,9 @@ class MainActivity : ComponentActivity() {
         val keyHash = getKeyHash(this)
         Log.d("KeyHash", keyHash ?: "KeyHash not found")
         // 로그 출력으로 값 확인
-        Log.d("KakaoMapKey", "API Key: ${BuildConfig.KAKAO_MAP_KEY}")
+//        Log.d("KakaoMapKey", "API Key: ${BuildConfig.KAKAO_MAP_KEY}")
         // 카카오 지도 SDK 초기화
-        KakaoMapSdk.init(this, BuildConfig.KAKAO_MAP_KEY)
+//        KakaoMapSdk.init(this, BuildConfig.KAKAO_MAP_KEY)
     }
 }
 

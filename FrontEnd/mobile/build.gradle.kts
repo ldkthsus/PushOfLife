@@ -106,4 +106,13 @@ dependencies {
     implementation(libs.retrofit.gson)
     implementation(libs.kakao.maps)
     implementation(libs.twilio.sdk)
+
+    // Add Koin dependencies
+    implementation("io.insert-koin:koin-android:3.3.2")
+    implementation("io.insert-koin:koin-core:3.3.2")
+
+    implementation("androidx.databinding:databinding-runtime:7.0.0")
+
+
+
 }

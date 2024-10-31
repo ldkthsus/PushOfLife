@@ -7,9 +7,10 @@ class PushSensor {
 
     // CPR 압박 시작/끝 기준값 설정
     private val noiseThreshold = 0.52f  // 미세한 진동을 필터링하는 노이즈 임계값
-    private val startThreshold = 7f  // 압박 시작 판별 임계값
-    private val endThreshold = -6f  // 압박 종료 판별 임계값
+    private val startThreshold = 8.5f  // 압박 시작 판별 임계값
+    private val endThreshold = -4.0f  // 압박 종료 판별 임계값
     private val depthRange = 0.05f  // 적절한 압박 깊이 (5cm 기준)
+    private val maxPressDuration = 300L  // 압박 최대 지속 시간 (0.4초)
 
     private var isPressing = false
 
@@ -50,18 +51,10 @@ class PushSensor {
             previousDistance = 0.0
         } else if (correctedAcceleration < endThreshold && isPressing) {
             // 압박 종료
-            isPressing = false
-            endAcceleration = correctedAcceleration  // 압박 종료 시 가속도 저장
-            endTime = currentTime  // 압박 종료 시 시간 저장
-
-            // 깊이 계산 및 출력
-            val timeDiff = (endTime - startTime) / 1000.0  // 시간 차이 계산
-            val estimatedDepth = (startAcceleration - endAcceleration) * timeDiff * resistanceFactor
-            Log.d("CPR Feedback", "압박 깊이: $estimatedDepth cm")
-
-            // 초기화
-            previousVelocity = 0.0
-            previousDistance = 0.0
+            completeCompression(correctedAcceleration, currentTime)
+        } else if (isPressing && (currentTime - startTime) > maxPressDuration) {
+            // 최대 압박 지속 시간 초과 시 강제 종료
+            completeCompression(0f, currentTime)  // 종료 가속도를 0으로 설정하여 종료 처리
         }
 
         // 압박 중 거리 업데이트
@@ -69,5 +62,21 @@ class PushSensor {
             previousVelocity = currentVelocity
             previousDistance = distance
         }
+    }
+
+    // 압박 종료 처리 함수
+    private fun completeCompression(acceleration: Float, currentTime: Long) {
+        isPressing = false
+        endAcceleration = acceleration  // 압박 종료 시 가속도 저장
+        endTime = currentTime  // 압박 종료 시 시간 저장
+
+        // 깊이 계산 및 출력
+        val timeDiff = (endTime - startTime) / 1000.0  // 시간 차이 계산
+        val estimatedDepth = (startAcceleration - endAcceleration) * timeDiff * resistanceFactor
+        Log.d("CPR Feedback", "압박 깊이: $estimatedDepth cm")
+
+        // 초기화
+        previousVelocity = 0.0
+        previousDistance = 0.0
     }
 }

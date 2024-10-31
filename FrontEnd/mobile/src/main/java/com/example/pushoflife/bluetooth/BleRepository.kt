@@ -14,10 +14,14 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import com.example.pushoflife.MyApplication
+import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.utils.Event
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -265,12 +269,24 @@ class BleRepository {
         }
     }
 
-    // 로그에 데이터를 출력하는 메소드
+    // logReceivedData에서 수신한 데이터를 분리하여 저장하는 메소드
     private fun logReceivedData(data: ByteArray) {
-        val dataString = String(data) // ByteArray를 문자열로 변환
-        Log.d("BleDeviceManager", "Received data: $dataString")
-    }
+        if (data.size >= 16) {
+            // 수신된 바이트 배열을 위도와 경도로 변환
+            val latitude = ByteBuffer.wrap(data.sliceArray(0 until 8)).double
+            val longitude = ByteBuffer.wrap(data.sliceArray(8 until 16)).double
 
+            Log.d(TAG, "Received latitude: $latitude, longitude: $longitude")
+
+            // DataStore에 위도와 경도 저장
+            CoroutineScope(Dispatchers.IO).launch {
+                val emergencyPreferences = EmergencyPreferences(context)
+                emergencyPreferences.saveLocation(latitude, longitude)
+            }
+        } else {
+            Log.e(TAG, "Invalid data length: Expected 16 bytes, received ${data.size}")
+        }
+    }
 
     fun disconnectGattServer() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

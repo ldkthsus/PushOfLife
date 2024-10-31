@@ -80,7 +80,9 @@ public class LocationService {
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = geoOperations
                 .search("user_location", reference, radius, args);
 
-        List<Point> position = geoOperations.position("user_location", fcmToken);
+        List<Point> position = geoOperations.position("user_location", userId);
+        System.out.println(position.get(0));
+        
         Point point = position.get(0);
 
         // fcm Token 리스트

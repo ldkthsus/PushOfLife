@@ -1,8 +1,6 @@
 package com.example.PushOfLife.controller;
 
-import com.example.PushOfLife.dto.aed.AedRequestDTO;
-import com.example.PushOfLife.dto.aed.AedDetailsResponseDTO;
-import com.example.PushOfLife.dto.aed.AedResponseDTO;
+import com.example.PushOfLife.dto.aed.*;
 import com.example.PushOfLife.service.AedLocationService;
 import com.example.PushOfLife.service.AedService;
 import com.example.PushOfLife.service.CsvToDataBaseService;
@@ -61,5 +59,17 @@ public class AedController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("AED not found");
         }
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+    }
+
+    @PostMapping("/add/info")
+    public ResponseEntity<?> addAed(@RequestBody AedAddRequestDTO requestDTO) {
+        aedLocationService.addAed(requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body("success");
+    }
+
+    @PostMapping("/add/details")
+    public ResponseEntity<?> addAedDetails(@RequestBody AedDetailsRequestDTO requestDTO) {
+        aedLocationService.addAedDetails(requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body("success");
     }
 }

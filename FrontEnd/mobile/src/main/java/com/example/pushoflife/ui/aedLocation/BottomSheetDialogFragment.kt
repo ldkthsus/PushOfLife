@@ -14,12 +14,30 @@ import androidx.core.content.res.ResourcesCompat
 import com.example.pushoflife.R
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import android.graphics.Typeface
+import androidx.core.content.ContextCompat
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 class AEDDetailBottomSheet(
     private val address: String,
     private val place: String,
     private val location: String,
-    private val number: String
+    private val number: String,
+    private val monStart: String?,
+    private val monEnd: String?,
+    private val tueStart: String?,
+    private val tueEnd: String?,
+    private val wedStart: String?,
+    private val wedEnd: String?,
+    private val thuStart: String?,
+    private val thuEnd: String?,
+    private val friStart: String?,
+    private val friEnd: String?,
+    private val satStart: String?,
+    private val satEnd: String?,
+    private val sunStart: String?,
+    private val sunEnd: String?,
+    private val holStart: String?,
+    private val holEnd: String?
 ) : BottomSheetDialogFragment() {
 
     // CustomTypefaceSpan 클래스 정의
@@ -39,7 +57,7 @@ class AEDDetailBottomSheet(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setStyle(STYLE_NORMAL, R.style.Theme_TransparentBackgroundBottomSheet)
+        setStyle(STYLE_NORMAL, R.style.RoundedTopBottomSheetDialog)
     }
 
     override fun onCreateView(
@@ -47,6 +65,12 @@ class AEDDetailBottomSheet(
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_aed_detail_bottom_sheet, container, false)
+        view.setBackgroundResource(R.drawable.rounded_bottom_sheet_background)
+
+        // 필요한 시간 형식을 변환하는 함수 정의
+        fun formatTime(time: String?): String {
+            return time?.substring(0, 5) ?: "" // 'HH:mm' 형식으로 잘라서 반환
+        }
 
         view.findViewById<TextView>(R.id.addressTextView).text = address
 
@@ -80,6 +104,39 @@ class AEDDetailBottomSheet(
             )
         }
         numberTextView.text = numberSpannable
+
+        // CustomTypefaceSpan을 사용하여 요일 텍스트에만 bold 폰트를 적용하는 함수
+        fun setDayTextView(textView: TextView, day: String, start: String?, end: String?) {
+            val timeText = if (start != null && end != null) "${formatTime(start)} - ${formatTime(end)}" else "운영 시간 없음"
+            val spannable = SpannableString("$day $timeText")
+            boldTypeface?.let {
+                spannable.setSpan(
+                    CustomTypefaceSpan(it),
+                    0,
+                    day.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+            textView.text = spannable
+        }
+
+        // 요일별 시간 설정
+        setDayTextView(view.findViewById(R.id.monTimeTextView), "월요일", monStart, monEnd)
+        setDayTextView(view.findViewById(R.id.tueTimeTextView), "화요일", tueStart, tueEnd)
+        setDayTextView(view.findViewById(R.id.wedTimeTextView), "수요일", wedStart, wedEnd)
+        setDayTextView(view.findViewById(R.id.thuTimeTextView), "목요일", thuStart, thuEnd)
+        setDayTextView(view.findViewById(R.id.friTimeTextView), "금요일", friStart, friEnd)
+        setDayTextView(view.findViewById(R.id.satTimeTextView), "토요일", satStart, satEnd)
+        setDayTextView(view.findViewById(R.id.sunTimeTextView), "일요일", sunStart, sunEnd)
+        setDayTextView(view.findViewById(R.id.holTimeTextView), "공휴일", holStart, holEnd)
+
+        view.post {
+            val bottomSheetBehavior = BottomSheetBehavior.from(view.parent as View)
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            bottomSheetBehavior.peekHeight = 760
+            val parent = view.parent as View
+            parent.background = ContextCompat.getDrawable(requireContext(), R.drawable.rounded_bottom_sheet_background)
+        }
 
         return view
     }

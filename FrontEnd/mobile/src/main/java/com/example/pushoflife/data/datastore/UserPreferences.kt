@@ -3,6 +3,7 @@ package com.example.pushoflife.data.datastore
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +14,6 @@ val Context.dataStore by preferencesDataStore(name = "user_preferences")
 
 // DataStore 키 정의
 object UserPreferencesKeys {
-    // 키 정의
     val USER_NAME_KEY = stringPreferencesKey("user_name")
     val USER_BIRTHDATE_KEY = stringPreferencesKey("user_birthdate")
     val USER_GENDER_KEY = stringPreferencesKey("user_gender")
@@ -22,6 +22,9 @@ object UserPreferencesKeys {
     val PILL_KEY = stringPreferencesKey("pill")
     val USER_PROTECTOR_KEY = stringPreferencesKey("user_protector")
     val USER_ADDRESS_KEY = stringPreferencesKey("user_address")
+
+    // 새로운 감지 허용 여부 키 정의
+    val ALLOW_DETECTION_KEY = booleanPreferencesKey("allow_detection")
 }
 
 // UserPreferences 클래스 정의
@@ -61,9 +64,22 @@ class UserPreferences(private val context: Context) {
             val pill = preferences[UserPreferencesKeys.PILL_KEY] ?: ""
             val protector = preferences[UserPreferencesKeys.USER_PROTECTOR_KEY] ?: ""
             val address = preferences[UserPreferencesKeys.USER_ADDRESS_KEY] ?: ""
-            UserProfile(name, birthdate, gender, disease, hospital, pill, protector,address)
+            UserProfile(name, birthdate, gender, disease, hospital, pill, protector, address)
         }
     }
+
+    // 감지 허용 여부 저장
+    suspend fun setAllowDetection(allow: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[UserPreferencesKeys.ALLOW_DETECTION_KEY] = allow
+        }
+    }
+
+    // 감지 허용 여부 읽기
+    val allowDetection: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[UserPreferencesKeys.ALLOW_DETECTION_KEY] ?: false
+        }
 }
 
 // UserProfile 데이터 클래스 정의

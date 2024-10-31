@@ -38,7 +38,7 @@ import android.Manifest
 import com.google.firebase.messaging.FirebaseMessaging
 import android.util.Log
 import com.google.android.gms.tasks.Task
-
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
@@ -63,7 +64,9 @@ import java.security.NoSuchAlgorithmException
 import kotlin.contracts.contract
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
+import com.example.pushoflife.data.datastore.UserPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
+import com.example.pushoflife.utils.FallDetectionService
 
 fun getKeyHash(context: Context): String? {
     try {
@@ -88,6 +91,7 @@ val PretendardSemiBold = FontFamily(
 val PretendardRegular = FontFamily(
     Font(R.font.pretendard_regular, FontWeight.Normal)
 )
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
@@ -124,7 +128,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
+    private lateinit var userPreferences: UserPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askNotificationPermission()
@@ -142,7 +146,19 @@ class MainActivity : ComponentActivity() {
 
         }
         firebaseAnalytics = Firebase.analytics
-
+        userPreferences = UserPreferences(this)
+        // DataStore에서 허용 여부를 확인하여 서비스 시작
+        lifecycleScope.launch {
+            userPreferences.allowDetection.collect { allowDetection ->
+                if (allowDetection) {
+                    val serviceIntent = Intent(this@MainActivity, FallDetectionService::class.java)
+                    startForegroundService(serviceIntent)
+                    Log.d("MainActivity", "Fall detection service started.")
+                } else {
+                    Log.d("MainActivity", "Fall detection not allowed.")
+                }
+            }
+        }
         enableEdgeToEdge()
 
         setContent {

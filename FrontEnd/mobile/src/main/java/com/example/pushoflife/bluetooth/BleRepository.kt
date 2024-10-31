@@ -224,6 +224,7 @@ class BleRepository {
 
     private val gattClientCallback = object : BluetoothGattCallback() {
 
+        @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 gatt.discoverServices() // 연결 성공 시 서비스 탐색 시작

@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Sharded;
 
 @Getter
 @Setter
-@Document(collection = "user_tokens")
+@Document(collection = "locationCollection")
 @Sharded(shardKey = { "fcmToken", "id" })
 public class MongoTokenEntity {
     @Id

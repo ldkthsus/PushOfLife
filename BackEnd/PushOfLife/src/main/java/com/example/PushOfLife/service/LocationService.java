@@ -82,7 +82,7 @@ public class LocationService {
 
         List<Point> position = geoOperations.position("user_location", userId);
         System.out.println(position.get(0));
-        
+
         Point point = position.get(0);
 
         // fcm Token 리스트

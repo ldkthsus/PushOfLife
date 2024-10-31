@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d556ce95-413e-4f7f-bef9-ad5361b8ab89" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/config/KafkaProducerConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/service/KafkaProducerService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/.gitattributes" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/build.gradle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/gradle/wrapper/gradle-wrapper.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/gradlew" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/gradlew.bat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/settings.gradle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/java/com/example/notification/NotificationApplication.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/java/com/example/notification/config/KafkaConsumerConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/java/com/example/notification/config/KafkaProducerConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/java/com/example/notification/controller/KafkaProducerController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/java/com/example/notification/controller/NotificationController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/java/com/example/notification/service/FirebaseInitializeService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/java/com/example/notification/service/KafkaConsumerService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/java/com/example/notification/service/KafkaProducerService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/java/com/example/notification/service/NotificationService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/main/resources/application.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../BackEnd/notification/src/test/java/com/example/notification/NotificationApplicationTests.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/codeStyles/Project.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/migrations.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/google-services.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/MyFirebaseMessagingService.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/network/LoginRequest.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/network/LoginResponse.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/network/SignUpRequest.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/network/UpdateUserRequest.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/utils/TwilioUtils.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/res/drawable/aedicon.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/res/drawable/homeicon.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/CprGuide.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/network/MessageSender.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/network/WearableListenerService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../BackEnd/PushOfLife/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/PushOfLife/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/config/RedisConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/config/RedisConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/controller/LocationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/controller/LocationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/dto/location/LocationDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/dto/location/LocationDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/service/LocationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/java/com/example/PushOfLife/service/LocationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../../BackEnd/PushOfLife/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/appInsightsSettings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/appInsightsSettings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/deploymentTargetSelector.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/other.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../gradle.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/../gradle/libs.versions.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/data/datastore/UserPreferences.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/data/datastore/UserPreferences.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/network/ApiService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/network/ApiService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/network/RetrofitClient.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/network/RetrofitClient.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/ui/aedLocation/AedLocationScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/ui/aedLocation/AedLocationScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/ui/user/LoginScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/ui/user/LoginScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/ui/user/ProfileEditScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/ui/user/ProfileEditScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/ui/user/SignUpScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/pushoflife/ui/user/SignUpScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/values/themes.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/values/themes.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/res/xml/network_security_config.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/xml/network_security_config.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../settings.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../settings.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wear/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/../wear/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wear/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../wear/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/SensorForegroundService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/SensorForegroundService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/network/MainNetwork.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/sensor/FallSensor.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/sensor/FallSensor.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/sensor/PushSensor.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../wear/src/main/java/com/example/pushoflife/sensor/PushSensor.kt" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <projects_view>
+          <tree_state>
+            <expand />
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2nsE96xoqeZPrDMtlCSHBiHWGCs" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "android.gradle.sync.needed": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "Merging backend__aed",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/SSAFY/workspace/project/S11P31B303/FrontEnd/mobile"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d556ce95-413e-4f7f-bef9-ad5361b8ab89" name="Changes" comment="" />
+      <created>1729753228937</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1729753228937</updated>
+    </task>
+    <servers />
+  </component>
+</project>

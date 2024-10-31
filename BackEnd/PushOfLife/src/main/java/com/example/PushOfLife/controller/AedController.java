@@ -1,13 +1,10 @@
 package com.example.PushOfLife.controller;
 
-import com.example.PushOfLife.dto.aed.AedRequestDTO;
-import com.example.PushOfLife.dto.aed.AedResponseDTO;
-import com.example.PushOfLife.entity.UserEntity;
+import com.example.PushOfLife.dto.aed.*;
 import com.example.PushOfLife.service.AedLocationService;
 import com.example.PushOfLife.service.AedService;
 import com.example.PushOfLife.service.CsvToDataBaseService;
 import com.example.PushOfLife.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +22,7 @@ public class AedController {
     private final UserService userService;
     private final AedLocationService aedLocationService;
 
-    @GetMapping("/list")
+    @GetMapping("/list/api")
     public ResponseEntity<?> getAedLoList() {
         try {
             aedService.fetchAllAedData();
@@ -45,12 +42,40 @@ public class AedController {
         }
     }
 
+    @GetMapping("/list")
+    public ResponseEntity<?> getAllAedLoList() {
+        List<AedResponseDTO> responseList = aedLocationService.getAllAedList();
+        return ResponseEntity.status(HttpStatus.OK).body(responseList);
+    }
+
     @GetMapping("/within-bounds")
-    public ResponseEntity<?> getAedWithinBounds(@RequestBody AedRequestDTO requestDTO) {
-        List<AedResponseDTO> responseDTO= aedLocationService.getAedLocation(requestDTO);
+    public ResponseEntity<?> getAedWithinBounds(@RequestParam("nor_latitude") double norLatitude, @RequestParam("nor_longitude") double norLongitude,
+                                                @RequestParam("sou_latitude") double souLatitude,@RequestParam("sou_longitude")  double souLongitude) {
+        List<AedResponseDTO> responseDTO= aedLocationService.getAedLocation(norLatitude, norLongitude, souLatitude, souLongitude);
         if (responseDTO == null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("AED not found");
         }
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+    }
+
+    @GetMapping("/details/{aedId}")
+    public ResponseEntity<?> getAedDetails(@PathVariable Integer aedId) {
+        AedDetailsResponseDTO responseDTO = aedLocationService.getAedDetails(aedId);
+        if (responseDTO == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("AED not found");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+    }
+
+    @PostMapping("/add/info")
+    public ResponseEntity<?> addAed(@RequestBody AedAddRequestDTO requestDTO) {
+        aedLocationService.addAed(requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body("success");
+    }
+
+    @PostMapping("/add/details")
+    public ResponseEntity<?> addAedDetails(@RequestBody AedDetailsRequestDTO requestDTO) {
+        aedLocationService.addAedDetails(requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body("success");
     }
 }

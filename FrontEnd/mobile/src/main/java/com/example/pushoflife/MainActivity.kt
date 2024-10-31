@@ -38,7 +38,7 @@ import android.Manifest
 import com.google.firebase.messaging.FirebaseMessaging
 import android.util.Log
 import com.google.android.gms.tasks.Task
-
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
@@ -58,10 +59,14 @@ import com.example.pushoflife.ui.user.SignUpScreen
 import android.content.Context
 import android.util.Base64
 //import android.util.Log
-import com.kakao.vectormap.KakaoMapSdk
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import kotlin.contracts.contract
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import com.example.pushoflife.data.datastore.UserPreferences
+import com.example.pushoflife.ui.aedLocation.AedLocationActivity
+import com.example.pushoflife.utils.FallDetectionService
 
 fun getKeyHash(context: Context): String? {
     try {
@@ -86,6 +91,7 @@ val PretendardSemiBold = FontFamily(
 val PretendardRegular = FontFamily(
     Font(R.font.pretendard_regular, FontWeight.Normal)
 )
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
@@ -122,7 +128,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
+    private lateinit var userPreferences: UserPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askNotificationPermission()
@@ -140,7 +146,19 @@ class MainActivity : ComponentActivity() {
 
         }
         firebaseAnalytics = Firebase.analytics
-
+        userPreferences = UserPreferences(this)
+        // DataStore에서 허용 여부를 확인하여 서비스 시작
+        lifecycleScope.launch {
+            userPreferences.allowDetection.collect { allowDetection ->
+                if (allowDetection) {
+                    val serviceIntent = Intent(this@MainActivity, FallDetectionService::class.java)
+                    startForegroundService(serviceIntent)
+                    Log.d("MainActivity", "Fall detection service started.")
+                } else {
+                    Log.d("MainActivity", "Fall detection not allowed.")
+                }
+            }
+        }
         enableEdgeToEdge()
 
         setContent {
@@ -157,12 +175,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        val keyHash = getKeyHash(this)
-        Log.d("KeyHash", keyHash ?: "KeyHash not found")
-        // 로그 출력으로 값 확인
-        Log.d("KakaoMapKey", "API Key: ${BuildConfig.KAKAO_MAP_KEY}")
-        // 카카오 지도 SDK 초기화
-        KakaoMapSdk.init(this, BuildConfig.KAKAO_MAP_KEY)
     }
 }
 
@@ -170,6 +182,7 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     // 현재 카드 인덱스를 저장하는 상태
     var currentCardIndex by remember { mutableStateOf(1) }
+    val context = LocalContext.current
 
     // 3초마다 카드 인덱스를 변경하는 LaunchedEffect
     LaunchedEffect(key1 = currentCardIndex) {
@@ -252,13 +265,18 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
 
         Spacer(modifier = Modifier.height(10.dp))
 
+// AED 컴포넌트
         // AED 컴포넌트
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(110.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { navController.navigate("aed_location_screen") },
+                .clickable {
+                    // XML Activity로 이동
+                    val intent = Intent(context, AedLocationActivity::class.java)
+                    context.startActivity(intent)
+                }
         ) {
             Image(
                 painter = painterResource(id = R.drawable.aed_location),
@@ -266,17 +284,14 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-
             Text(
                 text = "AED 위치",
                 fontSize = 20.sp,
                 fontFamily = PretendardSemiBold,
                 letterSpacing = (-0.5).sp,
                 color = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier
-                    .padding(top = 15.dp, start = 15.dp)
+                modifier = Modifier.padding(top = 15.dp, start = 15.dp)
             )
-
         }
 
         Spacer(modifier = Modifier.height(10.dp))

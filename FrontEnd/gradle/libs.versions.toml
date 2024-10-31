@@ -25,9 +25,12 @@ playServicesLocation = "21.3.0"
 #playServicesWearable = "17.1.0"
 accompanist = "0.28.0"
 twilio = "10.6.1"
-firebase-bom = "32.0.0"
-firebase-messaging = "23.0.5"
+firebase-bom = "33.5.1"
+firebase-messaging = "24.0.3"
 firebase-analytics = "21.4.0"
+gms-maps = "19.0.0"
+gms-location = "21.3.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -62,13 +65,13 @@ play-services-location = { module = "com.google.android.gms:play-services-locati
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }  # Accompanist Pager 추가
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
 
-kakao-maps = { group = "com.kakao.maps.open", name = "android", version = "2.12.8" }
 twilio-sdk = { group = "com.twilio.sdk", name = "twilio", version.ref = "twilio" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebase-messaging" }
 firebase-analytics = "com.google.firebase:firebase-analytics-ktx:{firebase-analytics}"
-
+gms-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "gms-maps" }
+gms-location = { module = "com.google.android.gms:play-services-location", version.ref = "gms-location" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

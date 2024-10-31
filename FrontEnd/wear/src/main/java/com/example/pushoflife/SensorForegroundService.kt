@@ -1,6 +1,7 @@
 
 package com.example.pushoflife
 
+import android.os.Binder
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -24,12 +25,11 @@ import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.Wearable
-
 class SensorForegroundService : Service(), SensorEventListener {
 
     private lateinit var messageSender: MessageSender // lateinit으로 변경하여 지연 초기화
     private val serviceScope = CoroutineScope(Dispatchers.Default + Job())
-
+    private val binder = SensorBinder()
     private lateinit var sensorManager: SensorManager
     private val fallSensor = FallSensor()
     private val pushSensor = PushSensor()
@@ -41,6 +41,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     private var linearAccelerationSensor: Sensor? = null
     var gravityValues: FloatArray? = null
     private var totalAccelation: Float = 0.0f
+    private var pressure: Sensor? = null
 
     // 가속도계 데이터를 전달하는 콜백
     var linearAccelerationSensorDataCallback: ((FloatArray)->Unit)? = null
@@ -76,6 +77,7 @@ class SensorForegroundService : Service(), SensorEventListener {
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
         linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
 
         // 센서 리스너 등록
         gyroscope?.also {
@@ -88,6 +90,9 @@ class SensorForegroundService : Service(), SensorEventListener {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
         linearAccelerationSensor?.also {
+            sensorManager.registerListener(this, it, 10000)
+        }
+        pressure?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
@@ -110,22 +115,26 @@ class SensorForegroundService : Service(), SensorEventListener {
                 gravityValues = event.values.clone()
             }
             Sensor.TYPE_LINEAR_ACCELERATION -> {
+//                val currentTime = System.currentTimeMillis()
+//
+//                if (currentTime - lastLinearAccelerationUpdateTime >= 50 ){
+//                    lastLinearAccelerationUpdateTime = currentTime
+//                }
                 val x = event.values[0]
                 val y = event.values[1]
                 val z = event.values[2]
                 //Log.d("acceleration", "acceleration : x=$x, y=$y, z=$z")
                 val linearAccelerationSensorData = event.values.clone()
-
-                // 가속도계 데이터를 콜백으로 전달
-                linearAccelerationSensorDataCallback?.invoke(linearAccelerationSensorData)
-                // PushSensor로 가속도계 데이터 전달
-                pushSensor.processlinearAccelerationSensorData(linearAccelerationSensorData)
+//// 가속도계 데이터를 콜백으로 전달
+//                linearAccelerationSensorDataCallback?.invoke(linearAccelerationSensorData)
+//                // PushSensor로 가속도계 데이터 전달
 
                 gravityValues?.let { gravity ->
                     totalAccelation = fallSensor.calculateAcceleration(event.values, gravity)
-                    //Log.d("밑 가속도", "total gravity : $totalAccelation")
+                    //Log.d("밑 가속도", "total gravity : $totalAccelation"
                 }
-                //Log.d("SensorData", "Accelerometer: x=$x, y=$y, z=$z")
+                Log.d("SensorData", "Accelerometer: $totalAccelation")
+                pushSensor.integrateAcceleration(totalAccelation)
                 if (!possibleFall && fallSensor.checkFall(totalAccelation)) {
                     Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
@@ -148,14 +157,12 @@ class SensorForegroundService : Service(), SensorEventListener {
                 //Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
                 val gyroscopeData = event.values.clone()
 
-                // 자이로스코프 데이터를 콜백으로 전달
-                gyroscopeDataCallback?.invoke(gyroscopeData)
                 // PushSensor로 자이로스코프 데이터 전달
 //                pushSensor.processGyroscopeData(gyroscopeData)
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])
-                Log.d("SensorData", "Heartrate: $heartRate")
+                //Log.d("SensorData", "Heartrate: $heartRate")
                 if(possibleFall && fallSensor.checkHeart(event.values[0])){
                     possibleHeart = true
                     nodeId?.let {
@@ -168,6 +175,10 @@ class SensorForegroundService : Service(), SensorEventListener {
                     Log.d("심정지 감지","Heartrate : $heartRate 심정지 가능성")
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
+            }
+            Sensor.TYPE_PRESSURE -> {
+                val millibarsOfPressure = event.values[0]
+                    //Log.d("고도","고도 : $millibarsOfPressure" )
             }
         }
     }
@@ -190,14 +201,16 @@ class SensorForegroundService : Service(), SensorEventListener {
         serviceScope.cancel()  // 백그라운드 작업 취소
         stopForeground(true)
     }
-
+    inner class SensorBinder : Binder() {
+        fun getService(): SensorForegroundService = this@SensorForegroundService
+    }
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelId = "notification_channel_id"
+            val channelId = "sensor_channel"//"notification_channel_id"
             val channelName = "Watch Notification Channel"
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val channel = NotificationChannel(channelId, channelName, importance)
@@ -240,6 +253,10 @@ class SensorForegroundService : Service(), SensorEventListener {
             Log.e("NodeID", "Failed to get connected node ID", it)
             onNodeIdReceived(null)
         }
+    }
+
+    fun getTotalAcceleration(): Float {
+        return totalAccelation
     }
 }
 

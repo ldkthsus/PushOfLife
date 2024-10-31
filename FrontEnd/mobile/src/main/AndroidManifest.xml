@@ -14,6 +14,12 @@
 
 
 
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
     <application
         android:networkSecurityConfig="@xml/network_security_config"
         android:allowBackup="true"
@@ -26,10 +32,12 @@
         android:theme="@style/Theme.PushOfLife"
         android:enableOnBackInvokedCallback="true"
         tools:targetApi="34">
-
         <meta-data
-            android:name="com.kakao.sdk.AppKey"
-            android:value="${KAKAO_MAP_KEY}" />
+            android:name="com.skt.tmap"
+            android:value="${T_MAP_KEY}" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${GOOGLE_MAP_KEY}" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -39,6 +47,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.aedLocation.AedLocationActivity"></activity>
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">
@@ -46,6 +55,11 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <service
+            android:name="com.example.pushoflife.utils.FallDetectionService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="health"/>
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher_round" />

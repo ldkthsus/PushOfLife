@@ -64,6 +64,7 @@ import kotlin.contracts.contract
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
+import com.example.pushoflife.utils.FallDetectionService
 
 fun getKeyHash(context: Context): String? {
     try {
@@ -88,6 +89,7 @@ val PretendardSemiBold = FontFamily(
 val PretendardRegular = FontFamily(
     Font(R.font.pretendard_regular, FontWeight.Normal)
 )
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
@@ -142,7 +144,9 @@ class MainActivity : ComponentActivity() {
 
         }
         firebaseAnalytics = Firebase.analytics
-
+        // 포그라운드 서비스 시작
+        val serviceIntent = Intent(this, FallDetectionService::class.java)
+        startForegroundService(serviceIntent)
         enableEdgeToEdge()
 
         setContent {

@@ -223,25 +223,54 @@ class BleRepository {
     }
 
     private val gattClientCallback = object : BluetoothGattCallback() {
-        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    Log.e(TAG, "BLUETOOTH_CONNECT permission is required to connect to GATT server.")
-                    disconnectGattServer()
-                    return
-                }
-            }
 
+        @SuppressLint("MissingPermission")
+        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                statusTxt = "Connected"
-                isStatusChange = true
-                Log.d(TAG, "Connected to GATT server")
-                gatt.discoverServices()
+                gatt.discoverServices() // 연결 성공 시 서비스 탐색 시작
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 disconnectGattServer()
             }
         }
+
+        @SuppressLint("MissingPermission")
+        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                val service = gatt.getService(UUID.fromString("YOUR_SERVICE_UUID"))
+                val characteristic = service?.getCharacteristic(UUID.fromString("YOUR_CHARACTERISTIC_UUID"))
+
+                // Notify 활성화 - 데이터를 자동으로 수신하기 위해 설정
+                characteristic?.let {
+                    gatt.setCharacteristicNotification(it, true)
+
+                    val descriptor = it.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
+                    descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    gatt.writeDescriptor(descriptor)
+                }
+            }
+        }
+
+        // 특성이 변경될 때마다 자동으로 호출되는 메소드
+        override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+            val receivedData = characteristic.value // 수신된 데이터 읽기
+            logReceivedData(receivedData) // 로그에 출력
+        }
+
+        // 필요한 경우, onCharacteristicRead 메소드를 사용하여 수동으로 데이터를 읽을 수도 있습니다.
+        override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                val receivedData = characteristic.value // 수신된 데이터 읽기
+                logReceivedData(receivedData) // 로그에 출력
+            }
+        }
     }
+
+    // 로그에 데이터를 출력하는 메소드
+    private fun logReceivedData(data: ByteArray) {
+        val dataString = String(data) // ByteArray를 문자열로 변환
+        Log.d("BleDeviceManager", "Received data: $dataString")
+    }
+
 
     fun disconnectGattServer() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

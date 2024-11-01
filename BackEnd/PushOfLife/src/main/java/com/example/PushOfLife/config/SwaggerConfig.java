@@ -38,7 +38,7 @@ public class SwaggerConfig {
 
         return new OpenAPI().components(new Components())
                 .info(info)
-//                .servers(Collections.singletonList(new Server().url(serverUrl).description("API Server")))
+                .servers(Collections.singletonList(new Server().url(serverUrl).description("API Server")))
                 .addSecurityItem(securityRequirement)
                 .components(components);
 

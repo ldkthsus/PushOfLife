@@ -61,6 +61,9 @@ fun ProfileEditScreen(navController: NavController) {
     val PretendardBold = FontFamily(
         Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
+    val PretendardRegular = FontFamily(
+        Font(R.font.pretendard_regular, FontWeight.Normal)
+    )
 
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
@@ -151,7 +154,9 @@ fun ProfileEditScreen(navController: NavController) {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.backicon),
-                    contentDescription = "뒤로 가기"
+                    contentDescription = "뒤로 가기",
+                    modifier = Modifier
+                    .size(25.dp) // 아이콘 크기
                 )
             }
 

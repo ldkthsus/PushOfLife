@@ -60,13 +60,14 @@ import android.content.Context
 import android.util.Base64
 //import android.util.Log
 import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
-import kotlin.contracts.contract
 import android.content.Intent
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
 import com.example.pushoflife.data.datastore.UserPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
-import com.example.pushoflife.utils.FallDetectionService
+import com.example.pushoflife.service.FallDetectionService
+import com.example.pushoflife.utils.isWearDeviceConnected
 
 fun getKeyHash(context: Context): String? {
     try {
@@ -183,6 +184,12 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     // 현재 카드 인덱스를 저장하는 상태
     var currentCardIndex by remember { mutableStateOf(1) }
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    var isFallDetectionEnabled by remember { mutableStateOf(false) }
+    // Wear OS 장치 연결 여부 확인
+    val isWearDeviceConnected = isWearDeviceConnected(context)
+    // 응급상황 임시 변수
+    var emergency by remember { mutableStateOf(false) }
 
     // 3초마다 카드 인덱스를 변경하는 LaunchedEffect
     LaunchedEffect(key1 = currentCardIndex) {
@@ -195,6 +202,7 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(start = 20.dp, top = 40.dp, end = 20.dp, bottom = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -225,15 +233,97 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
             )
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-
         Divider(
             color = Color.Gray,            // 선 색상
             thickness = 0.5.dp,              // 선 두께
             modifier = Modifier.padding(vertical = 8.dp)  // 위아래 여백
         )
 
+
+        if (emergency) {
+            // 응급상황 시 조건부 컴포넌트
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable {
+                        val intent = Intent(context, AedLocationActivity::class.java)
+                        intent.putExtra("emergency", emergency)
+                        intent.putExtra("patient_latitude", 36.35543407017086) // 임시 위도
+                        intent.putExtra("patient_longitude", 127.2992006868786) // 임시 경도
+                        context.startActivity(intent)
+                    }
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.emergency),
+                    contentDescription = "응급상황 발생",
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                Text(
+                    text = "도움이 필요합니다.\n" +
+                            "근처에 심정지 환자가 있습니다.\n" +
+                            "버튼을 터치하면 구조를 시작합니다.",
+                    fontSize = 20.sp,
+                    fontFamily = PretendardSemiBold,
+                    lineHeight = 33.sp,
+                    letterSpacing = (-0.5).sp,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .padding(top = 15.dp, start = 15.dp)
+                )
+
+            }
+        }
+
         Spacer(modifier = Modifier.height(10.dp))
+        if (!isWearDeviceConnected) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            ) {
+                // 배경 이미지
+
+                // 토글 및 상태 텍스트
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopStart), // Box 안에서 토글 위치 설정
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // 토글 버튼
+                    Switch(
+                        checked = isFallDetectionEnabled,
+                        onCheckedChange = { isFallDetectionEnabled = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onSurface,         // 활성화된 스위치 색상
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,      // 비활성화된 스위치 색상
+                            checkedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),  // 활성화된 트랙 색상
+                            uncheckedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),  // 비활성화된 트랙 색상
+                        ),
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .background(MaterialTheme.colorScheme.onSecondary) // 원하는 배경색 추가
+                    )
+
+                    // 상태에 따라 텍스트 표시
+                    Text(
+                        text = if (isFallDetectionEnabled) "낙상을 감지 중이에요!" else "낙상 감지 기능이 꺼져 있어요!",
+                        fontSize = 16.sp,
+                        fontFamily = PretendardRegular,
+                        letterSpacing = (-0.5).sp,
+//                    color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        }
 
         // 서비스 가이드 컴포넌트
         Box(
@@ -330,6 +420,8 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
             2 -> CardComponent2()
             3 -> CardComponent3()
         }
+
+        Spacer(modifier = Modifier.height(50.dp))
     }
 }
 

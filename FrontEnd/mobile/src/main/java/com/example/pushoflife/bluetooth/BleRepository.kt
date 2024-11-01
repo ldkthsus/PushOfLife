@@ -14,10 +14,18 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import com.example.pushoflife.MyApplication
+import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.utils.Event
+import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.tasks.Tasks
+import com.google.android.gms.wearable.MessageClient
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -265,13 +273,42 @@ class BleRepository {
         }
     }
 
-    // 로그에 데이터를 출력하는 메소드
     private fun logReceivedData(data: ByteArray) {
-        val dataString = String(data) // ByteArray를 문자열로 변환
-        Log.d("BleDeviceManager", "Received data: $dataString")
+        if (data.size >= 16) {
+            val latitude = ByteBuffer.wrap(data.sliceArray(0 until 8)).double
+            val longitude = ByteBuffer.wrap(data.sliceArray(8 until 16)).double
+
+            Log.d(TAG, "Received latitude: $latitude, longitude: $longitude")
+
+            // JSON 형식으로 위도와 경도 묶기
+            val json = JSONObject().apply {
+                put("latitude", latitude)
+                put("longitude", longitude)
+            }
+            val message = json.toString() // JSON 객체를 문자열로 변환
+
+            // DataStore에 위도와 경도 저장
+            CoroutineScope(Dispatchers.IO).launch {
+                val emergencyPreferences = EmergencyPreferences(context)
+                emergencyPreferences.saveLocation(latitude, longitude)
+            }
+
+            // 워치로 메시지 전송
+            sendMessageToWatch(message)
+
+        } else {
+            Log.e(TAG, "Invalid data length: Expected 16 bytes, received ${data.size}")
+        }
     }
+    fun sendMessageToWatch(message: String) {
+        val messageClient: MessageClient = Wearable.getMessageClient(context)
+        val path = "/emergency_alert"
 
-
+        val nodes = Tasks.await(Wearable.getNodeClient(context).connectedNodes)
+        for (node in nodes) {
+            messageClient.sendMessage(node.id, path, message.toByteArray())
+        }
+    }
     fun disconnectGattServer() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {

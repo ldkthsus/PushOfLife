@@ -76,7 +76,8 @@ fun CprGuideScreen(navController: NavController, modifier: Modifier = Modifier) 
                 text = "CPR 가이드",
                 fontSize = 24.sp,  // 글자 크기
                 textAlign = TextAlign.Center,
-                fontFamily = com.example.pushoflife.PretendardSemiBold,
+                fontFamily = PretendardSemiBold,
+                letterSpacing = (-1).sp,
                 modifier = Modifier
                     .weight(1f) // 남은 공간을 차지하도록 설정
                     .padding(end = 40.dp)

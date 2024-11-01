@@ -2,15 +2,17 @@ package com.example.pushoflife.utils
 
 import android.Manifest
 import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.core.content.ContextCompat
 
+private const val TAG = "WearDeviceChecker"
+
 fun isWearDeviceConnected(context: Context): Boolean {
-    // Bluetooth 권한이 있는지 확인
+    // Check Bluetooth permission
     if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-        // 권한이 없을 경우 false 반환
+//        Log.d(TAG, "BLUETOOTH_CONNECT permission is missing")
         return false
     }
 
@@ -18,15 +20,25 @@ fun isWearDeviceConnected(context: Context): Boolean {
     val bluetoothAdapter = bluetoothManager?.adapter
 
     if (bluetoothAdapter != null && bluetoothAdapter.isEnabled) {
+//        Log.d(TAG, "Bluetooth adapter is enabled")
+
         val pairedDevices = bluetoothAdapter.bondedDevices
+//        Log.d(TAG, "Number of paired devices: ${pairedDevices.size}")
+
         for (device in pairedDevices) {
-            // 장치 이름이 "Watch"를 포함하는지 확인하여 Wear OS 장치인지 추정
+//            Log.d(TAG, "Paired device name: ${device.name}")
             if (device.name?.contains("Watch", ignoreCase = true) == true) {
+                Log.d(TAG, "Wear OS device found: ${device.name}")
                 return true
             }
         }
+//        Log.d(TAG, "No Wear OS device found among paired devices")
+    } else {
+//        Log.d(TAG, "Bluetooth adapter is unavailable")
     }
 
-    // 패키지 매니저를 통해 Wear OS 시스템 패키지가 있는지 확인하여 Wear OS 장치 여부 확인
-    return context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+    val isWearDevice = context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+//    Log.d(TAG, "Wear OS device status via system feature: $isWearDevice")
+
+    return isWearDevice
 }

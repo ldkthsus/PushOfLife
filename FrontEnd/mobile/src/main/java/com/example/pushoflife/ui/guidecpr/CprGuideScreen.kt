@@ -84,7 +84,7 @@ fun CprGuideScreen(navController: NavController, modifier: Modifier = Modifier) 
             )
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+//        Spacer(modifier = Modifier.height(10.dp))
 
         // Pager
         HorizontalPager(
@@ -96,7 +96,7 @@ fun CprGuideScreen(navController: NavController, modifier: Modifier = Modifier) 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(450.dp)
+                    .height(400.dp)
                     .clip(RoundedCornerShape(12.dp))
 //                    .background(color = when (page) {
 //                        0 -> Color(0xFFE7CAD5)
@@ -143,7 +143,7 @@ fun CprGuideScreen(navController: NavController, modifier: Modifier = Modifier) 
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // 페이지 인디케이터
         Row(
@@ -167,7 +167,7 @@ fun CprGuideScreen(navController: NavController, modifier: Modifier = Modifier) 
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
 
         CardComponent1()
@@ -232,7 +232,7 @@ fun CardComponent1() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(260.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(color = Color(0xFFE7CAD5))
     ) {
@@ -240,7 +240,7 @@ fun CardComponent1() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(15.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+//            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단 텍스트

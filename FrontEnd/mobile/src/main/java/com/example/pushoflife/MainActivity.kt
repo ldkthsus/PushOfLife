@@ -67,6 +67,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.pushoflife.data.datastore.UserPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 import com.example.pushoflife.service.FallDetectionService
+import com.example.pushoflife.utils.isWearDeviceConnected
 
 fun getKeyHash(context: Context): String? {
     try {
@@ -185,7 +186,8 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var isFallDetectionEnabled by remember { mutableStateOf(false) }
-
+    // Wear OS 장치 연결 여부 확인
+    val isWearDeviceConnected = isWearDeviceConnected(context)
     // 응급상황 임시 변수
     var emergency by remember { mutableStateOf(false) }
 
@@ -281,44 +283,45 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
         }
 
         Spacer(modifier = Modifier.height(10.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .clip(RoundedCornerShape(12.dp))
-        ) {
-            // 배경 이미지
-
-            // 토글 및 상태 텍스트
-            Row(
+        if (!isWearDeviceConnected) {
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopStart), // Box 안에서 토글 위치 설정
-                verticalAlignment = Alignment.CenterVertically,
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .clip(RoundedCornerShape(12.dp))
             ) {
-                // 토글 버튼
-                Switch(
-                    checked = isFallDetectionEnabled,
-                    onCheckedChange = { isFallDetectionEnabled = it },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.onSurface,         // 활성화된 스위치 색상
-                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,      // 비활성화된 스위치 색상
-                        checkedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),  // 활성화된 트랙 색상
-                        uncheckedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),  // 비활성화된 트랙 색상
-                    ),
-                    modifier = Modifier
-                        .padding(end = 10.dp)
-                        .background(MaterialTheme.colorScheme.onSecondary) // 원하는 배경색 추가
-                )
+                // 배경 이미지
 
-                // 상태에 따라 텍스트 표시
-                Text(
-                    text = if (isFallDetectionEnabled) "낙상을 감지 중이에요!" else "낙상 감지 기능이 꺼져 있어요!",
-                    fontSize = 16.sp,
-                    fontFamily = PretendardRegular,
-                    letterSpacing = (-0.5).sp,
+                // 토글 및 상태 텍스트
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopStart), // Box 안에서 토글 위치 설정
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // 토글 버튼
+                    Switch(
+                        checked = isFallDetectionEnabled,
+                        onCheckedChange = { isFallDetectionEnabled = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onSurface,         // 활성화된 스위치 색상
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,      // 비활성화된 스위치 색상
+                            checkedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),  // 활성화된 트랙 색상
+                            uncheckedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),  // 비활성화된 트랙 색상
+                        ),
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .background(MaterialTheme.colorScheme.onSecondary) // 원하는 배경색 추가
+                    )
+
+                    // 상태에 따라 텍스트 표시
+                    Text(
+                        text = if (isFallDetectionEnabled) "낙상을 감지 중이에요!" else "낙상 감지 기능이 꺼져 있어요!",
+                        fontSize = 16.sp,
+                        fontFamily = PretendardRegular,
+                        letterSpacing = (-0.5).sp,
 //                    color = MaterialTheme.colorScheme.primary,
-                )
+                    )
+                }
             }
         }
 

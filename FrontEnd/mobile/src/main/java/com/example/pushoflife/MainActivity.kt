@@ -64,11 +64,29 @@ import android.content.Intent
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
+import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.data.datastore.UserPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 import com.example.pushoflife.service.FallDetectionService
+import com.example.pushoflife.service.LocationUpdatesService
 import com.example.pushoflife.utils.isWearDeviceConnected
+import kotlinx.coroutines.flow.first
 
+suspend fun prepareEmergencyMessage(context: Context) {
+    val userPreferences = UserPreferences(context)
+    val userProfile = userPreferences.getUserProfile().first() // UserProfile을 미리 가져옴
+
+    // 메시지 내용 빌드
+    val messageContent = buildString {
+        if (userProfile.name.isNotEmpty()) append("${userProfile.name}님의 비상 연락처입니다.\n")
+        else append("비상 연락처입니다.\n")
+        append("환자가 쓰러져 자동 신고되었습니다.\n")
+        append("환자 위치: ${userProfile.address}")
+    }
+
+    // 메시지를 DataStore에 저장
+    userPreferences.saveEmergencyMessage(messageContent)
+}
 fun getKeyHash(context: Context): String? {
     try {
         val info = context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_SIGNATURES)
@@ -96,44 +114,60 @@ val PretendardRegular = FontFamily(
 
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun askNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            when {
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    // Toast.makeText(this, "Permission already granted", Toast.LENGTH_SHORT)
-                }
-
-                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
-                    // Show an educational UI and request permission again
-                    Toast.makeText(this, "Notification permission is required for notifications", Toast.LENGTH_LONG).show()
-                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-
-                else -> {
-                    // Directly request permission
-                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
+    private val requestMultiplePermissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        permissions.entries.forEach {
+            val permission = it.key
+            val isGranted = it.value
+            if (isGranted) {
+                Log.d("Permissions", "$permission granted.")
+            } else {
+                Log.d("Permissions", "$permission denied.")
             }
         }
     }
+    private fun askPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+
+        // 알림 권한 요청 (Android 13 이상)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+
+        // Bluetooth 연결 권한 요청
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
+        }
+
+        // 위치 권한 요청
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+
+        // 필요한 권한이 있다면 요청, 없다면 바로 서비스 시작
+        if (permissionsToRequest.isNotEmpty()) {
+            requestMultiplePermissionsLauncher.launch(permissionsToRequest.toTypedArray())
+        } else {
+            startLocationService() // 모든 권한이 이미 허용된 경우 서비스 바로 시작
+        }
+    }
+
+
+
+
+    private fun startLocationService() {
+        startService(Intent(this, LocationUpdatesService::class.java))
+    }
     private lateinit var userPreferences: UserPreferences
+    private var isFallDetectionEnabled by mutableStateOf(false)
+    private var emergency by mutableStateOf(false)
+    private lateinit var emergencyPreferences: EmergencyPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        askNotificationPermission()
-
+        askPermissions()
         FirebaseMessaging.getInstance().token
             .addOnCompleteListener { task: Task<String> ->
                 if (!task.isSuccessful) {
@@ -148,16 +182,27 @@ class MainActivity : ComponentActivity() {
         }
         firebaseAnalytics = Firebase.analytics
         userPreferences = UserPreferences(this)
+        emergencyPreferences = EmergencyPreferences(this)
+        // 긴급 메시지 준비
+        lifecycleScope.launch {
+            prepareEmergencyMessage(this@MainActivity)
+        }
         // DataStore에서 허용 여부를 확인하여 서비스 시작
         lifecycleScope.launch {
             userPreferences.allowDetection.collect { allowDetection ->
+                val serviceIntent = Intent(this@MainActivity, FallDetectionService::class.java)
+                isFallDetectionEnabled = allowDetection
                 if (allowDetection) {
-                    val serviceIntent = Intent(this@MainActivity, FallDetectionService::class.java)
                     startForegroundService(serviceIntent)
                     Log.d("MainActivity", "Fall detection service started.")
                 } else {
-                    Log.d("MainActivity", "Fall detection not allowed.")
+                    stopService(serviceIntent)
+                    Log.d("MainActivity", "Fall detection service stopped.")
                 }
+            }
+            emergencyPreferences.getLocation().collect{ (latitude, longitude) ->
+                emergency = latitude != null && longitude != null
+
             }
         }
         enableEdgeToEdge()
@@ -166,7 +211,13 @@ class MainActivity : ComponentActivity() {
             PushOfLifeTheme {
                 val navController = rememberNavController() // Navigation Controller 생성
                 NavHost(navController = navController, startDestination = "main_screen") {
-                    composable("main_screen") { MainScreen(navController) }  // 메인 화면
+                    composable("main_screen") { MainScreen(navController, isFallDetectionEnabled = isFallDetectionEnabled,
+                        emergency = emergency,
+                        onToggleFallDetection = { enabled ->
+                            lifecycleScope.launch {
+                                userPreferences.setAllowDetection(enabled)
+                            }
+                        }) }  // 메인 화면
                     composable("service_screen") { ServiceScreen(navController) }          // 서비스 가이드 화면
                     composable("profile_edit_screen") { ProfileEditScreen(navController) } // 프로필 수정 화면
                     composable("sign_up_screen") { SignUpScreen(navController) }
@@ -176,20 +227,43 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        LocationUpdatesService.scheduleLocationUpdates(this)
+
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        // 위치 추적 서비스 중지
+        stopService(Intent(this, LocationUpdatesService::class.java))
     }
 }
 
 @Composable
-fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) {
+fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier,isFallDetectionEnabled: Boolean,emergency:Boolean,
+               onToggleFallDetection: (Boolean) -> Unit) {
     // 현재 카드 인덱스를 저장하는 상태
     var currentCardIndex by remember { mutableStateOf(1) }
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    var isFallDetectionEnabled by remember { mutableStateOf(false) }
+    // 위도와 경도 값을 위한 상태
+    var latitude by remember { mutableStateOf<Double?>(null) }
+    var longitude by remember { mutableStateOf<Double?>(null) }
+
+    // emergency가 true일 경우에만 데이터 로드
+    if (emergency) {
+        LaunchedEffect(emergency) {
+            // EmergencyPreferences에서 위치 데이터를 가져옴
+            val emergencyPreferences = EmergencyPreferences(context)
+            emergencyPreferences.getLocation().collect { (lat, lon) ->
+                latitude = lat
+                longitude = lon
+            }
+        }
+    }
+
     // Wear OS 장치 연결 여부 확인
     val isWearDeviceConnected = isWearDeviceConnected(context)
     // 응급상황 임시 변수
-    var emergency by remember { mutableStateOf(false) }
+//    var emergency by remember { mutableStateOf(false) }
 
     // 3초마다 카드 인덱스를 변경하는 LaunchedEffect
     LaunchedEffect(key1 = currentCardIndex) {
@@ -253,8 +327,8 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                     .clickable {
                         val intent = Intent(context, AedLocationActivity::class.java)
                         intent.putExtra("emergency", emergency)
-                        intent.putExtra("patient_latitude", 36.35543407017086) // 임시 위도
-                        intent.putExtra("patient_longitude", 127.2992006868786) // 임시 경도
+                        intent.putExtra("patient_latitude", latitude) // 임시 위도
+                        intent.putExtra("patient_longitude", longitude) // 임시 경도
                         context.startActivity(intent)
                     }
             ) {
@@ -301,16 +375,17 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                     // 토글 버튼
                     Switch(
                         checked = isFallDetectionEnabled,
-                        onCheckedChange = { isFallDetectionEnabled = it },
+                        onCheckedChange = { enabled ->
+                            onToggleFallDetection(enabled)
+                        },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.onSurface,         // 활성화된 스위치 색상
-                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,      // 비활성화된 스위치 색상
+                            checkedThumbColor = MaterialTheme.colorScheme.onSecondary,         // 활성화된 스위치 색상
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSecondary,      // 비활성화된 스위치 색상
                             checkedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),  // 활성화된 트랙 색상
                             uncheckedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),  // 비활성화된 트랙 색상
                         ),
                         modifier = Modifier
                             .padding(end = 10.dp)
-                            .background(MaterialTheme.colorScheme.onSecondary) // 원하는 배경색 추가
                     )
 
                     // 상태에 따라 텍스트 표시
@@ -431,7 +506,7 @@ fun CardComponent1() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(260.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(color = Color(0xFFE7CAD5))
     ) {
@@ -439,7 +514,7 @@ fun CardComponent1() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(15.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+//            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단 텍스트
@@ -458,7 +533,7 @@ fun CardComponent1() {
                 contentDescription = "CPR 가이드",
                 modifier = Modifier
                     .width(270.dp)
-                    .height(170.dp)
+                    .height(150.dp)
             )
 
             // 하단 텍스트
@@ -480,7 +555,7 @@ fun CardComponent2() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(260.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(color = Color(0xFFD5DCFF))
     ) {
@@ -488,7 +563,7 @@ fun CardComponent2() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(15.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+//            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단 텍스트
@@ -507,7 +582,7 @@ fun CardComponent2() {
                 contentDescription = "AED 설명",
                 modifier = Modifier
                     .width(270.dp)
-                    .height(170.dp)
+                    .height(150.dp)
             )
 
             // 하단 텍스트
@@ -529,7 +604,7 @@ fun CardComponent3() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(260.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(color = Color(0xFFFFC1C1))
     ) {
@@ -537,7 +612,7 @@ fun CardComponent3() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(15.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+//            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 상단 텍스트
@@ -556,7 +631,7 @@ fun CardComponent3() {
                 contentDescription = "CPR 설명",
                 modifier = Modifier
                     .width(270.dp)
-                    .height(170.dp)
+                    .height(150.dp)
             )
 
             // 하단 텍스트
@@ -576,6 +651,11 @@ fun CardComponent3() {
 @Composable
 fun MainScreenPreview() {
     PushOfLifeTheme {
-        MainScreen(navController = rememberNavController())
+        MainScreen(
+            navController = rememberNavController(),
+            isFallDetectionEnabled = false, // 기본값 설정
+            emergency = false,
+            onToggleFallDetection = {} // 빈 람다
+        )
     }
 }

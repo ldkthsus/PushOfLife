@@ -27,7 +27,10 @@ class PushSensor {
     private var startTime: Long = 0
     private var endAcceleration = 0.0f
     private var endTime: Long = 0
-
+    private var previousTime: Long = 0
+    private var isIncreasing = false
+    private var cycleCount = 0
+    private var lastPeakTime: Long = 0L
     // CPR 피드백 계산 함수
     fun calculateCPRFeedback(acceleration: Float) {
         val correctedAcceleration = if (abs(acceleration) < noiseThreshold) 0.0f else acceleration * resistanceFactor
@@ -54,7 +57,7 @@ class PushSensor {
             completeCompression(correctedAcceleration, currentTime)
         } else if (isPressing && (currentTime - startTime) > maxPressDuration) {
             // 최대 압박 지속 시간 초과 시 강제 종료
-            completeCompression(0f, currentTime)  // 종료 가속도를 0으로 설정하여 종료 처리
+            completeCompression(-0.2f, currentTime)  // 종료 가속도를 0으로 설정하여 종료 처리
         }
 
         // 압박 중 거리 업데이트
@@ -62,6 +65,7 @@ class PushSensor {
             previousVelocity = currentVelocity
             previousDistance = distance
         }
+        trackCprCycle(acceleration, currentTime)
     }
 
     // 압박 종료 처리 함수
@@ -78,5 +82,41 @@ class PushSensor {
         // 초기화
         previousVelocity = 0.0
         previousDistance = 0.0
+    }
+
+    // CPR 압박 빈도 측정 함수
+    // 여기서 CPR 시행 여부를 판단할 수 있음, 추후 자동 가이드 음악 시작 및 종료 조건도 여기서 걸 수 있을 듯
+    private fun trackCprCycle(totalAcceleration: Float, currentTime: Long) {
+        // 가속도가 증가하는지, 감소하는지에 따라 시작/끝점 감지
+        if (totalAcceleration > previousVelocity) {
+            if (!isIncreasing) {
+                isIncreasing = true
+                // 새로운 사이클의 시작점을 감지
+                cycleCount++
+                Log.d(
+                    "CPR_Cycle",
+                    "Cycle $cycleCount detected at ${currentTime - lastPeakTime} ms interval"
+                )
+
+                // 3초마다 cycleCount 평가 및 피드백 제공
+                if (currentTime - lastPeakTime >= 5000) {
+                    frequencyFeedback(cycleCount) // 피드백 제공 함수 호출
+                    cycleCount = 0 // 카운트 리셋
+                    lastPeakTime = currentTime // 피드백 제공 시간 갱신
+                }
+            }
+        } else {
+            isIncreasing = false
+        }
+    }
+
+    // CPR 빈도에 따라 피드백 제공
+    private fun frequencyFeedback(cycleCount: Int) {
+        val cprFrequencyFeedback = when {
+            cycleCount > 12 -> "빠름"
+            cycleCount in 9..12 -> "정상 속도"
+            else -> "느림"
+        }
+        Log.d("CPR_Feedback", "$cprFrequencyFeedback cpr")
     }
 }

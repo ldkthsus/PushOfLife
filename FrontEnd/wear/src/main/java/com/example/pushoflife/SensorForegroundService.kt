@@ -22,6 +22,7 @@ import com.example.pushoflife.sensor.PushSensor
 import com.example.pushoflife.sensor.WristAngleSensor
 import com.example.pushoflife.network.MessageSender
 import com.example.pushoflife.SecondActivity
+import com.example.pushoflife.CprGuideActivity
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
@@ -34,7 +35,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private val fallSensor = FallSensor()
     private val pushSensor = PushSensor()
-    private val wristAngleSensor = WristAngleSensor()
+    private val wristAngleSensor = WristAngleSensor(CprGuideActivity())
     private var possibleFall = false
     private var possibleHeart = false
     private var gyroscope: Sensor? = null
@@ -157,8 +158,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                 val z = String.format("%.2f", event.values[2])
                 //Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
                 val gyroscopeData = event.values
-                // wristAngleSensor로 자이로스코프 데이터 전달
-                wristAngleSensor.processGyroscopeData(gyroscopeData)
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])

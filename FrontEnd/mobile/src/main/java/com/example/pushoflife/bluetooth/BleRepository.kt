@@ -144,7 +144,7 @@ class BleRepository {
 
     @RequiresApi(Build.VERSION_CODES.M)
     fun startScan() {
-        if (bleAdapter == null || !bleAdapter?.isEnabled!!) {
+        if (bleAdapter == null || !bleAdapter!!.isEnabled) {
             requestEnableBLE.postValue(Event(true))
             statusTxt = "Scanning Failed: BLE not enabled"
             isStatusChange = true
@@ -157,22 +157,20 @@ class BleRepository {
             return
         }
 
-        val filters = listOf(
-            ScanFilter.Builder()
-                .setServiceUuid(ParcelUuid(UUID.fromString(SERVICE_STRING)))
-                .build()
-        )
+        // 필터링을 제거하고 모든 주변 기기를 스캔
+        val filters = emptyList<ScanFilter>()  // 빈 리스트로 설정하여 모든 기기를 스캔
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
             .build()
 
-        bleAdapter?.bluetoothLeScanner?.startScan(filters, settings, BLEScanCallback)
+        bleAdapter!!.bluetoothLeScanner?.startScan(filters, settings, BLEScanCallback)
         statusTxt = "Scanning...."
         isStatusChange = true
         isScanning.postValue(Event(true))
 
         Timer("SettingUp", false).schedule(3000) { stopScan() }
     }
+
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun stopScan() {

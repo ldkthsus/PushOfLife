@@ -1,4 +1,4 @@
-package com.example.pushoflife.utils
+package com.example.pushoflife.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -12,7 +12,6 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.pushoflife.MainActivity
 import com.example.pushoflife.R

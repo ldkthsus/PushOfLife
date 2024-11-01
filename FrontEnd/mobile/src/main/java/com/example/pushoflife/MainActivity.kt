@@ -60,15 +60,13 @@ import android.content.Context
 import android.util.Base64
 //import android.util.Log
 import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
-import kotlin.contracts.contract
 import android.content.Intent
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
 import com.example.pushoflife.data.datastore.UserPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
-import com.example.pushoflife.utils.FallDetectionService
+import com.example.pushoflife.service.FallDetectionService
 
 fun getKeyHash(context: Context): String? {
     try {

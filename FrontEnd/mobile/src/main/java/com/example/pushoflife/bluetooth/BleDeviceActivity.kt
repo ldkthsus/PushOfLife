@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -29,10 +30,13 @@ class BleDeviceActivity : AppCompatActivity() {
     ) { permissions ->
         if (permissions.all { it.value }) {
             Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
-            // 광고 시작
-            viewModel.startAdvertising()
+            // 권한이 부여되면 Foreground Service를 통해 광고 시작
+            startBleAdvertiseService()
         } else {
             Toast.makeText(this, "Permissions must be granted", Toast.LENGTH_SHORT).show()
+            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            intent.data = Uri.parse("package:$packageName")
+            startActivity(intent)
         }
     }
 
@@ -46,14 +50,19 @@ class BleDeviceActivity : AppCompatActivity() {
         // 권한 확인 및 요청
         if (!hasPermissions(PERMISSIONS)) {
             requestPermissionLauncher.launch(PERMISSIONS)
-        }
-        else {
+        } else {
             // 권한이 이미 있는 경우 광고 시작
-            viewModel.startAdvertising()
+            startBleAdvertiseService()
         }
 
         // 스캔 결과를 관찰하여 BleDeviceManager에 저장
         initObserver()
+    }
+
+    // 권한이 있는 경우 Foreground Service를 통해 BLE 광고 시작
+    private fun startBleAdvertiseService() {
+        val serviceIntent = Intent(this, BleAdvertiseService::class.java)
+        ContextCompat.startForegroundService(this, serviceIntent)
     }
 
     private fun initObserver() {

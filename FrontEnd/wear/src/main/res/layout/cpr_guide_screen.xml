@@ -11,4 +11,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="cpr 가이드 화면입니다~" />
+
+    <!--종료 버튼-->
+    <Button
+        android:id="@+id/exitButton"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:text="종료"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="visible" />
 </LinearLayout>

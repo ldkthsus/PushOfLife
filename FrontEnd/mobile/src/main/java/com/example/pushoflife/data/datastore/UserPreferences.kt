@@ -22,7 +22,7 @@ object UserPreferencesKeys {
     val PILL_KEY = stringPreferencesKey("pill")
     val USER_PROTECTOR_KEY = stringPreferencesKey("user_protector")
     val USER_ADDRESS_KEY = stringPreferencesKey("user_address")
-
+    val EMERGENCY_MESSAGE_KEY = stringPreferencesKey("emergency_message")
     // 새로운 감지 허용 여부 키 정의
     val ALLOW_DETECTION_KEY = booleanPreferencesKey("allow_detection")
 }
@@ -67,7 +67,17 @@ class UserPreferences(private val context: Context) {
             UserProfile(name, birthdate, gender, disease, hospital, pill, protector, address)
         }
     }
-
+    // 긴급 메시지 저장
+    suspend fun saveEmergencyMessage(messageContent: String) {
+        context.dataStore.edit { preferences ->
+            preferences[UserPreferencesKeys.EMERGENCY_MESSAGE_KEY] = messageContent
+        }
+    }
+    // 긴급 메시지 읽기
+    val emergencyMessage: Flow<String> = context.dataStore.data
+        .map { preferences ->
+            preferences[UserPreferencesKeys.EMERGENCY_MESSAGE_KEY] ?: "낙상 환자 발생"
+        }
     // 감지 허용 여부 저장
     suspend fun setAllowDetection(allow: Boolean) {
         context.dataStore.edit { preferences ->

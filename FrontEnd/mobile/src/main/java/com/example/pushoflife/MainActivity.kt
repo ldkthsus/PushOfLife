@@ -61,6 +61,8 @@ import android.util.Base64
 //import android.util.Log
 import java.security.MessageDigest
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
@@ -155,7 +157,38 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // 포그라운드 권한 요청 예시
+    private val requestForegroundLocationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // 포그라운드 위치 권한이 허용된 경우 백그라운드 위치 권한 요청
+            requestBackgroundLocationPermission()
+        } else {
+            Toast.makeText(this, "Foreground location permission is required.", Toast.LENGTH_SHORT).show()
+        }
+    }
 
+    // 백그라운드 권한 요청 함수
+    private fun requestBackgroundLocationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Android 11 이상에서는 설정 화면으로 이동
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+            }
+            startActivity(intent)
+            Toast.makeText(this, "Please enable 'Allow all the time' for location access.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // 포그라운드 위치 권한 요청 실행
+    fun requestLocationPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestForegroundLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        } else {
+            requestBackgroundLocationPermission()
+        }
+    }
 
 
     private fun startLocationService() {

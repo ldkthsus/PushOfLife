@@ -10,7 +10,5 @@ val viewModelModule = module {
 }
 
 val repositoryModule = module{
-    single{
-        BleRepository()
-    }
+    single { BleRepository(get()) }
 }

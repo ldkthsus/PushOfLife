@@ -115,7 +115,7 @@ class FallDetectionService : Service(), SensorEventListener {
                 // 중력 기반 가속도 계산
                 val acceleration = calculateAcceleration(linearAccelerationValues, gravityValues)
 
-                if (acceleration > 25) { // 임계값 설정
+                if (acceleration > 10) { // 임계값 설정
                     isFallDetected = true
                     Log.d("FallDetectionService", "Fall detected! Triggering siren.")
                     triggerSiren()
@@ -239,6 +239,9 @@ class FallDetectionService : Service(), SensorEventListener {
         CoroutineScope(Dispatchers.IO).launch {
             val userPreferences = UserPreferences(this@FallDetectionService)
             val messageContent = userPreferences.emergencyMessage.first() // 저장된 메시지 불러오기
+            // Broadcast 전송
+            val intent = Intent("com.example.pushoflife.ACTION_WATCH_ALERT")
+            sendBroadcast(intent)
             TwilioUtils.sendSmsWithRetrofit(
                 "", // 수신자 번호
                 BuildConfig.FROM_NUMBER,

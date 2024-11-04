@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.bluetooth.le.*
 import android.content.Context
+import android.content.Context.BLUETOOTH_SERVICE
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
@@ -20,11 +21,13 @@ import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.schedule
 
-class BleRepository {
+class BleRepository (private val context: Context)  {
 
-    private val TAG = "BleRepository"
-    private val context: Context = MyApplication.applicationContext()
-    private val bleManager: BluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+
+    // Central 역할 및 BLE 관리자
+    private val TAG = "Central"
+    //    private val context = MyApplication.applicationContext()
+    private val bleManager: BluetoothManager = context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
     private val bleAdapter: BluetoothAdapter? get() = bleManager.adapter
     private var bluetoothGattServer: BluetoothGattServer? = null
     private val deviceManager = BleDeviceManager(context)

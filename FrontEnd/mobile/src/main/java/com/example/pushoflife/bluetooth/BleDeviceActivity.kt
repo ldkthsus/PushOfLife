@@ -1,21 +1,15 @@
 package com.example.pushoflife.bluetooth
 
 import android.Manifest
-import android.app.Activity
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -66,13 +60,13 @@ class BleDeviceActivity : AppCompatActivity() {
     }
 
     private fun initObserver() {
-        viewModel.listUpdate.observe(this, {
+        viewModel.listUpdate.observe(this) {
             it.getContentIfNotHandled()?.let { scanResults ->
                 scanResults.forEach { device ->
                     bleDeviceManager.addDevice(device)  // 스캔된 기기를 BleDeviceManager에 추가
                 }
             }
-        })
+        }
     }
 
     // 모든 기기에 메시지를 전송하는 함수

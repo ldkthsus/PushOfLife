@@ -37,7 +37,7 @@ class BleAdvertiseService : Service() {
 
         val data = AdvertiseData.Builder()
             .setIncludeDeviceName(true)
-            .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_STRING)))
+            .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
             .build()
 
         advertiseCallback = object : AdvertiseCallback() {

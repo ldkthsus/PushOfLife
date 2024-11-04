@@ -8,6 +8,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import com.example.pushoflife.SecondActivity
+import org.json.JSONObject
 
 class WatchListenerService : WearableListenerService() {
 
@@ -24,6 +25,14 @@ class WatchListenerService : WearableListenerService() {
             Log.d("WatchListenerService", "Message content: $message")
             // 알림 띄우기
             showNotification(message)
+        } else if (messageEvent.path == "/emergency_alert") {
+            val dataString = String(messageEvent.data)
+            val json = JSONObject(dataString)
+
+            val latitude = json.getDouble("latitude")
+            val longitude = json.getDouble("longitude")
+
+            Log.d("WatchApp", "Received latitude: $latitude, longitude: $longitude")
         }
     }
 

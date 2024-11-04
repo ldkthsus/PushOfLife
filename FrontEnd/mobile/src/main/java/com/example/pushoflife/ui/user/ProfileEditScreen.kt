@@ -34,6 +34,7 @@ import com.example.pushoflife.BuildConfig
 import com.example.pushoflife.utils.TwilioUtils
 import java.util.Calendar
 import android.app.DatePickerDialog
+import android.util.Log
 import androidx.compose.ui.viewinterop.AndroidView
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -41,6 +42,8 @@ import android.widget.DatePicker
 import com.example.pushoflife.data.datastore.TokenPreferences
 import com.example.pushoflife.network.RetrofitClient.apiService
 import com.example.pushoflife.network.UpdateUserRequest
+import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.PutDataMapRequest
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 
@@ -58,6 +61,9 @@ fun ProfileEditScreen(navController: NavController) {
     val PretendardBold = FontFamily(
         Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
+    val PretendardRegular = FontFamily(
+        Font(R.font.pretendard_regular, FontWeight.Normal)
+    )
 
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
@@ -70,7 +76,12 @@ fun ProfileEditScreen(navController: NavController) {
     var showModal by remember { mutableStateOf(false) }
     var isLoggedIn by remember { mutableStateOf(false) }
     var authToken by remember { mutableStateOf<String?>(null) }
-
+    val messageContent = buildString {
+        if (user_name.text.isNotEmpty()) append("${user_name.text}님의 비상 연락처입니다.\n")
+        else append("비상 연락처입니다.\n")
+        append("환자가 쓰러져 자동 신고되었습니다.\n")
+        append("환자 위치: $address")
+    }
 
     // LaunchedEffect를 사용하여 초기화 시 DataStore에서 데이터를 불러옴
     LaunchedEffect(Unit) {
@@ -143,7 +154,9 @@ fun ProfileEditScreen(navController: NavController) {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.backicon),
-                    contentDescription = "뒤로 가기"
+                    contentDescription = "뒤로 가기",
+                    modifier = Modifier
+                    .size(25.dp) // 아이콘 크기
                 )
             }
 
@@ -348,13 +361,7 @@ fun ProfileEditScreen(navController: NavController) {
         Button(
             onClick = {
                 showModal = true
-//                TwilioUtils.sendSmsWithRetrofit(
-//                    "",
-//                    "",
-//                    "Test message",
-//                    BuildConfig.TWILIO_ACCOUNT_SID,
-//                    BuildConfig.TWILIO_AUTH_TOKEN
-//                )
+
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -511,6 +518,13 @@ fun ProfileEditScreen(navController: NavController) {
                 confirmButton = {
                     TextButton(
                         onClick = {
+//                            TwilioUtils.sendSmsWithRetrofit(
+//                                "",
+//                                BuildConfig.FROM_NUMBER,
+//                                messageContent,
+//                                BuildConfig.TWILIO_ACCOUNT_SID,
+//                                BuildConfig.TWILIO_AUTH_TOKEN
+//                            )
                             if (isLoggedIn && authToken != null) {
                                 // AccessToken이 존재하는 경우 서버 업데이트 요청
                                 CoroutineScope(Dispatchers.IO).launch {
@@ -574,6 +588,28 @@ fun ProfileEditScreen(navController: NavController) {
                                         navController.navigate("main_screen") // navigate 호출을 메인 스레드에서 실행
                                     }
                                 }
+                            }
+                            // 데이터를 Wear OS로 전송하는 로직 추가
+                            CoroutineScope(Dispatchers.IO).launch {
+                                val putDataMapRequest = PutDataMapRequest.create("/notification_path")
+                                putDataMapRequest.dataMap.putString("name", user_name.text)
+                                putDataMapRequest.dataMap.putString("birthdate", user_birthdate.text)
+                                putDataMapRequest.dataMap.putString("gender", user_gender.text)
+                                putDataMapRequest.dataMap.putString("disease", user_disease.text)
+                                putDataMapRequest.dataMap.putString("hospital", hospital.text)
+                                putDataMapRequest.dataMap.putString("pill", pill.text)
+                                putDataMapRequest.dataMap.putString("protector", user_protector.text)
+
+                                val putDataRequest = putDataMapRequest.asPutDataRequest()
+                                putDataRequest.setUrgent()
+
+                                Wearable.getDataClient(context).putDataItem(putDataRequest)
+                                    .addOnSuccessListener {
+                                        Log.d("Wearable", "Data sent successfully")
+                                    }
+                                    .addOnFailureListener {
+                                        Log.e("Wearable", "Failed to send data", it)
+                                    }
                             }
                         },
                     ) {

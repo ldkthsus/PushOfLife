@@ -68,12 +68,6 @@ class BleDeviceActivity : AppCompatActivity() {
             }
         }
     }
-
-    // 모든 기기에 메시지를 전송하는 함수
-    private fun sendMessageToAllDevices(message: ByteArray) {
-        bleDeviceManager.sendMessageToAllDevices(message)  // 모든 기기에 메시지 전송
-    }
-
     private fun hasPermissions(permissions: Array<String>): Boolean {
         return permissions.all { permission ->
             ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED

@@ -167,7 +167,7 @@ fun CprGuideScreen(navController: NavController, modifier: Modifier = Modifier) 
             }
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(25.dp))
 
 
         CardComponent1()
@@ -232,7 +232,7 @@ fun CardComponent1() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(260.dp)
+            .height(250.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(color = Color(0xFFE7CAD5))
     ) {

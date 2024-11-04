@@ -44,8 +44,8 @@ class BleDeviceManager(private val context: Context) {
         }
 
         // 기기와 BLE 연결 설정
+        //ble 통신을 위한 gatt 연결 시작
         val bluetoothGatt = device.connectGatt(context, false, object : BluetoothGattCallback() {
-
             override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {

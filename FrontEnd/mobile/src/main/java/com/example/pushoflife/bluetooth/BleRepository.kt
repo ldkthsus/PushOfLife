@@ -29,11 +29,12 @@ import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.schedule
 
-class BleRepository {
+class BleRepository (private val context: Context)  {
+
 
     // Central 역할 및 BLE 관리자
     private val TAG = "Central"
-    private val context = MyApplication.applicationContext()
+    //    private val context = MyApplication.applicationContext()
     private val bleManager: BluetoothManager = context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
     private val bleAdapter: BluetoothAdapter? get() = bleManager.adapter
     private var bleGatt: BluetoothGatt? = null

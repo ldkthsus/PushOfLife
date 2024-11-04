@@ -35,6 +35,7 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
 import android.Manifest
+import android.content.BroadcastReceiver
 import com.google.firebase.messaging.FirebaseMessaging
 import android.util.Log
 import com.google.android.gms.tasks.Task
@@ -61,11 +62,14 @@ import android.util.Base64
 //import android.util.Log
 import java.security.MessageDigest
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
+import com.example.pushoflife.bluetooth.BleManagerViewModel
 import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.data.datastore.UserPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
@@ -73,6 +77,7 @@ import com.example.pushoflife.service.FallDetectionService
 import com.example.pushoflife.service.LocationUpdatesService
 import com.example.pushoflife.utils.isWearDeviceConnected
 import kotlinx.coroutines.flow.first
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 suspend fun prepareEmergencyMessage(context: Context) {
     val userPreferences = UserPreferences(context)
@@ -143,7 +148,11 @@ class MainActivity : ComponentActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
         }
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_SCAN)
+            }
+        }
         // 위치 권한 요청
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -198,6 +207,7 @@ class MainActivity : ComponentActivity() {
     private var isFallDetectionEnabled by mutableStateOf(false)
     private var emergency by mutableStateOf(false)
     private lateinit var emergencyPreferences: EmergencyPreferences
+    private val bleManagerViewModel: BleManagerViewModel by viewModel()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askPermissions()
@@ -239,7 +249,8 @@ class MainActivity : ComponentActivity() {
             }
         }
         enableEdgeToEdge()
-
+        // BroadcastReceiver 등록
+        registerWatchAlertReceiver()
         setContent {
             PushOfLifeTheme {
                 val navController = rememberNavController() // Navigation Controller 생성
@@ -263,6 +274,34 @@ class MainActivity : ComponentActivity() {
         LocationUpdatesService.scheduleLocationUpdates(this)
 
     }
+    private fun registerWatchAlertReceiver() {
+        val watchAlertReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                try {
+                    if (intent.action == "com.example.pushoflife.ACTION_WATCH_ALERT") {
+                        Log.d("MainActivity", "Watch alert received")
+                        handleWatchAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리
+                    } else {
+                        Log.e("MainActivity", "Unexpected action received: ${intent.action}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error processing broadcast", e)
+                }
+            }
+        }
+
+        // BroadcastReceiver 등록
+        registerReceiver(
+            watchAlertReceiver,
+            IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT")
+        )
+    }
+
+    // ViewModel과 상호작용하는 메서드
+    private fun handleWatchAlertReceived() {
+        bleManagerViewModel.onWatchAlertReceived()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         // 위치 추적 서비스 중지

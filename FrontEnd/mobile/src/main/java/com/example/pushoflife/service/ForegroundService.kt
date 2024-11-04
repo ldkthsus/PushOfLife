@@ -239,7 +239,6 @@ class FallDetectionService : Service(), SensorEventListener {
         CoroutineScope(Dispatchers.IO).launch {
             val userPreferences = UserPreferences(this@FallDetectionService)
             val messageContent = userPreferences.emergencyMessage.first() // 저장된 메시지 불러오기
-
             TwilioUtils.sendSmsWithRetrofit(
                 "", // 수신자 번호
                 BuildConfig.FROM_NUMBER,

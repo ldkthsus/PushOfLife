@@ -133,7 +133,6 @@ class AEDDetailBottomSheet(
         view.post {
             val bottomSheetBehavior = BottomSheetBehavior.from(view.parent as View)
             bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            bottomSheetBehavior.peekHeight = 760
             val parent = view.parent as View
             parent.background = ContextCompat.getDrawable(requireContext(), R.drawable.rounded_bottom_sheet_background)
         }

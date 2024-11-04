@@ -130,7 +130,7 @@ class BleRepository {
     private val gattServerCallback = object : BluetoothGattServerCallback() {
 
         override fun onCharacteristicWriteRequest(device: BluetoothDevice, requestId: Int, characteristic: BluetoothGattCharacteristic, preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray) {
-            if (characteristic.uuid == UUID.fromString("YOUR_WRITE_CHARACTERISTIC_UUID")) {
+            if (characteristic.uuid == UUID.fromString(CHARACTERISTIC_WRITE_UUID)) {
                 val latitude = ByteBuffer.wrap(value.sliceArray(0 until 8)).double
                 val longitude = ByteBuffer.wrap(value.sliceArray(8 until 16)).double
                 Log.d(TAG, "Received updated location - Latitude: $latitude, Longitude: $longitude")

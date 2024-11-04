@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-10-31T07:35:32.213876700Z">
+        <DropdownSelection timestamp="2024-11-04T05:03:49.032284100Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.137.68:35111;connection=2c136907" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=R3CW20CE9KT" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,14 +15,29 @@
       </SelectionState>
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2024-11-04T05:05:18.120628100Z">
         <DropdownSelection timestamp="2024-11-04T05:52:23.223962100Z">
           <Target type="DEFAULT_BOOT">
             <handle>
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=R3CW20CE9KT" />
               <DeviceId pluginId="PhysicalDevice" identifier="serial=29ec244ccd3f7ece" />
             </handle>
           </Target>
         </DropdownSelection>
-        <DialogSelection />
+        <DialogSelection>
+          <targets>
+            <Target type="DEFAULT_BOOT">
+              <handle>
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=R3CW20CE9KT" />
+              </handle>
+            </Target>
+            <Target type="DEFAULT_BOOT">
+              <handle>
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=RFAW11BVP7V" />
+              </handle>
+            </Target>
+          </targets>
+        </DialogSelection>
       </SelectionState>
     </selectionStates>
   </component>

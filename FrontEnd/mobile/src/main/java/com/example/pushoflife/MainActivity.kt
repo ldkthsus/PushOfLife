@@ -72,6 +72,8 @@ import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 import com.example.pushoflife.service.FallDetectionService
 import com.example.pushoflife.service.LocationUpdatesService
 import com.example.pushoflife.utils.isWearDeviceConnected
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.flow.first
 
 suspend fun prepareEmergencyMessage(context: Context) {
@@ -116,6 +118,8 @@ val PretendardRegular = FontFamily(
 
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
+    private lateinit var messageClient: MessageClient
+
     private val requestMultiplePermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -198,9 +202,22 @@ class MainActivity : ComponentActivity() {
     private var isFallDetectionEnabled by mutableStateOf(false)
     private var emergency by mutableStateOf(false)
     private lateinit var emergencyPreferences: EmergencyPreferences
+
+    private val messageListener = MessageClient.OnMessageReceivedListener { messageEvent ->
+        if (messageEvent.path == "/emergency_path") {
+            val receivedMessage = String(messageEvent.data)
+            Log.d("MessageReceiverMain", "Received message: $receivedMessage")
+            // 메시지 처리 로직 수행
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askPermissions()
+        messageClient = Wearable.getMessageClient(this)
+        messageClient.addListener(messageListener)
+
         FirebaseMessaging.getInstance().token
             .addOnCompleteListener { task: Task<String> ->
                 if (!task.isSuccessful) {
@@ -265,6 +282,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onDestroy() {
         super.onDestroy()
+        messageClient.removeListener(messageListener)
         // 위치 추적 서비스 중지
         stopService(Intent(this, LocationUpdatesService::class.java))
     }

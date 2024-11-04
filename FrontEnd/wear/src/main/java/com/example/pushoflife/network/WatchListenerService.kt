@@ -8,6 +8,9 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import com.example.pushoflife.SecondActivity
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMapItem
 import org.json.JSONObject
 
 class WatchListenerService : WearableListenerService() {
@@ -17,6 +20,27 @@ class WatchListenerService : WearableListenerService() {
         Log.d("WatchListenerService", "Service is now waiting for messages...")
     }
 
+
+    // 작동 하는 코드
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        for (event in dataEvents) {
+            if (event.type == DataEvent.TYPE_CHANGED) {
+                val dataItem = event.dataItem
+                Log.d("Wearable","$dataItem")
+                if (dataItem.uri.path == "/notification_path") {
+                    // 회원 정보 수정에서 data값이 변경되었을때
+                    val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                    val value = dataMap.getString("name")
+                    Log.d("Wearable", "Received data: $value")
+                }
+            }
+        }
+    }
+
+
+
+
+    // 작동 안 하는 코드
     override fun onMessageReceived(messageEvent: MessageEvent) {
         Log.d("WatchListenerService", "Message received with path: ${messageEvent.path}")
 

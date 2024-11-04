@@ -36,3 +36,6 @@ class BleDeviceManager(private val context: Context) {
     // 스캔된 BLE 기기 리스트를 가져오는 메서드
     fun getDeviceList(): List<BluetoothDevice> = deviceList
 }
+
+
+

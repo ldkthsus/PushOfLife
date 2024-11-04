@@ -19,8 +19,10 @@ import android.util.Log
 import kotlinx.coroutines.*
 import com.example.pushoflife.sensor.FallSensor
 import com.example.pushoflife.sensor.PushSensor
+import com.example.pushoflife.sensor.WristAngleSensor
 import com.example.pushoflife.network.MessageSender
 import com.example.pushoflife.SecondActivity
+import com.example.pushoflife.CprGuideActivity
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
@@ -33,6 +35,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private val fallSensor = FallSensor()
     private val pushSensor = PushSensor()
+    private val wristAngleSensor = WristAngleSensor(CprGuideActivity())
     private var possibleFall = false
     private var possibleHeart = false
     private var gyroscope: Sensor? = null
@@ -40,7 +43,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     private var gravitySensor: Sensor? = null
     private var linearAccelerationSensor: Sensor? = null
     var gravityValues: FloatArray? = null
-    private var totalAccelation: Float = 0.0f
+    private var totalAcceleration: Float = 0.0f
     private var pressure: Sensor? = null
 
     // 가속도계 데이터를 전달하는 콜백
@@ -113,6 +116,8 @@ class SensorForegroundService : Service(), SensorEventListener {
                 val z = String.format("%.2f", event.values[2])
                 //Log.d("SensorData", "gravity: x=$x, y=$y, z=$z")
                 gravityValues = event.values.clone()
+                // wristAngleSensor로 중력 데이터 전달
+                wristAngleSensor.processGravityData(event.values)
             }
             Sensor.TYPE_LINEAR_ACCELERATION -> {
 //                val currentTime = System.currentTimeMillis()
@@ -125,18 +130,15 @@ class SensorForegroundService : Service(), SensorEventListener {
                 val z = event.values[2]
                 //Log.d("acceleration", "acceleration : x=$x, y=$y, z=$z")
                 val linearAccelerationSensorData = event.values.clone()
-//// 가속도계 데이터를 콜백으로 전달
-//                linearAccelerationSensorDataCallback?.invoke(linearAccelerationSensorData)
-//                // PushSensor로 가속도계 데이터 전달
 
                 gravityValues?.let { gravity ->
-                    totalAccelation = fallSensor.calculateAcceleration(event.values, gravity)
+                    totalAcceleration = fallSensor.calculateAcceleration(event.values, gravity)
                     //Log.d("밑 가속도", "total gravity : $totalAccelation"
                 }
-                Log.d("SensorData", "Accelerometer: $totalAccelation")
-                pushSensor.integrateAcceleration(totalAccelation)
-                if (!possibleFall && fallSensor.checkFall(totalAccelation)) {
-                    Log.d("FallDetection", "낙상감지됨")
+                //Log.d("너를 통해 얻을거야", "Accelerometer: $totalAcceleration")
+                pushSensor.calculateCPRFeedback(totalAcceleration)
+                if (!possibleFall && fallSensor.checkFall(totalAcceleration)) {
+                    //Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
                     // 낙상 감지 후 앱 실행 및 화면 켜기
                     launchApp()
@@ -145,8 +147,8 @@ class SensorForegroundService : Service(), SensorEventListener {
                     serviceScope.launch {
                         delay(5000L)  // 5초 대기
                         possibleFall = false
-                        Log.d("possibleFall", possibleFall.toString())
-                        Log.d("FallDetection", "possibleFall 초기화됨")
+                        // Log.d("possibleFall", possibleFall.toString())
+                        //Log.d("FallDetection", "possibleFall 초기화됨")
                     }
                 }
             }
@@ -155,10 +157,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                 val y = String.format("%.2f", event.values[1])
                 val z = String.format("%.2f", event.values[2])
                 //Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
-                val gyroscopeData = event.values.clone()
-
-                // PushSensor로 자이로스코프 데이터 전달
-//                pushSensor.processGyroscopeData(gyroscopeData)
+                val gyroscopeData = event.values
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])
@@ -178,7 +177,7 @@ class SensorForegroundService : Service(), SensorEventListener {
             }
             Sensor.TYPE_PRESSURE -> {
                 val millibarsOfPressure = event.values[0]
-                    //Log.d("고도","고도 : $millibarsOfPressure" )
+                //Log.d("고도","고도 : $millibarsOfPressure" )
             }
         }
     }
@@ -256,7 +255,6 @@ class SensorForegroundService : Service(), SensorEventListener {
     }
 
     fun getTotalAcceleration(): Float {
-        return totalAccelation
+        return totalAcceleration
     }
 }
-

@@ -38,19 +38,20 @@ class WatchListenerService : WearableListenerService() {
 
     private fun showNotification(message: String) {
         val notificationId = 1
-        val intent = Intent(this, SecondActivity::class.java) // 알림을 클릭하면 이동할 액티비티 설정
+        val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
+
+        val intent = Intent(this, SecondActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // "sensor_channel"을 알림 채널로 사용
-        val notification = NotificationCompat.Builder(this, "sensor_channel")
+        val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("새 알림")
             .setContentText(message)
             .setSmallIcon(com.example.pushoflife.R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
-            .setAutoCancel(true) // 알림을 누르면 자동으로 닫힘
+            .setAutoCancel(true)
             .build()
 
         NotificationManagerCompat.from(this).notify(notificationId, notification)

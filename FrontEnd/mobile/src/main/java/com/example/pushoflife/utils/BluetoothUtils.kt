@@ -3,9 +3,9 @@ package com.example.pushoflife.utils
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
-import com.example.pushoflife.bluetooth.CHARACTERISTIC_COMMAND_STRING
-import com.example.pushoflife.bluetooth.CHARACTERISTIC_RESPONSE_STRING
-import com.example.pushoflife.bluetooth.SERVICE_STRING
+import com.example.pushoflife.bluetooth.CHARACTERISTIC_READ_UUID
+import com.example.pushoflife.bluetooth.CHARACTERISTIC_WRITE_UUID
+import com.example.pushoflife.bluetooth.SERVICE_UUID
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -36,7 +36,7 @@ class BluetoothUtils {
          * @return found characteristic
          */
         fun findCommandCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
-            return findCharacteristic(gatt, CHARACTERISTIC_COMMAND_STRING)
+            return findCharacteristic(gatt, CHARACTERISTIC_WRITE_UUID)
         }
 
         /**
@@ -45,7 +45,7 @@ class BluetoothUtils {
          * @return found characteristic
          */
         fun findResponseCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
-            return findCharacteristic(gatt, CHARACTERISTIC_RESPONSE_STRING)
+            return findCharacteristic(gatt, CHARACTERISTIC_READ_UUID)
         }
 
         /**
@@ -106,7 +106,7 @@ class BluetoothUtils {
          * @return true if service uuid is matched
          */
         private fun matchServiceUUIDString(serviceUuidString: String): Boolean {
-            return matchUUIDs(serviceUuidString, SERVICE_STRING)
+            return matchUUIDs(serviceUuidString, SERVICE_UUID)
         }
 
         /**
@@ -129,8 +129,8 @@ class BluetoothUtils {
         private fun matchCharacteristicUUID(characteristicUuidString: String): Boolean {
             return matchUUIDs(
                 characteristicUuidString,
-                CHARACTERISTIC_COMMAND_STRING,
-                CHARACTERISTIC_RESPONSE_STRING
+                CHARACTERISTIC_WRITE_UUID,
+                CHARACTERISTIC_READ_UUID
             )
         }
 

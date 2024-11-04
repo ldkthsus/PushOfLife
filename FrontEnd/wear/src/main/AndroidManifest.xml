@@ -55,21 +55,18 @@
         <activity
             android:name=".CprGuideActivity"
             android:exported="true"/>
-
-
         <service
             android:name=".network.WatchListenerService"
-            android:enabled="true"
-            android:exported="true" />
-
-
-
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+            </intent-filter>
+        </service>
         <service
             android:name=".SensorForegroundService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="health" />
-
     </application>
 
 </manifest>

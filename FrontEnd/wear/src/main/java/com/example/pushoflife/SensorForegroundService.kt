@@ -162,7 +162,7 @@ class SensorForegroundService : Service(), SensorEventListener {
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])
                 //Log.d("SensorData", "Heartrate: $heartRate")
-                if(possibleFall && fallSensor.checkHeart(event.values[0])){
+                if(possibleFall ){
                     possibleHeart = true
                     nodeId?.let {
                         messageSender.sendEmergency(

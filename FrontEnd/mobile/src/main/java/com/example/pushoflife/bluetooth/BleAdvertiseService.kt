@@ -13,6 +13,7 @@ import android.bluetooth.BluetoothGattServer
 import android.bluetooth.BluetoothGattServerCallback
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
@@ -170,6 +171,21 @@ class BleAdvertiseService : Service() {
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
 
+        // 클라이언트의 연결 상태가 변경될 때 호출되는 메서드
+        override fun onConnectionStateChange(device: BluetoothDevice, status: Int, newState: Int) {
+            super.onConnectionStateChange(device, status, newState)
+            when (newState) {
+                BluetoothProfile.STATE_CONNECTED -> {
+                    Log.d(TAG, "클라이언트가 GATT 서버에 연결되었습니다: ${device.address}")
+                }
+                BluetoothProfile.STATE_DISCONNECTED -> {
+                    Log.d(TAG, "클라이언트가 GATT 서버에서 연결이 해제되었습니다: ${device.address}")
+                    // 연결이 끊어지면 서버를 닫거나 리소스를 해제할 수 있음
+                }
+            }
+        }
+
+        // 클라이언트가 특성에 데이터를 쓰려고 할 때 호출되는 메서드
         override fun onCharacteristicWriteRequest(
             device: BluetoothDevice,
             requestId: Int,

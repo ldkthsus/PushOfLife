@@ -133,7 +133,7 @@ class BleAdvertiseService : Service() {
             Log.d(TAG, "송신 특성에 값 넣으러 간다")
             service.addCharacteristic(writeCharacteristic)
             addService(service)
-            Log.d(TAG, "BLE GATT Server started and service added.")
+            Log.d(TAG, "BLE GATT Server 시작 and service added.")
         }
     }
 
@@ -143,14 +143,14 @@ class BleAdvertiseService : Service() {
             if (characteristic.uuid == UUID.fromString(CHARACTERISTIC_WRITE_UUID)) {
                 val latitude = ByteBuffer.wrap(value.sliceArray(0 until 8)).double
                 val longitude = ByteBuffer.wrap(value.sliceArray(8 until 16)).double
-                Log.d(TAG, "Received updated location - Latitude: $latitude, Longitude: $longitude")
+                Log.d(TAG, "위치 데이터 받았당 - Latitude: $latitude, Longitude: $longitude")
 
                 // 위치 데이터 저장
                 CoroutineScope(Dispatchers.IO).launch {
                     val emergencyPreferences = EmergencyPreferences(context)
                     emergencyPreferences.saveLocation(latitude, longitude)
                 }
-                Log.d(TAG, "위치데이터 넣어유")
+                Log.d(TAG, "위치 데이터 넣어유")
 
                 // 응답 전송 전에 권한 확인
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
@@ -162,20 +162,5 @@ class BleAdvertiseService : Service() {
 
             }
         }
-    }
-
-    // 송신 특성 가져오기
-    fun getWriteCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
-        val SERVICE_UUID = UUID.fromString(SERVICE_UUID)
-        val WRITE_CHARACTERISTIC_UUID = UUID.fromString(CHARACTERISTIC_WRITE_UUID)
-
-        val service = gatt.getService(SERVICE_UUID)
-        return service?.getCharacteristic(WRITE_CHARACTERISTIC_UUID)
-    }
-
-    // 권한 체크 메서드
-    private fun isPermissionGranted(permission: String): Boolean {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
-                ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
     }
 }

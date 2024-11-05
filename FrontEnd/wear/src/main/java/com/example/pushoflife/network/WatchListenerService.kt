@@ -8,6 +8,9 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import com.example.pushoflife.SecondActivity
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMapItem
 import org.json.JSONObject
 
 class WatchListenerService : WearableListenerService() {
@@ -17,6 +20,27 @@ class WatchListenerService : WearableListenerService() {
         Log.d("WatchListenerService", "Service is now waiting for messages...")
     }
 
+
+    // 작동 하는 코드
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        for (event in dataEvents) {
+            if (event.type == DataEvent.TYPE_CHANGED) {
+                val dataItem = event.dataItem
+                Log.d("Wearable","$dataItem")
+                if (dataItem.uri.path == "/notification_path") {
+                    // 회원 정보 수정에서 data값이 변경되었을때
+                    val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                    val value = dataMap.getString("name")
+                    Log.d("Wearable", "Received data: $value")
+                }
+            }
+        }
+    }
+
+
+
+
+    // 작동 안 하는 코드
     override fun onMessageReceived(messageEvent: MessageEvent) {
         Log.d("WatchListenerService", "Message received with path: ${messageEvent.path}")
 
@@ -38,19 +62,20 @@ class WatchListenerService : WearableListenerService() {
 
     private fun showNotification(message: String) {
         val notificationId = 1
-        val intent = Intent(this, SecondActivity::class.java) // 알림을 클릭하면 이동할 액티비티 설정
+        val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
+
+        val intent = Intent(this, SecondActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // "sensor_channel"을 알림 채널로 사용
-        val notification = NotificationCompat.Builder(this, "sensor_channel")
+        val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("새 알림")
             .setContentText(message)
             .setSmallIcon(com.example.pushoflife.R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
-            .setAutoCancel(true) // 알림을 누르면 자동으로 닫힘
+            .setAutoCancel(true)
             .build()
 
         NotificationManagerCompat.from(this).notify(notificationId, notification)

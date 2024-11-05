@@ -1,20 +1,16 @@
 package com.example.pushoflife.bluetooth
 
 import android.Manifest
-import android.app.Activity
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -28,11 +24,15 @@ class BleDeviceActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions.all { it.value }) {
+            Log.d("permission", "권한 필요해요")
             Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
-            // 광고 시작
-            viewModel.startAdvertising()
+            // 권한이 부여되면 Foreground Service를 통해 광고 시작
+            startBleAdvertiseService()
         } else {
             Toast.makeText(this, "Permissions must be granted", Toast.LENGTH_SHORT).show()
+            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            intent.data = Uri.parse("package:$packageName")
+            startActivity(intent)
         }
     }
 
@@ -46,31 +46,32 @@ class BleDeviceActivity : AppCompatActivity() {
         // 권한 확인 및 요청
         if (!hasPermissions(PERMISSIONS)) {
             requestPermissionLauncher.launch(PERMISSIONS)
-        }
-        else {
+        } else {
+            Log.d("song", "광고 시작")
             // 권한이 이미 있는 경우 광고 시작
-            viewModel.startAdvertising()
+            startBleAdvertiseService()
         }
 
         // 스캔 결과를 관찰하여 BleDeviceManager에 저장
         initObserver()
     }
 
+    // 권한이 있는 경우 Foreground Service를 통해 BLE 광고 시작
+    private fun startBleAdvertiseService() {
+        Log.d("song", "진짜로 광고하러 서비스 감")
+        val serviceIntent = Intent(this, BleAdvertiseService::class.java)
+        ContextCompat.startForegroundService(this, serviceIntent)
+    }
+
     private fun initObserver() {
-        viewModel.listUpdate.observe(this, {
+        viewModel.listUpdate.observe(this) {
             it.getContentIfNotHandled()?.let { scanResults ->
                 scanResults.forEach { device ->
                     bleDeviceManager.addDevice(device)  // 스캔된 기기를 BleDeviceManager에 추가
                 }
             }
-        })
+        }
     }
-
-    // 모든 기기에 메시지를 전송하는 함수
-    private fun sendMessageToAllDevices(message: ByteArray) {
-        bleDeviceManager.sendMessageToAllDevices(message)  // 모든 기기에 메시지 전송
-    }
-
     private fun hasPermissions(permissions: Array<String>): Boolean {
         return permissions.all { permission ->
             ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
@@ -100,7 +101,8 @@ class BleDeviceActivity : AppCompatActivity() {
             Manifest.permission.BLUETOOTH,
             Manifest.permission.BLUETOOTH_ADMIN,
             Manifest.permission.BLUETOOTH_SCAN,
-            Manifest.permission.BLUETOOTH_CONNECT
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.BLUETOOTH_ADVERTISE
         )
     }
 }

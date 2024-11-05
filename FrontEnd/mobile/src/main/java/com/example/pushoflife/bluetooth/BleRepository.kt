@@ -8,142 +8,78 @@ import android.content.Context
 import android.content.Context.BLUETOOTH_SERVICE
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.ParcelUuid
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import com.example.pushoflife.MyApplication
 import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.utils.Event
-import com.google.android.gms.wearable.Wearable
-import com.google.android.gms.tasks.Tasks
-import com.google.android.gms.wearable.MessageClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.schedule
 
-class BleRepository (private val context: Context)  {
-
+class BleRepository ()  {
 
     // Central 역할 및 BLE 관리자
-    private val TAG = "Central"
-    //    private val context = MyApplication.applicationContext()
+    private val TAG = "BleRepository"
+    private val context = MyApplication.applicationContext()
     private val bleManager: BluetoothManager = context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
     private val bleAdapter: BluetoothAdapter? get() = bleManager.adapter
-    private var bleGatt: BluetoothGatt? = null
-    private val deviceManager=BleDeviceManager(context)
-    var scanResults: ArrayList<BluetoothDevice>? = ArrayList()
+    private var bluetoothGattServer: BluetoothGattServer? = null
+    private val deviceManager = BleDeviceManager(context)
 
-    var statusTxt: String = ""
-    var txtRead: String = ""
-    var isStatusChange: Boolean = false
-    var isTxtRead: Boolean = false
-
-    val requestEnableBLE = MutableLiveData<Event<Boolean>>()
     val isScanning = MutableLiveData(Event(false))
-    val isConnect = MutableLiveData(Event(false))
-    val listUpdate = MutableLiveData<Event<ArrayList<BluetoothDevice>?>>()
-    val scrollDown = MutableLiveData<Event<Boolean>>()
+    val listUpdate = MutableLiveData<Event<List<BluetoothDevice>?>>()
 
-    // BluetoothLeAdvertiser와 광고 콜백 설정
-    private val bluetoothLeAdvertiser: BluetoothLeAdvertiser? = bleAdapter?.bluetoothLeAdvertiser
-    private val advertiseCallback = object : AdvertiseCallback() {
-        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-            super.onStartSuccess(settingsInEffect)
-            Log.d(TAG, "Advertisement started successfully")
-            statusTxt = "Advertisement started successfully"
-            isStatusChange = true
-        }
 
-        override fun onStartFailure(errorCode: Int) {
-            super.onStartFailure(errorCode)
-            Log.e(TAG, "Advertisement failed with error code: $errorCode")
-            statusTxt = "Advertisement failed with error code: $errorCode"
-            isStatusChange = true
-        }
+    init {
+        // 서버 초기화
+        Log.d("BleRepository", "Context in BleRepository1: $context")
+//        startServer() // GATT 서버를 초기화하여 송신 특성 변경 감지를 준비
+        Log.d("BleRepository", "Context in BleRepository: $context")
     }
 
-    // 광고 시작 메서드
+    // 클라이언트 기능: 스캔 및 위치 데이터 전송
     @SuppressLint("MissingPermission")
-    fun startAdvertising() {
-        if (bluetoothLeAdvertiser == null) {
-            Log.e(TAG, "BluetoothLeAdvertiser is not available")
-            statusTxt = "BluetoothLeAdvertiser is not available"
-            isStatusChange = true
-            return
+    fun startScan(onComplete: () -> Unit) {
+        Log.d("Repository", "repository에서 스캔 시작")
+        Log.d("context", context.toString())
+        if (!isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) return
+
+        val filters = emptyList<ScanFilter>()
+        val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).build()
+        bleAdapter?.bluetoothLeScanner?.startScan(filters, settings, BLEScanCallback)
+        isScanning.postValue(Event(true))
+
+        // 일정 시간 후 스캔 중지 및 onComplete 호출
+        Timer("SettingUp", false).schedule(3000) {
+            stopScan()
+            onComplete() // 스캔 중지 후 ViewModel의 onScanComplete 호출
         }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
-            Log.e(TAG, "BLUETOOTH_ADVERTISE permission is required.")
-            statusTxt = "BLUETOOTH_ADVERTISE permission is required."
-            isStatusChange = true
-            return
-        }
-
-        val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED) // 광고 주기 설정: Balanced
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-            .setConnectable(true)
-            .build()
-
-        val data = AdvertiseData.Builder()
-            .setIncludeDeviceName(true)
-            .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_STRING))) // 광고 데이터에 서비스 UUID 포함
-            .build()
-
-        bluetoothLeAdvertiser.startAdvertising(settings, data, advertiseCallback)
-        statusTxt = "Advertising started."
-        isStatusChange = true
-        Log.d(TAG, "Advertising started with Balanced mode.")
     }
 
-    // 광고 중지 메서드
+    private val BLEScanCallback = object : ScanCallback() {
+        override fun onScanResult(callbackType: Int, result: ScanResult) {
+            deviceManager.addDevice(result.device)
+            listUpdate.postValue(Event(deviceManager.getDeviceList()))
+            Log.d("BleRepository", "스캔한 기기들 목록에 담음")
+        }
+    }
+
     @SuppressLint("MissingPermission")
-    fun stopAdvertising() {
-        if (bluetoothLeAdvertiser == null) {
-            Log.e(TAG, "BluetoothLeAdvertiser is not available")
-            statusTxt = "BluetoothLeAdvertiser is not available"
-            isStatusChange = true
-            return
-        }
-
-        bluetoothLeAdvertiser.stopAdvertising(advertiseCallback)
-        statusTxt = "Advertising stopped."
-        isStatusChange = true
-        Log.d(TAG, "Advertising stopped.")
+    fun stopScan() {
+        bleAdapter?.bluetoothLeScanner?.stopScan(BLEScanCallback)
+        isScanning.postValue(Event(false))
     }
 
-    fun getContext(): Context {
-        return context
-    }
-
-    fun fetchReadText() = flow {
-        while (true) {
-            if (isTxtRead) {
-                emit(txtRead)
-                isTxtRead = false
-            }
-        }
-    }.flowOn(Dispatchers.Default)
-
-    fun fetchStatusText() = flow {
-        while (true) {
-            if (isStatusChange) {
-                emit(statusTxt)
-                isStatusChange = false
-            }
-        }
-    }.flowOn(Dispatchers.Default)
+    // 위치 정보를 모든 기기의 송신 특성에 작성
     @SuppressLint("MissingPermission")
     fun sendLocationToAllDevices(latitude: Double, longitude: Double) {
+        Log.d("BleRepository", "기기에 메세지 보낼 거임")
+        Log.d("BleRepository", latitude.toString() + longitude.toString())
         val locationData = ByteBuffer.allocate(16).apply {
             putDouble(latitude)
             putDouble(longitude)
@@ -154,6 +90,7 @@ class BleRepository (private val context: Context)  {
 
                 override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
                     if (newState == BluetoothGatt.STATE_CONNECTED) {
+                        Log.d("BleRepository", "gatt 연결 성공")
                         gatt.discoverServices() // 연결 성공 시 서비스 탐색 시작
                     } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                         gatt.close()
@@ -166,6 +103,7 @@ class BleRepository (private val context: Context)  {
                         writeCharacteristic?.let {
                             it.value = locationData
                             gatt.writeCharacteristic(it) // 송신 특성에 위치 정보 쓰기
+                            Log.d("BleRepository", "송신 특성에 위치 정보 적었씨유")
                         }
                     }
                 }
@@ -181,204 +119,62 @@ class BleRepository (private val context: Context)  {
             })
         }
     }
-    @RequiresApi(Build.VERSION_CODES.M)
-    fun startScan(onComplete:()->Unit) {
-        if (bleAdapter == null || !bleAdapter?.isEnabled!!) {
-            requestEnableBLE.postValue(Event(true))
-            statusTxt = "Scanning Failed: BLE not enabled"
-            isStatusChange = true
-            return
-        }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-            Log.e(TAG, "BLUETOOTH_SCAN permission is required.")
-            return
-        }
+    // 서버 기능: 광고 및 송신 특성 변경 감지
+    @SuppressLint("MissingPermission")
+    fun startServer() {
+        bluetoothGattServer = bleManager.openGattServer(context, gattServerCallback)?.apply {
+            val service = BluetoothGattService(UUID.fromString(SERVICE_UUID), BluetoothGattService.SERVICE_TYPE_PRIMARY)
 
-        val filters = listOf(
-            ScanFilter.Builder()
-                .setServiceUuid(ParcelUuid(UUID.fromString(SERVICE_STRING)))
-                .build()
-        )
-        val settings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
-            .build()
+            val writeCharacteristic = BluetoothGattCharacteristic(
+                UUID.fromString(CHARACTERISTIC_WRITE_UUID),
+                BluetoothGattCharacteristic.PROPERTY_WRITE,
+                BluetoothGattCharacteristic.PERMISSION_WRITE
+            )
 
-        bleAdapter?.bluetoothLeScanner?.startScan(filters, settings, BLEScanCallback)
-        statusTxt = "Scanning...."
-        isStatusChange = true
-        isScanning.postValue(Event(true))
-
-        Timer("SettingUp", false).schedule(3000) {
-            stopScan()
-            onComplete() // 스캔 중지 후 ViewModel의 onScanComplete 호출
+            service.addCharacteristic(writeCharacteristic)
+            addService(service)
+            Log.d(TAG, "BLE GATT Server started and service added.")
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    fun stopScan() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                Log.e(TAG, "BLUETOOTH_SCAN permission is required to stop scanning.")
-                return // 권한이 없으면 스캔 중지를 수행하지 않음
-            }
-        }
+    private val gattServerCallback = object : BluetoothGattServerCallback() {
 
-        bleAdapter?.bluetoothLeScanner?.stopScan(BLEScanCallback)
-        isScanning.postValue(Event(false))
-        statusTxt = "Scan finished."
-        isStatusChange = true
-        scanResults = ArrayList()
-        Log.d(TAG, "BLE Stop!, ${scanResults}")
-    }
+        override fun onCharacteristicWriteRequest(device: BluetoothDevice, requestId: Int, characteristic: BluetoothGattCharacteristic, preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray) {
+            if (characteristic.uuid == UUID.fromString(CHARACTERISTIC_WRITE_UUID)) {
+                val latitude = ByteBuffer.wrap(value.sliceArray(0 until 8)).double
+                val longitude = ByteBuffer.wrap(value.sliceArray(8 until 16)).double
+                Log.d(TAG, "Received updated location - Latitude: $latitude, Longitude: $longitude")
 
-    private val BLEScanCallback = object : ScanCallback() {
-        override fun onScanResult(callbackType: Int, result: ScanResult) {
-            super.onScanResult(callbackType, result)
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                    Log.e(TAG, "BLUETOOTH_SCAN permission is required to scan devices.")
-                    return
+                // 위치 데이터 저장
+                CoroutineScope(Dispatchers.IO).launch {
+                    val emergencyPreferences = EmergencyPreferences(context)
+                    emergencyPreferences.saveLocation(latitude, longitude)
                 }
+
+                // 응답 전송 전에 권한 확인
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                    bluetoothGattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                } else {
+                    Log.e(TAG, "BLUETOOTH_CONNECT permission not granted")
+                }
+
             }
-
-            Log.i(TAG, "Remote device name: ${result.device.name}")
-            addScanResult(result)
-        }
-
-        private fun addScanResult(result: ScanResult) {
-            val device = result.device
-            if (scanResults?.any { it.address == device.address } == true) return
-            scanResults?.add(device)
-            statusTxt = "Added device: ${device.address}"
-            isStatusChange = true
-            listUpdate.postValue(Event(scanResults))
         }
     }
 
-
-//
-//    fun connectDevice(device: BluetoothDevice?) {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-//            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-//            Log.e(TAG, "BLUETOOTH_CONNECT permission is required.")
-//            return
-//        }
-//
-//        statusTxt = "Connecting to ${device?.address}"
-//        isStatusChange = true
-//        bleGatt = device?.connectGatt(context, false, gattClientCallback)
-//    }
-
-//    private val gattClientCallback = object : BluetoothGattCallback() {
-//
-//        @SuppressLint("MissingPermission")
-//        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-//            if (newState == BluetoothProfile.STATE_CONNECTED) {
-//                gatt.discoverServices() // 연결 성공 시 서비스 탐색 시작
-//            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-//                disconnectGattServer()
-//            }
-//        }
-//
-//        @SuppressLint("MissingPermission")
-//        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-//            if (status == BluetoothGatt.GATT_SUCCESS) {
-//                val writeCharacteristic = getWriteCharacteristic(gatt)
-//                writeCharacteristic?.let {
-//                    it.value = locationData
-//                    gatt.writeCharacteristic(it) // 송신 특성에 위치 정보 쓰기
-//                }
-//            }
-//        }
-//
-//        // 특성이 변경될 때마다 자동으로 호출되는 메소드
-//        override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-//            val receivedData = characteristic.value // 수신된 데이터 읽기
-//            logReceivedData(receivedData) // 로그에 출력
-//        }
-
-//        // 필요한 경우, onCharacteristicRead 메소드를 사용하여 수동으로 데이터를 읽을 수도 있습니다.
-//        override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
-//            if (status == BluetoothGatt.GATT_SUCCESS) {
-//                val receivedData = characteristic.value // 수신된 데이터 읽기
-//                logReceivedData(receivedData) // 로그에 출력
-//            }
-//        }
-//    }
-
-    private fun logReceivedData(data: ByteArray) {
-        if (data.size >= 16) {
-            val latitude = ByteBuffer.wrap(data.sliceArray(0 until 8)).double
-            val longitude = ByteBuffer.wrap(data.sliceArray(8 until 16)).double
-
-            Log.d(TAG, "Received latitude: $latitude, longitude: $longitude")
-
-            // JSON 형식으로 위도와 경도 묶기
-            val json = JSONObject().apply {
-                put("latitude", latitude)
-                put("longitude", longitude)
-            }
-            val message = json.toString() // JSON 객체를 문자열로 변환
-
-            // DataStore에 위도와 경도 저장
-            CoroutineScope(Dispatchers.IO).launch {
-                val emergencyPreferences = EmergencyPreferences(context)
-                emergencyPreferences.saveLocation(latitude, longitude)
-            }
-
-            // 워치로 메시지 전송
-            sendMessageToWatch(message)
-
-        } else {
-            Log.e(TAG, "Invalid data length: Expected 16 bytes, received ${data.size}")
-        }
-    }
-    fun sendMessageToWatch(message: String) {
-        val messageClient: MessageClient = Wearable.getMessageClient(context)
-        val path = "/emergency_alert"
-
-        val nodes = Tasks.await(Wearable.getNodeClient(context).connectedNodes)
-        for (node in nodes) {
-            messageClient.sendMessage(node.id, path, message.toByteArray())
-        }
-    }
-    fun disconnectGattServer() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                Log.e(TAG, "BLUETOOTH_CONNECT permission is required to disconnect from GATT server.")
-                return
-            }
-        }
-
-        Log.d(TAG, "Closing Gatt connection")
-        bleGatt?.let {
-            it.disconnect()
-            it.close()
-            bleGatt = null
-        }
-        statusTxt = "Disconnected"
-        isStatusChange = true
-        isConnect.postValue(Event(false))
-    }
-
+    // 송신 특성 가져오기
     fun getWriteCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
-        val SERVICE_UUID = UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")
-        val CHARACTERISTIC_UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb")
+        val SERVICE_UUID = UUID.fromString(SERVICE_UUID)
+        val WRITE_CHARACTERISTIC_UUID = UUID.fromString(CHARACTERISTIC_WRITE_UUID)
 
         val service = gatt.getService(SERVICE_UUID)
-        if (service == null) {
-            Log.e("BleRepository", "Service with UUID $SERVICE_UUID not found")
-            return null
-        }
+        return service?.getCharacteristic(WRITE_CHARACTERISTIC_UUID)
+    }
 
-        val characteristic = service.getCharacteristic(CHARACTERISTIC_UUID)
-        if (characteristic == null) {
-            Log.e("BleRepository", "Characteristic with UUID $CHARACTERISTIC_UUID not found")
-        }
-
-        return characteristic
+    // 권한 체크 메서드
+    private fun isPermissionGranted(permission: String): Boolean {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+                ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
     }
 }

@@ -122,45 +122,57 @@ class BleAdvertiseService : Service() {
     @SuppressLint("MissingPermission")
     fun startServer() {
         bluetoothGattServer = bleManager.openGattServer(context, gattServerCallback)?.apply {
+            // 서비스 생성
             val service = BluetoothGattService(UUID.fromString(SERVICE_UUID), BluetoothGattService.SERVICE_TYPE_PRIMARY)
 
+            // 쓰기 특성 생성 (초기값 없음)
             val writeCharacteristic = BluetoothGattCharacteristic(
                 UUID.fromString(CHARACTERISTIC_WRITE_UUID),
                 BluetoothGattCharacteristic.PROPERTY_WRITE,
                 BluetoothGattCharacteristic.PERMISSION_WRITE
             )
 
-            Log.d(TAG, "송신 특성에 값 넣으러 간다")
+            // 특성 및 서비스 추가
+            Log.d(TAG, "송신 특성 및 서비스 추가 중...")
             service.addCharacteristic(writeCharacteristic)
             addService(service)
-            Log.d(TAG, "BLE GATT Server 시작 and service added.")
+            Log.d(TAG, "BLE GATT Server 시작 및 서비스 추가 완료.")
         }
     }
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
 
-        override fun onCharacteristicWriteRequest(device: BluetoothDevice, requestId: Int, characteristic: BluetoothGattCharacteristic, preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray) {
+        override fun onCharacteristicWriteRequest(
+            device: BluetoothDevice,
+            requestId: Int,
+            characteristic: BluetoothGattCharacteristic,
+            preparedWrite: Boolean,
+            responseNeeded: Boolean,
+            offset: Int,
+            value: ByteArray
+        ) {
             if (characteristic.uuid == UUID.fromString(CHARACTERISTIC_WRITE_UUID)) {
+                // 클라이언트가 보낸 데이터를 읽어 처리
                 val latitude = ByteBuffer.wrap(value.sliceArray(0 until 8)).double
                 val longitude = ByteBuffer.wrap(value.sliceArray(8 until 16)).double
-                Log.d(TAG, "위치 데이터 받았당 - Latitude: $latitude, Longitude: $longitude")
+                Log.d(TAG, "위치 데이터 수신 - 위도: $latitude, 경도: $longitude")
 
-                // 위치 데이터 저장
+                // 위치 데이터 저장 (비동기 처리)
                 CoroutineScope(Dispatchers.IO).launch {
                     val emergencyPreferences = EmergencyPreferences(context)
                     emergencyPreferences.saveLocation(latitude, longitude)
                 }
-                Log.d(TAG, "위치 데이터 넣어유")
+                Log.d(TAG, "위치 데이터 저장 완료")
 
-                // 응답 전송 전에 권한 확인
+                // 응답 전송 (권한 확인 후)
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
                     bluetoothGattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
-                    Log.d(TAG, "응답 데이터까지 제조 완룡")
+                    Log.d(TAG, "응답 데이터 전송 완료")
                 } else {
-                    Log.e(TAG, "BLUETOOTH_CONNECT permission not granted")
+                    Log.e(TAG, "BLUETOOTH_CONNECT 권한이 없습니다.")
                 }
-
             }
         }
     }
+
 }

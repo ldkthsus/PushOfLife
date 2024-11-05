@@ -22,9 +22,13 @@ public class NotificationController {
     public ResponseEntity<Void> sendMessage() {
         System.out.println(testFcmKey);
         for (int i=0; i<5000; i++){
-            notificationService.sendNotNormal(testFcmKey, "123","123");
+            System.out.println(i);
+            try{
+                notificationService.sendNotNormal(testFcmKey, "123","123");
+            } catch (Exception e){
+                e.printStackTrace();
+            }
 
-            
         }
         return ResponseEntity.ok().build();
 

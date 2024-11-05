@@ -12,6 +12,7 @@ import androidx.lifecycle.*
 import com.example.pushoflife.utils.Event
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.nio.ByteBuffer
 
 class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel() {
 
@@ -41,19 +42,21 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
      * 알림 수신 시 BLE 스캔을 시작
      */
     @RequiresApi(Build.VERSION_CODES.M)
-    fun onWatchAlertReceived() {
+    fun onWatchAlertReceived(message:ByteArray) {
         Log.d("BleManagerViewModel", "Watch alert received. Starting BLE scan.")
-        startEmergencyScan()
+        startEmergencyScan(message)
     }
 
     /**
      * BLE 스캔 시작 메서드 (주변 장치 검색)
      */
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun startEmergencyScan() {
+    private fun startEmergencyScan(message: ByteArray) {
         viewModelScope.launch {
-            Log.d("BleManagerViewModel", "Starting BLE scan.")
-            bleRepository.startScan()
+            Log.d(TAG, "Starting BLE scan.")
+            bleRepository.startScan { // 콜백 전달
+                onScanComplete(message) // 스캔 완료 시 onScanComplete 호출
+            }
         }
     }
 
@@ -75,8 +78,16 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
      * 스캔 완료 시 모든 장치에 메시지를 전송하고 연결을 해제
      */
     fun onScanComplete(message: ByteArray) {
-        Log.d("BleManagerViewModel", "BLE scan completed. Connecting to all devices to send message.")
-        connectAndSendMessageToAllDevices(message)
+        Log.d(TAG, "BLE scan completed. Connecting to all devices to send message.")
+
+        // ByteArray에서 latitude와 longitude를 추출
+        val byteBuffer = ByteBuffer.wrap(message)
+        val latitude = byteBuffer.double // 앞의 8바이트는 latitude
+        val longitude = byteBuffer.double // 뒤의 8바이트는 longitude
+
+        viewModelScope.launch(Dispatchers.IO) {
+            bleRepository.sendLocationToAllDevices(latitude, longitude)
+        }
     }
 
     /**
@@ -100,7 +111,7 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
                     Log.d("BleManagerViewModel", "Connecting to device: ${device.name} (${device.address})")
 
                     // connectDevice를 호출할 때 콜백 처리를 직접 구현하지 않는다면 별도의 람다식 대신에 단순 호출 사용
-                    bleRepository.connectDevice(device)
+//                    bleRepository.connectDevice(device)
                 }
             }
         }

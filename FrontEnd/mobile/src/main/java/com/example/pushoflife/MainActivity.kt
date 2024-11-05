@@ -78,6 +78,7 @@ import com.example.pushoflife.service.LocationUpdatesService
 import com.example.pushoflife.utils.isWearDeviceConnected
 import kotlinx.coroutines.flow.first
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.nio.ByteBuffer
 
 suspend fun prepareEmergencyMessage(context: Context) {
     val userPreferences = UserPreferences(context)
@@ -208,6 +209,9 @@ class MainActivity : ComponentActivity() {
     private var emergency by mutableStateOf(false)
     private lateinit var emergencyPreferences: EmergencyPreferences
     private val bleManagerViewModel: BleManagerViewModel by viewModel()
+
+    private lateinit var locationData: ByteArray // 클래스 레벨 선언으로 전환
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askPermissions()
@@ -229,6 +233,7 @@ class MainActivity : ComponentActivity() {
         // 긴급 메시지 준비
         lifecycleScope.launch {
             prepareEmergencyMessage(this@MainActivity)
+            locationData = getLocationDataAsByteArray(36.35524340919229, 127.29796329785906)
         }
         // DataStore에서 허용 여부를 확인하여 서비스 시작
         lifecycleScope.launch {
@@ -296,10 +301,15 @@ class MainActivity : ComponentActivity() {
             IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT")
         )
     }
-
+    fun getLocationDataAsByteArray(latitude: Double, longitude: Double): ByteArray {
+        val byteBuffer = ByteBuffer.allocate(16)
+        byteBuffer.putDouble(latitude)
+        byteBuffer.putDouble(longitude)
+        return byteBuffer.array()
+    }
     // ViewModel과 상호작용하는 메서드
     private fun handleWatchAlertReceived() {
-        bleManagerViewModel.onWatchAlertReceived()
+        bleManagerViewModel.onWatchAlertReceived(locationData)
     }
 
     override fun onDestroy() {

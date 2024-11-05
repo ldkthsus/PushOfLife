@@ -31,7 +31,8 @@ public class NotificationService {
 
         } catch (Exception e){
             if (!isError){
-                return this.sendNotification(fcmToken, longitude,latitude,true);
+                System.out.println("failed"+e);
+//                return this.sendNotification(fcmToken, longitude,latitude,true);
             }
         }
 

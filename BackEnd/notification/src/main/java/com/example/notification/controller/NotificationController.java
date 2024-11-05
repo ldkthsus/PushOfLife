@@ -25,6 +25,7 @@ public class NotificationController {
             System.out.println(i);
             try{
                 notificationService.sendNotNormal(testFcmKey, "123","123");
+
             } catch (Exception e){
                 e.printStackTrace();
             }

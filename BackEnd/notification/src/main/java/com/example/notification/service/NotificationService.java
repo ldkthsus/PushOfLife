@@ -38,4 +38,25 @@ public class NotificationService {
         return Mono.empty();
     }
 
+    public void sendNotNormal(String fcmToken, String longitude, String latitude){
+        String title = "테스트용 알림";
+        String body = "속도 비교용 함수입니다.";
+
+        Message message = Message.builder()
+                .putData("title", title)
+                .putData("body", body)
+                .putData("latitude",latitude)
+                .putData("longitude",longitude)
+                .setToken(fcmToken)
+                .build();
+
+        try{
+            String response = FirebaseMessaging.getInstance().send(message);
+            System.out.println("Successfully sent Message : "+response);
+
+        } catch (Exception e){
+
+        }
+    }
+
 }

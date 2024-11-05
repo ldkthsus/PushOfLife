@@ -1,61 +1,65 @@
 package com.example.pushoflife.bluetooth
 
 import android.Manifest
+import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
-class BleDeviceService : AppCompatActivity() {
+class BleDeviceService : Service() {
 
-    private val viewModel by viewModel<BleManagerViewModel>()
+    // ViewModel을 Koin을 통해 inject()로 주입받기
+    private val viewModel: BleManagerViewModel by inject()
     private lateinit var bleDeviceManager: BleDeviceManager  // BleDeviceManager 인스턴스 생성
 
-    // 권한 요청 런처 설정
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        if (permissions.all { it.value }) {
-            Log.d("song", "권한이 필요한데 설정하셨네요")
-            Toast.makeText(this, "권한 허용 감삼다 !", Toast.LENGTH_SHORT).show()
-            // 권한이 부여되면 Foreground Service를 통해 광고 시작
-            startBleAdvertiseService()
-        } else {
-            Toast.makeText(this, "Permissions must be granted", Toast.LENGTH_SHORT).show()
-            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-            intent.data = Uri.parse("package:$packageName")
-            startActivity(intent)
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.M)
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreate() {
+        super.onCreate()
         bleDeviceManager = BleDeviceManager(this)
 
-        // 권한 확인 및 요청
+        // Android 버전에 따른 권한 확인 및 광고 시작
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (!hasPermissions(PERMISSIONS)) {
-                requestPermissionLauncher.launch(PERMISSIONS)
+                requestPermissions()
             } else {
                 Log.d("song", "SDK 버전 높지만 권한 허용 했구 광고 시작")
                 startBleAdvertiseService()
             }
-        }
-        else{
+        } else {
             Log.d("song", "SDK 버전 낮아서 바로 광고 시작")
             startBleAdvertiseService()
         }
+
         // 스캔 결과를 관찰하여 BleDeviceManager에 저장
         initObserver()
+    }
+
+    private fun requestPermissions() {
+        CoroutineScope(Dispatchers.Main).launch {
+            val permissions = PERMISSIONS.filter {
+                ContextCompat.checkSelfPermission(this@BleDeviceService, it) != PackageManager.PERMISSION_GRANTED
+            }
+            if (permissions.isEmpty()) {
+                Log.d("song", "권한이 필요한데 다 허용해주셨네용 광고 합니다요")
+                startBleAdvertiseService()
+            }
+//            else {
+//                // 권한 요청 로직 작성 필요 (Foreground Service에서는 ActivityResultContracts 사용이 제한적)
+//                Toast.makeText(this@BleDeviceService, "권한을 허용해주세요 !!", Toast.LENGTH_SHORT).show()
+//                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+//                intent.data = Uri.parse("package:$packageName")
+//                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+//                startActivity(intent)
+//            }
+        }
     }
 
     // 권한이 있는 경우 Foreground Service를 통해 BLE 광고 시작
@@ -66,7 +70,7 @@ class BleDeviceService : AppCompatActivity() {
     }
 
     private fun initObserver() {
-        viewModel.listUpdate.observe(this) {
+        viewModel.listUpdate.observeForever {
             it.getContentIfNotHandled()?.let { scanResults ->
                 scanResults.forEach { device ->
                     bleDeviceManager.addDevice(device)  // 스캔된 기기를 BleDeviceManager에 추가
@@ -81,21 +85,8 @@ class BleDeviceService : AppCompatActivity() {
         }
     }
 
-    // 권한 요청 응답 처리
-    @Deprecated("Use requestPermissionLauncher instead")
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_ALL_PERMISSION) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Permissions must be granted", Toast.LENGTH_SHORT).show()
-            }
-        }
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
     }
 
     companion object {

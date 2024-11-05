@@ -1,6 +1,7 @@
 package com.example.notification.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -14,6 +15,8 @@ import java.util.Map;
 public class KafkaConsumerService {
 
     private final NotificationService notificationService;
+    @Value("${test.fcmKey}")
+    private String testFcmKey;
 
     @KafkaListener(topics="${topic.name}",groupId = "${spring.kafka.consumer.group-id}")
     public Mono<Void> consumeNotify(String message) throws IOException{
@@ -26,7 +29,8 @@ public class KafkaConsumerService {
             String latitude = messageMap.get("latitude");
 
             System.out.println("Received message: " + message);
-            return this.notificationService.sendNotification(fcmToken, longitude, latitude, false);
+//            return this.notificationService.sendNotification(fcmToken, longitude, latitude, false);
+            return this.notificationService.sendNotification(testFcmKey, longitude, latitude, false);
 
         } catch (Exception e) {
             e.printStackTrace();

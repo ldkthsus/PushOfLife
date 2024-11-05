@@ -25,7 +25,7 @@ class BleDeviceActivity : AppCompatActivity() {
     ) { permissions ->
         if (permissions.all { it.value }) {
             Log.d("song", "권한이 필요한데 설정하셨네요")
-            Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "권한 허용 감삼다 !", Toast.LENGTH_SHORT).show()
             // 권한이 부여되면 Foreground Service를 통해 광고 시작
             startBleAdvertiseService()
         } else {

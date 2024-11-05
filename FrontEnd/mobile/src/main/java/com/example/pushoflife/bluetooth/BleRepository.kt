@@ -21,12 +21,13 @@ import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.schedule
 
-class BleRepository ()  {
+class BleRepository() {
 
     // Central 역할 및 BLE 관리자
     private val TAG = "BleRepository"
     private val context = MyApplication.applicationContext()
-    private val bleManager: BluetoothManager = context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+    private val bleManager: BluetoothManager =
+        context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
     private val bleAdapter: BluetoothAdapter? get() = bleManager.adapter
     private var bluetoothGattServer: BluetoothGattServer? = null
     private val deviceManager = BleDeviceManager(context)
@@ -61,9 +62,19 @@ class BleRepository ()  {
 
     private val BLEScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            deviceManager.addDevice(result.device)
-            listUpdate.postValue(Event(deviceManager.getDeviceList()))
-            Log.d("BleRepository", "스캔한 기기들 목록에 담음")
+            val serviceUuid = UUID.fromString(SERVICE_UUID) // 대상 UUID 설정
+            val scanRecord = result.scanRecord
+
+            // 스캔된 장치의 서비스 UUID가 일치하는지 확인
+            val matches = scanRecord?.serviceUuids?.any { it.uuid == serviceUuid } ?: false
+            if (matches) {
+                // UUID가 일치하는 경우에만 장치를 목록에 추가
+                deviceManager.addDevice(result.device)
+                listUpdate.postValue(Event(deviceManager.getDeviceList()))
+                Log.d("BleRepository", "UUID가 일치하는 기기가 목록에 추가돼썽")
+            } else {
+                Log.d("BleRepository", "UUID가 달라서 필터링당함..")
+            }
         }
     }
 
@@ -86,7 +97,11 @@ class BleRepository ()  {
         for (device in deviceManager.getDeviceList()) {
             device.connectGatt(context, false, object : BluetoothGattCallback() {
 
-                override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+                override fun onConnectionStateChange(
+                    gatt: BluetoothGatt,
+                    status: Int,
+                    newState: Int
+                ) {
                     if (newState == BluetoothGatt.STATE_CONNECTED) {
                         Log.d("BleRepository", "gatt 연결 성공")
                         gatt.discoverServices() // 연결 성공 시 서비스 탐색 시작
@@ -106,7 +121,11 @@ class BleRepository ()  {
                     }
                 }
 
-                override fun onCharacteristicWrite(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+                override fun onCharacteristicWrite(
+                    gatt: BluetoothGatt,
+                    characteristic: BluetoothGattCharacteristic,
+                    status: Int
+                ) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
                         Log.d(TAG, "송신 데이터에 적었구 이제 연결 해제할 거양")
                         gatt.disconnect() // 데이터 전송 후 연결 해제
@@ -117,6 +136,7 @@ class BleRepository ()  {
             })
         }
     }
+
     // 송신 특성 가져오기
     fun getWriteCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
         val SERVICE_UUID = UUID.fromString(SERVICE_UUID)
@@ -129,6 +149,9 @@ class BleRepository ()  {
     // 권한 체크 메서드
     private fun isPermissionGranted(permission: String): Boolean {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
-                ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+                ContextCompat.checkSelfPermission(
+                    context,
+                    permission
+                ) == PackageManager.PERMISSION_GRANTED
     }
 }

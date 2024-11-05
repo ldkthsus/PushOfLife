@@ -60,18 +60,9 @@ class BleAdvertiseService : Service() {
     @SuppressLint("MissingPermission")
     private fun startAdvertising() {
         Log.d("song", "광고 하려고 데이터 빌드")
-        val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-            .setConnectable(true)
-            .build()
 
-        val data = AdvertiseData.Builder()
-            .setIncludeDeviceName(true)
-            .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
-            .build()
-
-        advertiseCallback = object : AdvertiseCallback() {
+        // 광고 콜백 초기화
+        val advertiseCallback = object : AdvertiseCallback() {
             override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
                 Log.d("BleAdvertiseService", "Advertising started successfully")
             }
@@ -81,8 +72,24 @@ class BleAdvertiseService : Service() {
             }
         }
 
-        bluetoothLeAdvertiser.startAdvertising(settings, data, advertiseCallback)
+        // 광고 설정 구성
+        val settings = AdvertiseSettings.Builder()
+            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+            .setConnectable(true)
+            .build()
+
+        // 광고 데이터 구성
+        val data = AdvertiseData.Builder()
+            .setIncludeDeviceName(true)
+            .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
+            .build()
+
+        // 광고 시작
+        bluetoothLeAdvertiser?.startAdvertising(settings, data, advertiseCallback)
+        Log.d("song", "BLE 광고 시작이예용 !!")
     }
+
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = NotificationCompat.Builder(this, "BLE_ADVERTISE_CHANNEL")

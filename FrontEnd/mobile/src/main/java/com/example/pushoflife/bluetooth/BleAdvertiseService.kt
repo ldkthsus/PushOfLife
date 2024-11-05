@@ -71,7 +71,7 @@ class BleAdvertiseService : Service() {
             }
 
             override fun onStartFailure(errorCode: Int) {
-                Log.e("BleAdvertiseService", "Advertising failed with error code: $errorCode")
+                Log.e("song", "광고 보내기 실패애,,, 나 지금 이 상태야 : $errorCode")
             }
         }
 

@@ -14,22 +14,12 @@ class MyApplication : Application() {
     init{
         instance = this
     }
-
     companion object {
         lateinit var instance: MyApplication
         fun applicationContext() : Context {
             return instance.applicationContext
         }
     }
-//    init{
-//        instance = this
-//    }
-//    companion object {
-//        lateinit var instance: MyApplication
-//        fun ApplicationContext() : Context {
-//            return instance.applicationContext
-//        }
-//    }
 override fun onCreate() {
     super.onCreate()
     Log.d("MyApplication", "Application context initialized: $applicationContext")

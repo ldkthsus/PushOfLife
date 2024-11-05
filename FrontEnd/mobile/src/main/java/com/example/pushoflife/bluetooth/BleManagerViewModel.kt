@@ -13,10 +13,7 @@ import java.nio.ByteBuffer
 
 class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel() {
 
-//    val statusTxt: LiveData<String> = bleRepository.fetchStatusText()
-//    val readTxt: LiveData<String> = bleRepository.fetchReadText()
     val _isScanning: LiveData<Event<Boolean>> = bleRepository.isScanning
-//    val _isConnect: LiveData<Event<Boolean>> = bleRepository.isConnect
     val listUpdate: MutableLiveData<Event<List<BluetoothDevice>?>> = bleRepository.listUpdate
 
     companion object {
@@ -24,29 +21,22 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
     }
 
     fun onWatchAlertReceived(message: ByteArray) {
-        Log.d(TAG, "Watch alert received. Starting BLE scan.")
+        Log.d(TAG, "스캔 시작할게유")
         startEmergencyScan(message)
     }
 
     // ViewModel에서 startEmergencyScan 메서드 수정
     private fun startEmergencyScan(message: ByteArray) {
         viewModelScope.launch {
-            Log.d(TAG, "Starting BLE scan.")
+            Log.d(TAG, "스 캔 시 작")
             bleRepository.startScan { // 콜백 전달
                 onScanComplete(message) // 스캔 완료 시 onScanComplete 호출
             }
         }
     }
-
-
-//    fun startAdvertising() {
-//        viewModelScope.launch {
-//            bleRepository.startAdvertising()
-//        }
-//    }
-
     fun onScanComplete(message: ByteArray) {
-        Log.d(TAG, "BLE scan completed. Connecting to all devices to send message.")
+        Log.d(TAG, "BLE 스캔 끝 ! 기기들한테 메세지 보내러 간다.")
+        Log.d(TAG, message.toString())
 
         // ByteArray에서 latitude와 longitude를 추출
         val byteBuffer = ByteBuffer.wrap(message)

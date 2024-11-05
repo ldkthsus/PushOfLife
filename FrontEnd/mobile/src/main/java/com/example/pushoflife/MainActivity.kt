@@ -35,6 +35,7 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
 import android.Manifest
+import android.content.BroadcastReceiver
 import com.google.firebase.messaging.FirebaseMessaging
 import android.util.Log
 import com.google.android.gms.tasks.Task
@@ -61,11 +62,14 @@ import android.util.Base64
 //import android.util.Log
 import java.security.MessageDigest
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
+import com.example.pushoflife.bluetooth.BleDeviceService
+import com.example.pushoflife.bluetooth.BleManagerViewModel
 import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.data.datastore.UserPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
@@ -75,6 +79,8 @@ import com.example.pushoflife.utils.isWearDeviceConnected
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.flow.first
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.nio.ByteBuffer
 
 suspend fun prepareEmergencyMessage(context: Context) {
     val userPreferences = UserPreferences(context)
@@ -142,12 +148,30 @@ class MainActivity : ComponentActivity() {
                 permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
-
         // Bluetooth 연결 권한 요청
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.BLUETOOTH)
+        }
+        // Bluetooth 연결 권한 요청
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADMIN)
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_SCAN)
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.BLUETOOTH_ADVERTISE)
+            }
+        }
         // 위치 권한 요청
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -202,6 +226,7 @@ class MainActivity : ComponentActivity() {
     private var isFallDetectionEnabled by mutableStateOf(false)
     private var emergency by mutableStateOf(false)
     private lateinit var emergencyPreferences: EmergencyPreferences
+    private val bleManagerViewModel: BleManagerViewModel by viewModel()
 
     private val messageListener = MessageClient.OnMessageReceivedListener { messageEvent ->
         if (messageEvent.path == "/emergency_path") {
@@ -210,6 +235,7 @@ class MainActivity : ComponentActivity() {
             // 메시지 처리 로직 수행
         }
     }
+    private lateinit var locationData: ByteArray // 클래스 레벨 선언으로 전환
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -228,15 +254,18 @@ class MainActivity : ComponentActivity() {
                 // Get new FCM registration token
                 val token = task.result
                 Log.d("MainActivity", "FCM Registration Token: $token")
+            }
 
-        }
         firebaseAnalytics = Firebase.analytics
         userPreferences = UserPreferences(this)
         emergencyPreferences = EmergencyPreferences(this)
+
         // 긴급 메시지 준비
         lifecycleScope.launch {
             prepareEmergencyMessage(this@MainActivity)
+            locationData = getLocationDataAsByteArray(36.35524340919229, 127.29796329785906)
         }
+
         // DataStore에서 허용 여부를 확인하여 서비스 시작
         lifecycleScope.launch {
             userPreferences.allowDetection.collect { allowDetection ->
@@ -250,36 +279,84 @@ class MainActivity : ComponentActivity() {
                     Log.d("MainActivity", "Fall detection service stopped.")
                 }
             }
-            emergencyPreferences.getLocation().collect{ (latitude, longitude) ->
+            emergencyPreferences.getLocation().collect { (latitude, longitude) ->
                 emergency = latitude != null && longitude != null
-
             }
         }
+
         enableEdgeToEdge()
+        // BroadcastReceiver 등록
+        registerWatchAlertReceiver()
+
+        // BleDeviceActivity 시작
+        val bleDeviceActivityIntent = Intent(this, BleDeviceService::class.java)
+        startActivity(bleDeviceActivityIntent)
 
         setContent {
             PushOfLifeTheme {
-                val navController = rememberNavController() // Navigation Controller 생성
+                val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = "main_screen") {
-                    composable("main_screen") { MainScreen(navController, isFallDetectionEnabled = isFallDetectionEnabled,
-                        emergency = emergency,
-                        onToggleFallDetection = { enabled ->
-                            lifecycleScope.launch {
-                                userPreferences.setAllowDetection(enabled)
+                    composable("main_screen") {
+                        MainScreen(
+                            navController,
+                            isFallDetectionEnabled = isFallDetectionEnabled,
+                            emergency = emergency,
+                            onToggleFallDetection = { enabled ->
+                                lifecycleScope.launch {
+                                    userPreferences.setAllowDetection(enabled)
+                                }
                             }
-                        }) }  // 메인 화면
-                    composable("service_screen") { ServiceScreen(navController) }          // 서비스 가이드 화면
-                    composable("profile_edit_screen") { ProfileEditScreen(navController) } // 프로필 수정 화면
+                        )
+                    }
+                    composable("service_screen") { ServiceScreen(navController) }
+                    composable("profile_edit_screen") { ProfileEditScreen(navController) }
                     composable("sign_up_screen") { SignUpScreen(navController) }
                     composable("login_screen") { LoginScreen(navController) }
-                    composable("cpr_guide_screen") { CprGuideScreen(navController) } // CPR 가이드 스크린
-                    composable("aed_location_screen") { AedLocationScreen(navController) } // CPR 가이드 스크린
+                    composable("cpr_guide_screen") { CprGuideScreen(navController) }
+                    composable("aed_location_screen") { AedLocationScreen(navController) }
                 }
             }
         }
-        LocationUpdatesService.scheduleLocationUpdates(this)
 
+        LocationUpdatesService.scheduleLocationUpdates(this)
     }
+
+    private fun registerWatchAlertReceiver() {
+        val watchAlertReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                try {
+                    if (intent.action == "com.example.pushoflife.ACTION_WATCH_ALERT") {
+                        Log.d("MainActivity", "Watch alert received")
+                        handleWatchAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리
+                    } else {
+                        Log.e("MainActivity", "Unexpected action received: ${intent.action}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error processing broadcast", e)
+                }
+            }
+        }
+
+        // BroadcastReceiver 등록
+        registerReceiver(
+            watchAlertReceiver,
+            IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT")
+        )
+    }
+
+    fun getLocationDataAsByteArray(latitude: Double, longitude: Double): ByteArray {
+        val byteBuffer = ByteBuffer.allocate(16)
+        byteBuffer.putDouble(latitude)
+        byteBuffer.putDouble(longitude)
+        return byteBuffer.array()
+    }
+
+    // ViewModel과 상호작용하는 메서드
+    private fun handleWatchAlertReceived() {
+        Log.d("MainActivity", "낙상 감지 알림 탐지")
+        bleManagerViewModel.onWatchAlertReceived(locationData)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         messageClient.removeListener(messageListener)

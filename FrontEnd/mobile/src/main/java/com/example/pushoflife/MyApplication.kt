@@ -2,6 +2,7 @@ package com.example.pushoflife
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import com.example.pushoflife.di.repositoryModule
 import com.example.pushoflife.di.viewModelModule
 import org.koin.android.ext.koin.androidContext
@@ -10,7 +11,6 @@ import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 
 class MyApplication : Application() {
-
     init{
         instance = this
     }
@@ -21,22 +21,24 @@ class MyApplication : Application() {
             return instance.applicationContext
         }
     }
+//    init{
+//        instance = this
+//    }
+//    companion object {
+//        lateinit var instance: MyApplication
+//        fun ApplicationContext() : Context {
+//            return instance.applicationContext
+//        }
+//    }
+override fun onCreate() {
+    super.onCreate()
+    Log.d("MyApplication", "Application context initialized: $applicationContext")
 
-    override fun onCreate() {
-        super.onCreate()
-
-        startKoin {
-            // 로그를 찍어볼 수 있다.
-            // 에러확인 - androidLogger(Level.ERROR)
-            androidLogger()
-            // Android Content를 넘겨준다.
-            androidContext(this@MyApplication)
-            // assets/koin.properties 파일에서 프로퍼티를 가져옴
-            androidFileProperties()
-            //module list
-            modules(listOf(repositoryModule, viewModelModule))
-        }
-
+    startKoin {
+        androidContext(this@MyApplication)
+        modules(listOf(repositoryModule, viewModelModule))
     }
+    Log.d("MyApplication", "Koin started successfully")
+}
 
 }

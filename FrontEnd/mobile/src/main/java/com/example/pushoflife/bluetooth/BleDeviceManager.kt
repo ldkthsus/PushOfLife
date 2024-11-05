@@ -21,7 +21,7 @@ class BleDeviceManager(private val context: Context) {
         // Android 12(API 31) 이상인 경우에만 권한 확인
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                Log.w(TAG, "BLUETOOTH_CONNECT permission not granted.")
+                Log.w(TAG, "BLUETOOTH_CONNECT permission 승인해주세여")
                 return
             }
         }

@@ -38,8 +38,6 @@ class BleRepository ()  {
     init {
         // 서버 초기화
         Log.d("BleRepository", "Context in BleRepository1: $context")
-//        startServer() // GATT 서버를 초기화하여 송신 특성 변경 감지를 준비
-        Log.d("BleRepository", "Context in BleRepository: $context")
     }
 
     // 클라이언트 기능: 스캔 및 위치 데이터 전송
@@ -110,59 +108,15 @@ class BleRepository ()  {
 
                 override fun onCharacteristicWrite(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                        Log.d(TAG, "Successfully wrote to characteristic")
+                        Log.d(TAG, "송신 데이터에 적었구 이제 연결 해제할 거양")
                         gatt.disconnect() // 데이터 전송 후 연결 해제
                     } else {
-                        Log.e(TAG, "Failed to write characteristic with status: $status")
+                        Log.e(TAG, "특성에 데이터 못씀,,, 나 지금 이 상태 : $status")
                     }
                 }
             })
         }
     }
-
-    // 서버 기능: 광고 및 송신 특성 변경 감지
-    @SuppressLint("MissingPermission")
-    fun startServer() {
-        bluetoothGattServer = bleManager.openGattServer(context, gattServerCallback)?.apply {
-            val service = BluetoothGattService(UUID.fromString(SERVICE_UUID), BluetoothGattService.SERVICE_TYPE_PRIMARY)
-
-            val writeCharacteristic = BluetoothGattCharacteristic(
-                UUID.fromString(CHARACTERISTIC_WRITE_UUID),
-                BluetoothGattCharacteristic.PROPERTY_WRITE,
-                BluetoothGattCharacteristic.PERMISSION_WRITE
-            )
-
-            service.addCharacteristic(writeCharacteristic)
-            addService(service)
-            Log.d(TAG, "BLE GATT Server started and service added.")
-        }
-    }
-
-    private val gattServerCallback = object : BluetoothGattServerCallback() {
-
-        override fun onCharacteristicWriteRequest(device: BluetoothDevice, requestId: Int, characteristic: BluetoothGattCharacteristic, preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray) {
-            if (characteristic.uuid == UUID.fromString(CHARACTERISTIC_WRITE_UUID)) {
-                val latitude = ByteBuffer.wrap(value.sliceArray(0 until 8)).double
-                val longitude = ByteBuffer.wrap(value.sliceArray(8 until 16)).double
-                Log.d(TAG, "Received updated location - Latitude: $latitude, Longitude: $longitude")
-
-                // 위치 데이터 저장
-                CoroutineScope(Dispatchers.IO).launch {
-                    val emergencyPreferences = EmergencyPreferences(context)
-                    emergencyPreferences.saveLocation(latitude, longitude)
-                }
-
-                // 응답 전송 전에 권한 확인
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                    bluetoothGattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
-                } else {
-                    Log.e(TAG, "BLUETOOTH_CONNECT permission not granted")
-                }
-
-            }
-        }
-    }
-
     // 송신 특성 가져오기
     fun getWriteCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
         val SERVICE_UUID = UUID.fromString(SERVICE_UUID)

@@ -22,7 +22,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -62,39 +64,53 @@ class BleAdvertiseService : Service() {
     private fun startAdvertising() {
         Log.d("song", "광고 하려고 데이터 빌드")
 
-        // 광고 콜백 초기화
         val advertiseCallback = object : AdvertiseCallback() {
             override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-                Log.d("BleAdvertiseService", "Advertising started successfully")
+                Log.d("song", "광고 보냄!") // 광고할 때마다 로그 출력
             }
 
             override fun onStartFailure(errorCode: Int) {
-                Log.e("BleAdvertiseService", "Advertising failed with error code: $errorCode")
+                Log.e("song", "광고 보내기 실패애,,, 나 지금 이 상태야 : $errorCode")
             }
         }
 
-        // 광고 설정 구성
-        val settings = AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-            .setConnectable(true)
-            .build()
+        fun startBLEAdvertising() {
+            val settings = AdvertiseSettings.Builder()
+                .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
+                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+                .setConnectable(true)
+                .build()
 
-        // 광고 데이터 구성
-        val data = AdvertiseData.Builder()
-            .setIncludeDeviceName(true)
-            .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
-            .build()
+            val serviceUuid = UUID.fromString(SERVICE_UUID)
+            val data = AdvertiseData.Builder()
+                .setIncludeDeviceName(false)
+                .addServiceUuid(ParcelUuid(serviceUuid))
+                .build()
 
-        // 광고 시작
-        bluetoothLeAdvertiser?.startAdvertising(settings, data, advertiseCallback)
-        Log.d("song", "BLE 광고 시작이예용 !!")
+            bluetoothLeAdvertiser?.startAdvertising(settings, data, advertiseCallback)
+        }
+
+        fun stopAndRestartAdvertising() {
+            bluetoothLeAdvertiser?.stopAdvertising(advertiseCallback)
+            startBLEAdvertising() // 다시 광고 시작
+        }
+
+        // Handler를 사용하여 1초마다 광고를 중지하고 재시작
+        val handler = Handler(Looper.getMainLooper())
+        val advertisingRunnable = object : Runnable {
+            override fun run() {
+                stopAndRestartAdvertising()
+                handler.postDelayed(this, 1000) // 1초 후에 다시 실행
+            }
+        }
+
+        handler.post(advertisingRunnable) // 초기 실행
     }
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = NotificationCompat.Builder(this, "BLE_ADVERTISE_CHANNEL")
-            .setContentTitle("BLE Advertising")
+            .setContentTitle("Push Of Life")
             .setContentText("백그라운드에서 광고중이예요...")
             .setSmallIcon(R.drawable.ic_notification)
             .build()

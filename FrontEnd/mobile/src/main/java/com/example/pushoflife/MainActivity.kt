@@ -68,8 +68,7 @@ import android.provider.Settings
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.ActivityCompat
-import com.example.pushoflife.bluetooth.BleDeviceActivity
+import com.example.pushoflife.bluetooth.BleDeviceService
 import com.example.pushoflife.bluetooth.BleManagerViewModel
 import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.data.datastore.UserPreferences
@@ -289,9 +288,9 @@ class MainActivity : ComponentActivity() {
         // BroadcastReceiver 등록
         registerWatchAlertReceiver()
 
-        // BleDeviceActivity 시작
-        val bleDeviceActivityIntent = Intent(this, BleDeviceActivity::class.java)
-        startActivity(bleDeviceActivityIntent)
+        // BleDeviceService 시작
+        val bleDeviceServiceIntent = Intent(this, BleDeviceService::class.java)
+        startService(bleDeviceServiceIntent)
 
         setContent {
             PushOfLifeTheme {

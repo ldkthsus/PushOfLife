@@ -106,6 +106,8 @@ class BleRepository() {
                     status: Int,
                     newState: Int
                 ) {
+                    Log.d("test", "확인 $newState, 기존 $status")
+                    Log.d("test", "확인 ${BluetoothGatt.STATE_CONNECTED}")
                     if (newState == BluetoothGatt.STATE_CONNECTED) {
                         Log.d("BleRepository", "gatt 연결 성공")
                         gatt.discoverServices() // 연결 성공 시 서비스 탐색 시작

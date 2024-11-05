@@ -14,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class BleDeviceActivity : AppCompatActivity() {
+class BleDeviceService : AppCompatActivity() {
 
     private val viewModel by viewModel<BleManagerViewModel>()
     private lateinit var bleDeviceManager: BleDeviceManager  // BleDeviceManager 인스턴스 생성

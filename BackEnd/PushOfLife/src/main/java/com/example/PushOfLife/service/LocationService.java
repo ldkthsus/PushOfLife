@@ -60,7 +60,7 @@ public class LocationService {
         }
         System.out.println(userId);
 
-        redisTemplate.opsForGeo().add("user_location", new Point(locationDTO.getLatitude(), locationDTO.getLongitude()), userId);
+        redisTemplate.opsForGeo().add("user_location", new Point( locationDTO.getLongitude(), locationDTO.getLatitude()), userId);
 
     }
 

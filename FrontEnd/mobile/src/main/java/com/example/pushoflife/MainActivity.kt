@@ -68,8 +68,7 @@ import android.provider.Settings
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.ActivityCompat
-import com.example.pushoflife.bluetooth.BleDeviceActivity
+import com.example.pushoflife.bluetooth.BleDeviceService
 import com.example.pushoflife.bluetooth.BleManagerViewModel
 import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.data.datastore.TokenPreferences
@@ -306,7 +305,7 @@ class MainActivity : ComponentActivity() {
         registerWatchAlertReceiver()
 
         // BleDeviceActivity 시작
-        val bleDeviceActivityIntent = Intent(this, BleDeviceActivity::class.java)
+        val bleDeviceActivityIntent = Intent(this, BleDeviceService::class.java)
         startActivity(bleDeviceActivityIntent)
 
         setContent {

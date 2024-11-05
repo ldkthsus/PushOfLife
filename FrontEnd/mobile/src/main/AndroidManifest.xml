@@ -47,7 +47,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.aedLocation.AedLocationActivity"></activity>
-        <activity android:name=".bluetooth.BleDeviceActivity"></activity>
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">
@@ -69,7 +68,10 @@
             android:enabled="true"
             android:foregroundServiceType="location">
         </service>
-
+        <service android:name=".bluetooth.BleDeviceService"
+            android:enabled="true"
+            android:exported="true">
+        </service>
         <service
             android:name=".service.LocationUpdatesService"
             android:enabled="true"

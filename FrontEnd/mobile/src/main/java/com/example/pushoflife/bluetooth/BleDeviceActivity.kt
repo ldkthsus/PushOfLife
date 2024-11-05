@@ -24,7 +24,7 @@ class BleDeviceActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions.all { it.value }) {
-            Log.d("permission", "권한 필요해요")
+            Log.d("song", "권한이 필요한데 설정하셨네요")
             Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
             // 권한이 부여되면 Foreground Service를 통해 광고 시작
             startBleAdvertiseService()
@@ -39,19 +39,21 @@ class BleDeviceActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // BleDeviceManager 초기화 시 context 전달
         bleDeviceManager = BleDeviceManager(this)
 
         // 권한 확인 및 요청
-        if (!hasPermissions(PERMISSIONS)) {
-            requestPermissionLauncher.launch(PERMISSIONS)
-        } else {
-            Log.d("song", "광고 시작")
-            // 권한이 이미 있는 경우 광고 시작
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!hasPermissions(PERMISSIONS)) {
+                requestPermissionLauncher.launch(PERMISSIONS)
+            } else {
+                Log.d("song", "SDK 버전 높지만 권한 허용 했구 광고 시작")
+                startBleAdvertiseService()
+            }
+        }
+        else{
+            Log.d("song", "SDK 버전 낮아서 바로 광고 시작")
             startBleAdvertiseService()
         }
-
         // 스캔 결과를 관찰하여 BleDeviceManager에 저장
         initObserver()
     }
@@ -72,6 +74,7 @@ class BleDeviceActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun hasPermissions(permissions: Array<String>): Boolean {
         return permissions.all { permission ->
             ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED

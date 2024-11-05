@@ -304,9 +304,9 @@ class MainActivity : ComponentActivity() {
         // BroadcastReceiver 등록
         registerWatchAlertReceiver()
 
-        // BleDeviceActivity 시작
-        val bleDeviceActivityIntent = Intent(this, BleDeviceService::class.java)
-        startActivity(bleDeviceActivityIntent)
+        // BleDeviceService 시작
+        val bleDeviceServiceIntent = Intent(this, BleDeviceService::class.java)
+        startService(bleDeviceServiceIntent)
 
         setContent {
             PushOfLifeTheme {

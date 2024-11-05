@@ -54,7 +54,7 @@ class BleRepository() {
         isScanning.postValue(Event(true))
 
         // 일정 시간 후 스캔 중지 및 onComplete 호출
-        Timer("SettingUp", false).schedule(20000) {
+        Timer("SettingUp", false).schedule(5000) {
             stopScan()
             onComplete() // 스캔 중지 후 ViewModel의 onScanComplete 호출
         }

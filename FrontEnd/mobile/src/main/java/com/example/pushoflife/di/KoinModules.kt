@@ -1,5 +1,6 @@
 package com.example.pushoflife.di
 
+import com.example.pushoflife.bluetooth.BleDeviceManager
 import com.example.pushoflife.bluetooth.BleRepository
 import com.example.pushoflife.bluetooth.BleManagerViewModel
 import org.koin.android.ext.koin.androidContext

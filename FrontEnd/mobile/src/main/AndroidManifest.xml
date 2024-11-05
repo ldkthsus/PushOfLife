@@ -73,6 +73,12 @@
             android:exported="true">
         </service>
         <service
+            android:name=".bluetooth.BleDeviceService"
+            android:exported="true"
+            android:enabled="true">
+        </service>
+
+        <service
             android:name=".service.LocationUpdatesService"
             android:enabled="true"
             android:exported="false" />

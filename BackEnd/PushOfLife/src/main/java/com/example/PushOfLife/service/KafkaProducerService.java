@@ -25,6 +25,7 @@ public class KafkaProducerService {
         messageMap.put("fcmToken", fcmToken);
         messageMap.put("longitude", String.valueOf(longitude));
         messageMap.put("latitude", String.valueOf(latitude));
+
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             String messageJson = objectMapper.writeValueAsString(messageMap);

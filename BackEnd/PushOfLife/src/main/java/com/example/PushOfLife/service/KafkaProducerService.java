@@ -25,10 +25,11 @@ public class KafkaProducerService {
         messageMap.put("fcmToken", fcmToken);
         messageMap.put("longitude", String.valueOf(longitude));
         messageMap.put("latitude", String.valueOf(latitude));
+
         try{
             ObjectMapper objectMapper = new ObjectMapper();
             String messageJson = objectMapper.writeValueAsString(messageMap);
-            System.out.printf("Error message sent : %s%n",messageJson);
+            System.out.printf("message sent : %s%n",messageJson);
             this.kafkaTemplate.send(topic, messageJson);
 
         } catch (JsonProcessingException e) {

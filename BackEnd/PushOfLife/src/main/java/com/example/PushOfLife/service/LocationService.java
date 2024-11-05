@@ -1,6 +1,9 @@
 package com.example.PushOfLife.service;
 
 import com.example.PushOfLife.dto.location.LocationDTO;
+import com.example.PushOfLife.entity.MongoTokenEntity;
+import com.example.PushOfLife.repository.MongoTokenRepository;
+import com.mongodb.client.MongoClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.*;
@@ -10,6 +13,8 @@ import org.springframework.data.redis.domain.geo.GeoReference;
 import org.springframework.data.redis.domain.geo.Metrics;
 import org.springframework.stereotype.Service;
 import org.springframework.data.redis.connection.RedisGeoCommands;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,15 +26,47 @@ public class LocationService {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
     private final KafkaProducerService kafkaProducerService;
+    private final MongoTokenRepository mongoTokenRepository;
+
+    public String generateShortUserId(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes());
+
+            // 해시를 16진수 문자열로 변환
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+
+            // 원하는 길이로 잘라서 반환 (예: 8자리)
+            return hexString.toString().substring(0, 8);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public void saveLocation(LocationDTO locationDTO) {
-        redisTemplate.opsForGeo().add("user_location", new Point(locationDTO.getLatitude(), locationDTO.getLongitude()), locationDTO.getFcmToken());
+
+        String userId = generateShortUserId(locationDTO.getFcmToken());
+        if (!mongoTokenRepository.findById(userId).isPresent()) {
+            MongoTokenEntity mongoTokenEntity = new MongoTokenEntity();
+            mongoTokenEntity.setId(userId);
+            mongoTokenEntity.setFcmToken(locationDTO.getFcmToken());
+
+            mongoTokenRepository.save(mongoTokenEntity);
+        }
+        System.out.println(userId);
+
+        redisTemplate.opsForGeo().add("user_location", new Point( locationDTO.getLongitude(), locationDTO.getLatitude()), userId);
 
     }
 
     public List<String> findUsersNearby(String fcmToken, int range) {
-
-        GeoReference reference = GeoReference.fromMember(fcmToken);
+        String userId = generateShortUserId(fcmToken);
+        GeoReference reference = GeoReference.fromMember(userId);
 
         Distance radius = new Distance(range, RedisGeoCommands.DistanceUnit.METERS);
         RedisGeoCommands.GeoRadiusCommandArgs args = RedisGeoCommands.GeoRadiusCommandArgs
@@ -55,9 +92,12 @@ public class LocationService {
 
         for (GeoResult<RedisGeoCommands.GeoLocation<String>> geoResult : results){
             String token = geoResult.getContent().getName();
-            if (!token.equals(fcmToken)){
-                list.add(token);
+            MongoTokenEntity mongoTokenEntity = mongoTokenRepository.findById(token).orElse(null);
+
+            if (mongoTokenEntity != null && !mongoTokenEntity.getFcmToken().equals(fcmToken)){
+                list.add(mongoTokenEntity.getFcmToken());
             }
+
         }
 
         for (String tokens : list){

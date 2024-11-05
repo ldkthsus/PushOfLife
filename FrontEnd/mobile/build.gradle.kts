@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.pushoflife"
-        minSdk = 33
+        minSdk = 29
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -39,6 +39,10 @@ android {
         val twilioAuthToken = project.findProperty("TWILIO_AUTH_TOKEN") as String? ?: ""
         buildConfigField ("String", "TWILIO_ACCOUNT_SID", "\"${twilioAccountSID}\"")
         buildConfigField ("String", "TWILIO_AUTH_TOKEN", "\"${twilioAuthToken}\"")
+        val backServer = project.findProperty("BACK_SERVER") as String? ?: ""
+        val fromNumber = project.findProperty("FROM_NUMBER") as String? ?: ""
+        buildConfigField ("String", "BACK_SERVER", "\"${backServer}\"")
+        buildConfigField ("String", "FROM_NUMBER", "\"${fromNumber}\"")
 
     }
 
@@ -63,6 +67,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        dataBinding = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -116,5 +121,14 @@ dependencies {
     implementation(libs.gms.location)
     implementation(files("libs/tmap-sdk-1.4.aar"))
     implementation(files("libs/vsm-tmap-sdk-v2-android-1.6.60.aar"))
+
+    // Koin Core 모듈 (필수)
+    implementation("io.insert-koin:koin-core:3.4.0")
+
+    // Koin Android 모듈 (Android 통합에 필요한 기능 포함)
+    implementation("io.insert-koin:koin-android:3.4.0")
+
+    // 다른 의존성들
+//    implementation("androidx.databinding:databinding-runtime:7.0.0") // Android Gradle Plugin 버전에 맞게 설정
     implementation("androidx.compose.material3:material3:1.1.0")
 }

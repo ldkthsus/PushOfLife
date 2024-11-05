@@ -83,7 +83,9 @@ fun SignUpScreen(navController: NavController) {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.backicon),
-                    contentDescription = "뒤로 가기"
+                    contentDescription = "뒤로 가기",
+                    modifier = Modifier
+                    .size(25.dp) // 아이콘 크기
                 )
             }
 

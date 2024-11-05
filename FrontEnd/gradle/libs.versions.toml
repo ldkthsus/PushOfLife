@@ -64,7 +64,6 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }  # Accompanist Pager 추가
 accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
-
 twilio-sdk = { group = "com.twilio.sdk", name = "twilio", version.ref = "twilio" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }

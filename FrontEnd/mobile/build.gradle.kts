@@ -116,4 +116,5 @@ dependencies {
     implementation(libs.gms.location)
     implementation(files("libs/tmap-sdk-1.4.aar"))
     implementation(files("libs/vsm-tmap-sdk-v2-android-1.6.60.aar"))
+    implementation("androidx.compose.material3:material3:1.1.0")
 }

@@ -1,35 +1,37 @@
 package com.example.pushoflife
 
+import android.media.AudioManager
 import android.media.MediaPlayer
+import android.media.ToneGenerator
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import android.util.Log
-import android.widget.Button
+import com.example.pushoflife.ui.CprGuideScreen
+import kotlinx.coroutines.*
 import java.util.*
 
 class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
     private lateinit var tts: TextToSpeech
-    private lateinit var metronomePlayer: MediaPlayer
+    private var metronomeJob: Job? = null
+    private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.cpr_guide_screen) // 나중에 레이아웃 파일 추가 예정
-
-        // 종료 버튼 설정
-        val exitButton = findViewById<Button>(R.id.exitButton)
-        exitButton.setOnClickListener {
-            stopAudio()
-            finish() // 현재 액티비티 종료
-        }
 
         // TTS 초기화
         tts = TextToSpeech(this, this)
 
-        // TTS 완료 후 메트로놈 재생
-        startCprGuide()
+        // Compose UI 설정
+        setContent {
+            CprGuideScreen(onExitClick = {
+                stopAudio()
+                finish() // 종료 버튼 클릭 시 액티비티 종료
+            })
+        }
     }
 
     override fun onInit(status: Int) {
@@ -50,11 +52,11 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                 "박자에 맞춰 5cm 깊이로 흉부 압박 시작합니다." +
                 "3,2,1."
 
-        tts.setOnUtteranceProgressListener(object: UtteranceProgressListener() {
+        tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {
                 runOnUiThread {
-                    startCprMetronome() // TTS가 완료되면 메트로놈 시작
+                    startMetronome() // TTS가 완료되면 메트로놈 시작
                 }
             }
             override fun onError(utteranceId: String?) {}
@@ -64,12 +66,15 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         tts.speak(guideText, TextToSpeech.QUEUE_FLUSH, null, "CPR_GUIDE")
     }
 
+    private fun startMetronome() {
+        val intervalMillis = (60000 / 110).toLong() // 110Bpm에 맞춘 간격: 약 545ms
 
-    private fun startCprMetronome() {
-        // CPR 메트로놈 음원 재생 (ex: cpr_metronome.mp3) 아직 음원 없음
-//        metronomePlayer = MediaPlayer.create(this, R.raw.cpr_metronome)
-//        metronomePlayer.isLooping = true // 반복재생
-//        metronomePlayer.start()
+        metronomeJob = CoroutineScope(Dispatchers.Main).launch {
+            while (isActive) {
+                toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 100) // 100ms 길이의 톤 생성
+                delay(intervalMillis)
+            }
+        }
     }
 
     private fun stopAudio() {
@@ -78,12 +83,9 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         }
         tts.shutdown()
 
-        if (::metronomePlayer.isInitialized && metronomePlayer.isPlaying) {
-            metronomePlayer.stop()
-            metronomePlayer.release()
-        }
+        metronomeJob?.cancel()
+        toneGenerator.release() //리소스 해제
     }
-
 
     override fun onDestroy() {
         super.onDestroy()

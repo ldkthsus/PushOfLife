@@ -74,7 +74,7 @@ public class LocationService {
                 .includeDistance()
                 .includeCoordinates()
                 .sortAscending()
-                .limit(5000);
+                .limit(500);
 
         GeoOperations<String, String> geoOperations = redisTemplate.opsForGeo();
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = geoOperations
@@ -98,13 +98,14 @@ public class LocationService {
 
             if (mongoTokenEntity != null && !mongoTokenEntity.getFcmToken().equals(fcmToken)){
                 list.add(mongoTokenEntity.getFcmToken());
+                kafkaProducerService.sendTopic(token, point.getX(),point.getY());
             }
 
         }
 
-        for (String tokens : list){
-            kafkaProducerService.sendTopic(tokens, point.getX(),point.getY());
-        }
+//        for (String tokens : list){
+//            kafkaProducerService.sendTopic(tokens, point.getX(),point.getY());
+//        }
 
         return list;
 

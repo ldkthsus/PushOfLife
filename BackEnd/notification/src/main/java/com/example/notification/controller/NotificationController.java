@@ -21,7 +21,7 @@ public class NotificationController {
     @PostMapping()
     public ResponseEntity<Void> sendMessage() {
         System.out.println(testFcmKey);
-        for (int i=0; i<5000; i++){
+        for (int i=0; i<500; i++){
             System.out.println(i);
             try{
                 notificationService.sendNotNormal(testFcmKey, "123","123");

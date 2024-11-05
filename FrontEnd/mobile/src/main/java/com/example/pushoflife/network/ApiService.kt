@@ -66,4 +66,8 @@ interface ApiService {
         @Path("aedId") aedId: Int
     ): Call<AedDetailResponse>
 
+    @POST("location")
+    fun locationUpdate(@Body currentLocationRequest:CurrentLocationRequest): Call<Void>
+
+
 }

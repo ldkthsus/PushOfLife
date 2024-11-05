@@ -238,7 +238,7 @@ class MainActivity : ComponentActivity() {
     }
     private lateinit var locationData: ByteArray // 클래스 레벨 선언으로 전환
 
-
+    private lateinit var watchAlertReceiver: BroadcastReceiver
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askPermissions()
@@ -360,6 +360,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        unregisterReceiver(watchAlertReceiver)
         messageClient.removeListener(messageListener)
         // 위치 추적 서비스 중지
         stopService(Intent(this, LocationUpdatesService::class.java))

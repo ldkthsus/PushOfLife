@@ -54,7 +54,7 @@ class BleRepository() {
         isScanning.postValue(Event(true))
 
         // 일정 시간 후 스캔 중지 및 onComplete 호출
-        Timer("SettingUp", false).schedule(3000) {
+        Timer("SettingUp", false).schedule(20000) {
             stopScan()
             onComplete() // 스캔 중지 후 ViewModel의 onScanComplete 호출
         }
@@ -67,6 +67,10 @@ class BleRepository() {
 
             // 스캔된 장치의 서비스 UUID가 일치하는지 확인
             val matches = scanRecord?.serviceUuids?.any { it.uuid == serviceUuid } ?: false
+            // 스캔된 기기의 모든 서비스 UUID를 로그로 출력
+            scanRecord?.serviceUuids?.forEach { parcelUuid ->
+                Log.d(TAG, "스캔된 기기의 UUID: ${parcelUuid.uuid}")
+            }
             if (matches) {
                 // UUID가 일치하는 경우에만 장치를 목록에 추가
                 deviceManager.addDevice(result.device)

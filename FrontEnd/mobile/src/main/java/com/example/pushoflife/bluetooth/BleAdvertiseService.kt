@@ -129,19 +129,21 @@ class BleAdvertiseService : Service() {
     @SuppressLint("MissingPermission")
     fun startServer() {
         bluetoothGattServer = bleManager.openGattServer(context, gattServerCallback)?.apply {
-            // 서비스 생성
+            // constants에 정의된 UUID 사용
             val service = BluetoothGattService(UUID.fromString(SERVICE_UUID), BluetoothGattService.SERVICE_TYPE_PRIMARY)
 
-            // 쓰기 특성 생성 (초기값 없음)
+            // 쓰기 특성 생성
             val writeCharacteristic = BluetoothGattCharacteristic(
                 UUID.fromString(CHARACTERISTIC_WRITE_UUID),
                 BluetoothGattCharacteristic.PROPERTY_WRITE,
                 BluetoothGattCharacteristic.PERMISSION_WRITE
             )
 
-            // 특성 및 서비스 추가
+            // 서비스에 특성 추가
             Log.d(TAG, "송신 특성 및 서비스 추가 중...")
             service.addCharacteristic(writeCharacteristic)
+
+            // GATT 서버에 서비스 추가
             addService(service)
             Log.d(TAG, "BLE GATT Server 시작 및 서비스 추가 완료.")
         }

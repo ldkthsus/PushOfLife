@@ -13,10 +13,7 @@ import java.nio.ByteBuffer
 
 class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel() {
 
-//    val statusTxt: LiveData<String> = bleRepository.fetchStatusText()
-//    val readTxt: LiveData<String> = bleRepository.fetchReadText()
     val _isScanning: LiveData<Event<Boolean>> = bleRepository.isScanning
-//    val _isConnect: LiveData<Event<Boolean>> = bleRepository.isConnect
     val listUpdate: MutableLiveData<Event<List<BluetoothDevice>?>> = bleRepository.listUpdate
 
     companion object {

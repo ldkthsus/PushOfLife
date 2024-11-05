@@ -26,12 +26,15 @@ class BleDeviceManager(private val context: Context) {
             }
         }
 
-        // 중복된 기기가 들어가지 않도록 검사
-        if (!deviceList.contains(device)) {
+        // MAC 주소를 기준으로 중복 기기 검사
+        if (deviceList.none { it.address == device.address }) {
             deviceList.add(device)
-            Log.d(TAG, "Added device: ${device.name} (${device.address})")
+            Log.d(TAG, "방금 기기가 추가 되었어용 : ${device.name} (${device.address})")
+        } else {
+            Log.d(TAG, "기기 중복으로 추가하지 않음: ${device.address}")
         }
     }
+
 
     // 스캔된 BLE 기기 리스트를 가져오는 메서드
     fun getDeviceList(): List<BluetoothDevice> = deviceList

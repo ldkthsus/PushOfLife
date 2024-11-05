@@ -44,7 +44,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun startCprGuide() {
-        val guideText = "심폐소생술 가이드를 시작합니다. " +
+        val guideText = "시작. "
                 "무릎을 꿇은 채로 세워 주세요." +
                 "검지, 중지, 약지를 펴고 환자의 명치에 약지를 대 주세요." +
                 "검지가 놓인 지점에 손꿈치를 대 주세요." +
@@ -71,7 +71,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
         metronomeJob = CoroutineScope(Dispatchers.Main).launch {
             while (isActive) {
-                toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 100) // 100ms 길이의 톤 생성
+                toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 100) // 100ms 길이의 톤 생성
                 delay(intervalMillis)
             }
         }

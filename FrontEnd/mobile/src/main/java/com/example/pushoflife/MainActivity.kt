@@ -71,6 +71,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.pushoflife.bluetooth.BleDeviceService
 import com.example.pushoflife.bluetooth.BleManagerViewModel
 import com.example.pushoflife.data.datastore.EmergencyPreferences
+import com.example.pushoflife.data.datastore.TokenPreferences
 import com.example.pushoflife.data.datastore.UserPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 import com.example.pushoflife.service.FallDetectionService
@@ -78,6 +79,8 @@ import com.example.pushoflife.service.LocationUpdatesService
 import com.example.pushoflife.utils.isWearDeviceConnected
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.first
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.nio.ByteBuffer
@@ -237,13 +240,13 @@ class MainActivity : ComponentActivity() {
     }
     private lateinit var locationData: ByteArray // 클래스 레벨 선언으로 전환
 
-
+    private lateinit var watchAlertReceiver: BroadcastReceiver
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askPermissions()
         messageClient = Wearable.getMessageClient(this)
         messageClient.addListener(messageListener)
-
+        val tokenPreferences = TokenPreferences(applicationContext)
         FirebaseMessaging.getInstance().token
             .addOnCompleteListener { task: Task<String> ->
                 if (!task.isSuccessful) {
@@ -252,7 +255,13 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Get new FCM registration token
+
                 val token = task.result
+                // Use GlobalScope to launch a coroutine
+                GlobalScope.launch(Dispatchers.IO) {
+                    tokenPreferences.saveFcmToken(token) // Save it to DataStore
+                    Log.d("TokenSaveCheck", "Saved token: $token")
+                }
                 Log.d("MainActivity", "FCM Registration Token: $token")
             }
 
@@ -260,12 +269,19 @@ class MainActivity : ComponentActivity() {
         userPreferences = UserPreferences(this)
         emergencyPreferences = EmergencyPreferences(this)
 
-        // 긴급 메시지 준비
+        // 긴급 메시지 준비 및 locationData 설정
         lifecycleScope.launch {
             prepareEmergencyMessage(this@MainActivity)
-            locationData = getLocationDataAsByteArray(36.35524340919229, 127.29796329785906)
-        }
 
+            // Retrieve location data from DataStore as a Pair of Doubles
+            tokenPreferences.getLocation().collect { location ->
+                val latitude = location.first ?: 0.0
+                val longitude = location.second ?: 0.0
+
+                locationData = getLocationDataAsByteArray(latitude, longitude)
+                Log.d("LocationData", "LocationData set with latitude: $latitude, longitude: $longitude")
+            }
+        }
         // DataStore에서 허용 여부를 확인하여 서비스 시작
         lifecycleScope.launch {
             userPreferences.allowDetection.collect { allowDetection ->
@@ -318,7 +334,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        LocationUpdatesService.scheduleLocationUpdates(this)
     }
 
     private fun registerWatchAlertReceiver() {
@@ -359,6 +374,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        // 초기화된 경우에만 해제
+        if (::watchAlertReceiver.isInitialized) {
+            unregisterReceiver(watchAlertReceiver)
+        }
         messageClient.removeListener(messageListener)
         // 위치 추적 서비스 중지
         stopService(Intent(this, LocationUpdatesService::class.java))

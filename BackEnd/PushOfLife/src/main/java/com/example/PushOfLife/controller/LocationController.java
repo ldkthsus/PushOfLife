@@ -1,6 +1,7 @@
 package com.example.PushOfLife.controller;
 
 import com.example.PushOfLife.dto.location.LocationDTO;
+import com.example.PushOfLife.dto.location.RequestHelpDTO;
 import com.example.PushOfLife.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/location")
+@RequestMapping("/POL/location")
 public class LocationController {
 
     @Autowired
@@ -27,15 +28,16 @@ public class LocationController {
     }
 
 
-    @GetMapping()
-    // 확인용 코드
-    public ResponseEntity<?> getNearLocation(@RequestBody LocationDTO locationDTO) {
+    @PostMapping("/help")
+    public ResponseEntity<?> getNearLocation(@RequestBody RequestHelpDTO requestHelpDTO) {
         try{
-            List<String> result = locationService.findUsersNearby(locationDTO.getFcmToken(), 300);
+            List<String> result = locationService.findUsersNearby(requestHelpDTO.getFcmToken(), 300);
             return ResponseEntity.ok().body(result);
         }catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+
 }

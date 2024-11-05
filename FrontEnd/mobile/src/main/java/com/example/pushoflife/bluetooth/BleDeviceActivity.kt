@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -23,6 +24,7 @@ class BleDeviceActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions.all { it.value }) {
+            Log.d("permission", "권한 필요해요")
             Toast.makeText(this, "Permissions granted!", Toast.LENGTH_SHORT).show()
             // 권한이 부여되면 Foreground Service를 통해 광고 시작
             startBleAdvertiseService()
@@ -45,6 +47,7 @@ class BleDeviceActivity : AppCompatActivity() {
         if (!hasPermissions(PERMISSIONS)) {
             requestPermissionLauncher.launch(PERMISSIONS)
         } else {
+            Log.d("song", "광고 시작")
             // 권한이 이미 있는 경우 광고 시작
             startBleAdvertiseService()
         }
@@ -55,6 +58,7 @@ class BleDeviceActivity : AppCompatActivity() {
 
     // 권한이 있는 경우 Foreground Service를 통해 BLE 광고 시작
     private fun startBleAdvertiseService() {
+        Log.d("song", "진짜로 광고하러 서비스 감")
         val serviceIntent = Intent(this, BleAdvertiseService::class.java)
         ContextCompat.startForegroundService(this, serviceIntent)
     }
@@ -97,7 +101,8 @@ class BleDeviceActivity : AppCompatActivity() {
             Manifest.permission.BLUETOOTH,
             Manifest.permission.BLUETOOTH_ADMIN,
             Manifest.permission.BLUETOOTH_SCAN,
-            Manifest.permission.BLUETOOTH_CONNECT
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.BLUETOOTH_ADVERTISE
         )
     }
 }

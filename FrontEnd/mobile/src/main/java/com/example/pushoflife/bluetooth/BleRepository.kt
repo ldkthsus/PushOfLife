@@ -21,12 +21,11 @@ import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.schedule
 
-class BleRepository (private val context: Context)  {
-
+class BleRepository ()  {
 
     // Central 역할 및 BLE 관리자
-    private val TAG = "Central"
-    //    private val context = MyApplication.applicationContext()
+    private val TAG = "BleRepository"
+    private val context = MyApplication.applicationContext()
     private val bleManager: BluetoothManager = context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
     private val bleAdapter: BluetoothAdapter? get() = bleManager.adapter
     private var bluetoothGattServer: BluetoothGattServer? = null
@@ -38,12 +37,16 @@ class BleRepository (private val context: Context)  {
 
     init {
         // 서버 초기화
-        startServer() // GATT 서버를 초기화하여 송신 특성 변경 감지를 준비
+        Log.d("BleRepository", "Context in BleRepository1: $context")
+//        startServer() // GATT 서버를 초기화하여 송신 특성 변경 감지를 준비
+        Log.d("BleRepository", "Context in BleRepository: $context")
     }
 
     // 클라이언트 기능: 스캔 및 위치 데이터 전송
     @SuppressLint("MissingPermission")
     fun startScan(onComplete: () -> Unit) {
+        Log.d("Repository", "repository에서 스캔 시작")
+        Log.d("context", context.toString())
         if (!isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) return
 
         val filters = emptyList<ScanFilter>()
@@ -62,6 +65,7 @@ class BleRepository (private val context: Context)  {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             deviceManager.addDevice(result.device)
             listUpdate.postValue(Event(deviceManager.getDeviceList()))
+            Log.d("BleRepository", "스캔한 기기들 목록에 담음")
         }
     }
 
@@ -74,6 +78,8 @@ class BleRepository (private val context: Context)  {
     // 위치 정보를 모든 기기의 송신 특성에 작성
     @SuppressLint("MissingPermission")
     fun sendLocationToAllDevices(latitude: Double, longitude: Double) {
+        Log.d("BleRepository", "기기에 메세지 보낼 거임")
+        Log.d("BleRepository", latitude.toString() + longitude.toString())
         val locationData = ByteBuffer.allocate(16).apply {
             putDouble(latitude)
             putDouble(longitude)
@@ -84,6 +90,7 @@ class BleRepository (private val context: Context)  {
 
                 override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
                     if (newState == BluetoothGatt.STATE_CONNECTED) {
+                        Log.d("BleRepository", "gatt 연결 성공")
                         gatt.discoverServices() // 연결 성공 시 서비스 탐색 시작
                     } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                         gatt.close()
@@ -96,6 +103,7 @@ class BleRepository (private val context: Context)  {
                         writeCharacteristic?.let {
                             it.value = locationData
                             gatt.writeCharacteristic(it) // 송신 특성에 위치 정보 쓰기
+                            Log.d("BleRepository", "송신 특성에 위치 정보 적었씨유")
                         }
                     }
                 }

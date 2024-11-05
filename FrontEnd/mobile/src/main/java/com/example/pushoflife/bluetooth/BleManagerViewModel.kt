@@ -25,6 +25,7 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
 
     fun onWatchAlertReceived(message: ByteArray) {
         Log.d(TAG, "Watch alert received. Starting BLE scan.")
+        Log.d("ViewModel", "스캔 시작할게유")
         startEmergencyScan(message)
     }
 
@@ -47,6 +48,7 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
 
     fun onScanComplete(message: ByteArray) {
         Log.d(TAG, "BLE scan completed. Connecting to all devices to send message.")
+        Log.d(TAG, message.toString())
 
         // ByteArray에서 latitude와 longitude를 추출
         val byteBuffer = ByteBuffer.wrap(message)

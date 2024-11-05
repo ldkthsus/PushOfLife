@@ -16,6 +16,7 @@ import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.utils.Event
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.util.*
@@ -88,40 +89,62 @@ class BleRepository() {
         isScanning.postValue(Event(false))
     }
 
-    // 위치 정보를 모든 기기의 송신 특성에 작성
     @SuppressLint("MissingPermission")
-    fun sendLocationToAllDevices(latitude: Double, longitude: Double) {
-        Log.d("BleRepository", "기기에 메세지 보낼 거임")
-        Log.d("BleRepository", latitude.toString() + longitude.toString())
+    suspend fun sendLocationToAllDevices(latitude: Double, longitude: Double) {
+        Log.d(TAG, "기기에 메세지 보낼 거임")
         val locationData = ByteBuffer.allocate(16).apply {
             putDouble(latitude)
             putDouble(longitude)
         }.array() // 위치 정보를 ByteArray로 변환
 
+        // 이미 연결된 기기를 추적하기 위한 Set
+        val connectedDevices = mutableSetOf<String>()
+
         for (device in deviceManager.getDeviceList()) {
-            device.connectGatt(context, false, object : BluetoothGattCallback() {
+            if (connectedDevices.contains(device.address)) {
+                Log.d(TAG, "이미 연결된 기기라 건너뜀: ${device.address}")
+                continue
+            }
+
+            connectedDevices.add(device.address) // 연결 시도한 기기 주소 추가
+            delay(1000) // 각 기기 연결 시 지연 시간 추가
+
+            Log.d(TAG, "현재 device : " + device.address)
+            device.connectGatt(context, true, object : BluetoothGattCallback() {
 
                 override fun onConnectionStateChange(
                     gatt: BluetoothGatt,
                     status: Int,
                     newState: Int
                 ) {
-                    if (newState == BluetoothGatt.STATE_CONNECTED) {
-                        Log.d("BleRepository", "gatt 연결 성공")
+                    Log.d(TAG, "onConnectionStateChange - device: ${device.address}, status: $status, newState: $newState")
+
+                    if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothGatt.STATE_CONNECTED) {
+                        Log.d(TAG, "GATT 연결 성공: ${device.address}")
                         gatt.discoverServices() // 연결 성공 시 서비스 탐색 시작
                     } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
+                        Log.d(TAG, "GATT 연결 해제 또는 실패: ${device.address}")
+                        Log.d(TAG, "현재 STATUS : " + newState)
                         gatt.close()
+                        connectedDevices.remove(device.address) // 연결 해제된 기기 주소 삭제
+                    } else if (status != BluetoothGatt.GATT_SUCCESS) {
+                        Log.e(TAG, "GATT 연결 실패 - 상태 코드: $status")
+                        gatt.close()
+                        connectedDevices.remove(device.address) // 연결 실패 시 기기 주소 삭제
                     }
                 }
 
                 override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
+                        Log.d(TAG, "서비스 발견 성공: ${device.address}")
                         val writeCharacteristic = getWriteCharacteristic(gatt)
                         writeCharacteristic?.let {
                             it.value = locationData
                             gatt.writeCharacteristic(it) // 송신 특성에 위치 정보 쓰기
-                            Log.d("BleRepository", "송신 특성에 위치 정보 적었씨유")
+                            Log.d(TAG, "송신 특성에 위치 정보 작성 완료")
                         }
+                    } else {
+                        Log.e(TAG, "서비스 발견 실패 - 상태 코드: $status")
                     }
                 }
 
@@ -131,15 +154,17 @@ class BleRepository() {
                     status: Int
                 ) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                        Log.d(TAG, "송신 데이터에 적었구 이제 연결 해제할 거양")
+                        Log.d(TAG, "데이터 작성 성공: ${device.address}")
                         gatt.disconnect() // 데이터 전송 후 연결 해제
                     } else {
-                        Log.e(TAG, "특성에 데이터 못씀,,, 나 지금 이 상태 : $status")
+                        Log.e(TAG, "특성에 데이터 작성 실패 - 상태 코드: $status")
                     }
                 }
             })
         }
     }
+
+
 
     // 송신 특성 가져오기
     fun getWriteCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {

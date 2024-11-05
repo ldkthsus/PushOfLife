@@ -18,7 +18,7 @@ import android.os.PowerManager
 import android.util.Log
 import kotlinx.coroutines.*
 import com.example.pushoflife.sensor.FallSensor
-import com.example.pushoflife.sensor.PushSensor
+import com.example.pushoflife.sensor.CPRSensor
 import com.example.pushoflife.sensor.WristAngleSensor
 import com.example.pushoflife.network.MessageSender
 import com.example.pushoflife.SecondActivity
@@ -34,7 +34,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     private val binder = SensorBinder()
     private lateinit var sensorManager: SensorManager
     private val fallSensor = FallSensor()
-    private val pushSensor = PushSensor()
+    private val CPRSensor = CPRSensor()
     private val wristAngleSensor = WristAngleSensor(CprGuideActivity())
     private var possibleFall = false
     private var possibleHeart = false
@@ -43,6 +43,7 @@ class SensorForegroundService : Service(), SensorEventListener {
     private var gravitySensor: Sensor? = null
     private var linearAccelerationSensor: Sensor? = null
     var gravityValues: FloatArray? = null
+    var gyroscopeValues: FloatArray? = null
     private var totalAcceleration: Float = 0.0f
     private var pressure: Sensor? = null
 
@@ -84,13 +85,13 @@ class SensorForegroundService : Service(), SensorEventListener {
 
         // 센서 리스너 등록
         gyroscope?.also {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, it, 10000)
         }
         heartRateSensor?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
         gravitySensor?.also {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, it, 10000)
         }
         linearAccelerationSensor?.also {
             sensorManager.registerListener(this, it, 10000)
@@ -111,32 +112,22 @@ class SensorForegroundService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent) {
         when (event.sensor.type) {
             Sensor.TYPE_GRAVITY -> {
-                val x = String.format("%.2f", event.values[0])
-                val y = String.format("%.2f", event.values[1])
-                val z = String.format("%.2f", event.values[2])
                 //Log.d("SensorData", "gravity: x=$x, y=$y, z=$z")
                 gravityValues = event.values.clone()
                 // wristAngleSensor로 중력 데이터 전달
-                wristAngleSensor.processGravityData(event.values)
+                //wristAngleSensor.processGravityData(event.values)
+            }
+            Sensor.TYPE_GYROSCOPE -> {
+                //Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
+                gyroscopeValues = event.values.clone()
             }
             Sensor.TYPE_LINEAR_ACCELERATION -> {
-//                val currentTime = System.currentTimeMillis()
-//
-//                if (currentTime - lastLinearAccelerationUpdateTime >= 50 ){
-//                    lastLinearAccelerationUpdateTime = currentTime
-//                }
-                val x = event.values[0]
-                val y = event.values[1]
-                val z = event.values[2]
-                //Log.d("acceleration", "acceleration : x=$x, y=$y, z=$z")
-                val linearAccelerationSensorData = event.values.clone()
-
-                gravityValues?.let { gravity ->
-                    totalAcceleration = fallSensor.calculateAcceleration(event.values, gravity)
-                    //Log.d("밑 가속도", "total gravity : $totalAccelation"
+                if (gravityValues != null) {
+                    val depth = CPRSensor.feedbackCPR(event.values, gravityValues!!)
+                    Log.d("깊이 측정", "깊이 : $depth cm")
+                } else {
+                    Log.d("깊이 측정", "필수 센서 값 누락 - gyroscopeValues 또는 gravityValues가 null입니다.")
                 }
-                //Log.d("너를 통해 얻을거야", "Accelerometer: $totalAcceleration")
-                pushSensor.calculateCPRFeedback(totalAcceleration)
                 if (!possibleFall && fallSensor.checkFall(totalAcceleration)) {
                     //Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
@@ -151,13 +142,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                         //Log.d("FallDetection", "possibleFall 초기화됨")
                     }
                 }
-            }
-            Sensor.TYPE_GYROSCOPE -> {
-                val x = String.format("%.2f", event.values[0])
-                val y = String.format("%.2f", event.values[1])
-                val z = String.format("%.2f", event.values[2])
-                //Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
-                val gyroscopeData = event.values
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])
@@ -175,10 +159,10 @@ class SensorForegroundService : Service(), SensorEventListener {
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
             }
-            Sensor.TYPE_PRESSURE -> {
-                val millibarsOfPressure = event.values[0]
-                //Log.d("고도","고도 : $millibarsOfPressure" )
-            }
+//            Sensor.TYPE_PRESSURE -> {
+//                val millibarsOfPressure = event.values[0]
+//                //Log.d("고도","고도 : $millibarsOfPressure" )
+//            }
         }
     }
 

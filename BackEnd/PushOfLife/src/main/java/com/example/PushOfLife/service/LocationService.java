@@ -74,7 +74,7 @@ public class LocationService {
                 .includeDistance()
                 .includeCoordinates()
                 .sortAscending()
-                .limit(13);
+                .limit(5000);
 
         GeoOperations<String, String> geoOperations = redisTemplate.opsForGeo();
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = geoOperations

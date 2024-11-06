@@ -17,24 +17,32 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
     val _isScanning: LiveData<Event<Boolean>> = bleRepository.isScanning
     val listUpdate: MutableLiveData<Event<List<BluetoothDevice>?>> = bleRepository.listUpdate
 
+    private var isScanning = false // 스캔 중인지 여부를 관리하는 플래그
+
     companion object {
         private const val TAG = "BleManagerViewModel" // TAG 정의
     }
 
     fun onWatchAlertReceived(message: ByteArray) {
-        Log.d(TAG, "스캔 시작할게유")
-        startEmergencyScan(message)
+        if (!isScanning) { // 스캔 중이 아닐 때만 실행
+            Log.d(TAG, "스캔 시작할게유")
+            startEmergencyScan(message)
+        } else {
+            Log.d(TAG, "이미 스캔 중입니다.")
+        }
     }
 
-    // ViewModel에서 startEmergencyScan 메서드 수정
     private fun startEmergencyScan(message: ByteArray) {
+        isScanning = true // 스캔 시작 시 플래그 설정
         viewModelScope.launch {
             Log.d(TAG, "스 캔 시 작")
             bleRepository.startScan { // 콜백 전달
                 onScanComplete(message) // 스캔 완료 시 onScanComplete 호출
+                isScanning = false // 스캔 완료 후 플래그 해제
             }
         }
     }
+
     fun onScanComplete(message: ByteArray) {
         Log.d(TAG, "BLE 스캔 끝 ! 기기들한테 메세지 보내러 간다.")
         Log.d(TAG, message.toString())
@@ -50,5 +58,4 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
             bleRepository.sendLocationToAllDevices(latitude, longitude)
         }
     }
-
 }

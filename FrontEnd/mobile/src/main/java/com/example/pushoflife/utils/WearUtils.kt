@@ -28,7 +28,7 @@ fun isWearDeviceConnected(context: Context): Boolean {
         for (device in pairedDevices) {
 //            Log.d(TAG, "Paired device name: ${device.name}")
             if (device.name?.contains("Watch", ignoreCase = true) == true) {
-                Log.d(TAG, "Wear OS device found: ${device.name}")
+//                Log.d(TAG, "Wear OS device found: ${device.name}")
                 return true
             }
         }

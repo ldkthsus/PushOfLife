@@ -46,7 +46,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.aedLocation.AedLocationActivity"></activity>
+        <activity
+            android:name=".ui.aedLocation.AedLocationActivity"
+            android:exported="true"
+            />
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">
@@ -56,7 +59,7 @@
         </service>
         <service
             android:name=".network.MessageReceiverService"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.BIND_LISTENER"
                     tools:ignore="WearableBindListener" />
@@ -64,26 +67,20 @@
         </service>
         <service
             android:name=".bluetooth.BleAdvertiseService"
-            android:exported="true"
+            android:exported="false"
             android:enabled="true"
             android:foregroundServiceType="location">
         </service>
         <service android:name=".bluetooth.BleDeviceService"
             android:enabled="true"
-            android:exported="true">
+            android:exported="false">
         </service>
-        <service
-            android:name=".bluetooth.BleDeviceService"
-            android:exported="true"
-            android:enabled="true">
-        </service>
-
         <service
             android:name=".service.LocationUpdatesService"
             android:enabled="true"
             android:exported="false" />
         <receiver android:name=".service.LocationUpdatesReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="ACTION_PROCESS_UPDATES" />
             </intent-filter>

@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-05T07:52:59.853187800Z">
+        <DropdownSelection timestamp="2024-11-06T08:21:19.352193200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\SSAFY\.android\avd\Wear_OS_Large_Round_API_33.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=29ec244ccd3f7ece" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,13 +15,21 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2024-11-06T07:56:27.756038Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=RFAX51HWP9M" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-05T14:46:42.751834700Z">
+        <DropdownSelection timestamp="2024-11-06T07:56:27.756038Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R3CN70ARHPT" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=RFAX51HWP9M" />
             </handle>
           </Target>
         </DropdownSelection>

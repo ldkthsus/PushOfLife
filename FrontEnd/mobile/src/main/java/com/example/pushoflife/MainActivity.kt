@@ -63,6 +63,7 @@ import android.util.Base64
 import java.security.MessageDigest
 import android.content.Intent
 import android.content.IntentFilter
+import android.location.Geocoder
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.rememberScrollState
@@ -73,28 +74,62 @@ import com.example.pushoflife.bluetooth.BleManagerViewModel
 import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.data.datastore.TokenPreferences
 import com.example.pushoflife.data.datastore.UserPreferences
+import com.example.pushoflife.network.CurrentLocationRequest
+import com.example.pushoflife.network.RetrofitClient
+import com.example.pushoflife.network.SendLocationRequest
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 import com.example.pushoflife.service.FallDetectionService
 import com.example.pushoflife.service.LocationUpdatesService
+import com.example.pushoflife.utils.TwilioUtils
 import com.example.pushoflife.utils.isWearDeviceConnected
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.first
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.nio.ByteBuffer
+import java.util.Locale
 
+suspend fun getAddressFromLocation(context: Context, latitude: Double, longitude: Double): String? {
+    return try {
+        val geocoder = Geocoder(context,Locale.KOREAN)
+        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+        if (addresses.isNullOrEmpty()) {
+            "주소를 찾을 수 없습니다."
+        } else {
+            addresses[0].getAddressLine(0) // 도로명 주소 반환
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        "주소를 찾을 수 없습니다."
+    }
+}
 suspend fun prepareEmergencyMessage(context: Context) {
+    val tokenPreferences = TokenPreferences(context)
     val userPreferences = UserPreferences(context)
-    val userProfile = userPreferences.getUserProfile().first() // UserProfile을 미리 가져옴
+    val userProfile = userPreferences.getUserProfile().first()
+
+    // 위도와 경도 가져오기
+    val (latitude, longitude) = tokenPreferences.getLocation().first()
+
+    // 위도와 경도를 주소로 변환
+    val address = if (latitude != null && longitude != null) {
+        getAddressFromLocation(context, latitude, longitude)
+    } else {
+        "주소를 찾을 수 없습니다."
+    }
 
     // 메시지 내용 빌드
     val messageContent = buildString {
         if (userProfile.name.isNotEmpty()) append("${userProfile.name}님의 비상 연락처입니다.\n")
         else append("비상 연락처입니다.\n")
         append("환자가 쓰러져 자동 신고되었습니다.\n")
-        append("환자 위치: ${userProfile.address}")
+        append("환자 위치: $address")
     }
 
     // 메시지를 DataStore에 저장
@@ -231,11 +266,64 @@ class MainActivity : ComponentActivity() {
     private lateinit var emergencyPreferences: EmergencyPreferences
     private val bleManagerViewModel: BleManagerViewModel by viewModel()
 
+    // 마지막 메시지 수신 시간을 기록하는 변수
+    private var lastMessageTime: Long = 0L
+
     private val messageListener = MessageClient.OnMessageReceivedListener { messageEvent ->
         if (messageEvent.path == "/emergency_path") {
+            val currentTime = System.currentTimeMillis()
+
+            // 마지막 메시지 수신 후 5초가 지나지 않았으면 무시
+            if (currentTime - lastMessageTime < 5000) {
+                Log.d("MessageReceiverMain", "Message ignored to prevent duplicate alerts.")
+                return@OnMessageReceivedListener
+            }
+
+            lastMessageTime = currentTime // 메시지 수신 시간을 업데이트
+
             val receivedMessage = String(messageEvent.data)
             Log.d("MessageReceiverMain", "Received message: $receivedMessage")
-            // 메시지 처리 로직 수행
+
+            // DataStore에서 FCM token을 가져와서 API 요청
+            GlobalScope.launch(Dispatchers.IO) {
+                val tokenPreferences = TokenPreferences(context = applicationContext)
+                val fcmToken = tokenPreferences.getFcmToken().first()
+
+                // 서버로 전송할 LocationRequest 객체 생성
+                val sendRequest = SendLocationRequest(
+                    fcm_token = fcmToken ?: "",
+                )
+
+                RetrofitClient.apiService.askForHelp(sendRequest).enqueue(object :
+                    Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            Log.d("AskForHelp", "My Location data sent successfully.")
+                        } else {
+                            Log.e("AskForHelp", "Failed to send location data. Response code: ${response.code()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
+                        Log.e("AskForHelp", "Error sending location data: ${t.message}")
+                    }
+                })
+            }
+            CoroutineScope(Dispatchers.IO).launch {
+                val userPreferences = UserPreferences(context = applicationContext)
+                val messageContent = userPreferences.emergencyMessage.first() // 저장된 메시지 불러오기
+                // Broadcast 전송
+                val intent = Intent("com.example.pushoflife.ACTION_WATCH_ALERT")
+                sendBroadcast(intent)
+                TwilioUtils.sendSmsWithRetrofit(
+                    "", // 수신자 번호
+                    BuildConfig.FROM_NUMBER,
+                    messageContent,
+                    BuildConfig.TWILIO_ACCOUNT_SID,
+                    BuildConfig.TWILIO_AUTH_TOKEN
+                )
+                Log.d("FallDetectionService", "Emergency SMS sent: $messageContent")
+            }
         }
     }
     private lateinit var locationData: ByteArray // 클래스 레벨 선언으로 전환
@@ -295,8 +383,11 @@ class MainActivity : ComponentActivity() {
                     Log.d("MainActivity", "Fall detection service stopped.")
                 }
             }
+        }
+        lifecycleScope.launch {
             emergencyPreferences.getLocation().collect { (latitude, longitude) ->
                 emergency = latitude != null && longitude != null
+                Log.d("la&lo","$emergency, $latitude, $longitude")
             }
         }
 
@@ -355,7 +446,8 @@ class MainActivity : ComponentActivity() {
         // BroadcastReceiver 등록
         registerReceiver(
             watchAlertReceiver,
-            IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT")
+            IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT"),
+            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else null)!!
         )
     }
 
@@ -395,20 +487,21 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier,i
     var latitude by remember { mutableStateOf<Double?>(null) }
     var longitude by remember { mutableStateOf<Double?>(null) }
 
-    // emergency가 true일 경우에만 데이터 로드
-    if (emergency) {
-        LaunchedEffect(emergency) {
-            // EmergencyPreferences에서 위치 데이터를 가져옴
-            val emergencyPreferences = EmergencyPreferences(context)
-            emergencyPreferences.getLocation().collect { (lat, lon) ->
-                latitude = lat
-                longitude = lon
-            }
+    LaunchedEffect(emergency) {
+        // EmergencyPreferences에서 위치 데이터를 가져옴
+        val emergencyPreferences = EmergencyPreferences(context)
+        emergencyPreferences.getLocation().collect { (lat, lon) ->
+            latitude = lat
+            longitude = lon
+            Log.d("la&lo","$latitude, $longitude")
         }
+
+
     }
 
     // Wear OS 장치 연결 여부 확인
     val isWearDeviceConnected = isWearDeviceConnected(context)
+//    Log.d("isWearDeviceCOnnected", "$isWearDeviceConnected")
     // 응급상황 임시 변수
 //    var emergency by remember { mutableStateOf(false) }
 

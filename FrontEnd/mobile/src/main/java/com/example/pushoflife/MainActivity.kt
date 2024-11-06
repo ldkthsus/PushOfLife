@@ -339,8 +339,11 @@ class MainActivity : ComponentActivity() {
                     Log.d("MainActivity", "Fall detection service stopped.")
                 }
             }
+        }
+        lifecycleScope.launch {
             emergencyPreferences.getLocation().collect { (latitude, longitude) ->
                 emergency = latitude != null && longitude != null
+                Log.d("la&lo","$emergency, $latitude, $longitude")
             }
         }
 
@@ -439,16 +442,16 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier,i
     var latitude by remember { mutableStateOf<Double?>(null) }
     var longitude by remember { mutableStateOf<Double?>(null) }
 
-    // emergency가 true일 경우에만 데이터 로드
-    if (emergency) {
-        LaunchedEffect(emergency) {
-            // EmergencyPreferences에서 위치 데이터를 가져옴
-            val emergencyPreferences = EmergencyPreferences(context)
-            emergencyPreferences.getLocation().collect { (lat, lon) ->
-                latitude = lat
-                longitude = lon
-            }
+    LaunchedEffect(emergency) {
+        // EmergencyPreferences에서 위치 데이터를 가져옴
+        val emergencyPreferences = EmergencyPreferences(context)
+        emergencyPreferences.getLocation().collect { (lat, lon) ->
+            latitude = lat
+            longitude = lon
+            Log.d("la&lo","$latitude, $longitude")
         }
+
+
     }
 
     // Wear OS 장치 연결 여부 확인
@@ -521,9 +524,10 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier,i
                     .clip(RoundedCornerShape(12.dp))
                     .clickable {
                         val intent = Intent(context, AedLocationActivity::class.java)
+                        Log.d("map","$latitude,$longitude")
                         intent.putExtra("emergency", emergency)
-                        intent.putExtra("patient_latitude", latitude) // 임시 위도
-                        intent.putExtra("patient_longitude", longitude) // 임시 경도
+                        intent.putExtra("patient_latitude", 36.35535730721076) // 임시 위도
+                        intent.putExtra("patient_longitude", 127.29817360639572) // 임시 경도
                         context.startActivity(intent)
                     }
             ) {

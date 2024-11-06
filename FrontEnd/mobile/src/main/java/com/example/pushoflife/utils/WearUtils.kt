@@ -26,15 +26,15 @@ fun isWearDeviceConnected(context: Context): Boolean {
 //        Log.d(TAG, "Number of paired devices: ${pairedDevices.size}")
 
         for (device in pairedDevices) {
-            Log.d(TAG, "Paired device name: ${device.name}")
+//            Log.d(TAG, "Paired device name: ${device.name}")
             if (device.name?.contains("Watch", ignoreCase = true) == true) {
-                Log.d(TAG, "Wear OS device found: ${device.name}")
+//                Log.d(TAG, "Wear OS device found: ${device.name}")
                 return true
             }
         }
 //        Log.d(TAG, "No Wear OS device found among paired devices")
     } else {
-        Log.d(TAG, "Bluetooth adapter is unavailable")
+//        Log.d(TAG, "Bluetooth adapter is unavailable")
     }
 
     val isWearDevice = context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)

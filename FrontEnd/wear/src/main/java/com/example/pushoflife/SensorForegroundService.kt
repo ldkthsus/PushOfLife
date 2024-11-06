@@ -77,7 +77,7 @@ class SensorForegroundService : Service(), SensorEventListener {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
         linearAccelerationSensor?.also {
-            sensorManager.registerListener(this, it, 10000)
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
         // 백그라운드 작업 시작 (센서 데이터 수집은 센서 이벤트에서 처리됨)

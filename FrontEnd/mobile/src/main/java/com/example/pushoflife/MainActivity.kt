@@ -63,6 +63,7 @@ import android.util.Base64
 import java.security.MessageDigest
 import android.content.Intent
 import android.content.IntentFilter
+import android.location.Geocoder
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.rememberScrollState
@@ -79,9 +80,11 @@ import com.example.pushoflife.network.SendLocationRequest
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 import com.example.pushoflife.service.FallDetectionService
 import com.example.pushoflife.service.LocationUpdatesService
+import com.example.pushoflife.utils.TwilioUtils
 import com.example.pushoflife.utils.isWearDeviceConnected
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.first
@@ -90,17 +93,39 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.nio.ByteBuffer
+import java.util.Locale
 
+suspend fun getAddressFromLocation(context: Context, latitude: Double, longitude: Double): String? {
+    return try {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+        if (addresses.isNullOrEmpty()) {
+            null
+        } else {
+            addresses[0].getAddressLine(0) // 도로명 주소 반환
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
 suspend fun prepareEmergencyMessage(context: Context) {
+    val tokenPreferences = TokenPreferences(context)
     val userPreferences = UserPreferences(context)
-    val userProfile = userPreferences.getUserProfile().first() // UserProfile을 미리 가져옴
-
+    val userProfile=userPreferences.getUserProfile().first()
+    val latitude = tokenPreferences.getLocation().first().first // latitude,longitude
+    val longitude = tokenPreferences.getLocation().first().second // latitude,longitude
+    val address = latitude?.let {
+        if (longitude != null) {
+            getAddressFromLocation(context, it, longitude)
+        }
+    } ?: "주소를 찾을 수 없습니다."
     // 메시지 내용 빌드
     val messageContent = buildString {
         if (userProfile.name.isNotEmpty()) append("${userProfile.name}님의 비상 연락처입니다.\n")
         else append("비상 연락처입니다.\n")
         append("환자가 쓰러져 자동 신고되었습니다.\n")
-        append("환자 위치: ${userProfile.address}")
+        append("환자 위치: ${address}")
     }
 
     // 메시지를 DataStore에 저장
@@ -279,6 +304,21 @@ class MainActivity : ComponentActivity() {
                         Log.e("AskForHelp", "Error sending location data: ${t.message}")
                     }
                 })
+            }
+            CoroutineScope(Dispatchers.IO).launch {
+                val userPreferences = UserPreferences(context = applicationContext)
+                val messageContent = userPreferences.emergencyMessage.first() // 저장된 메시지 불러오기
+                // Broadcast 전송
+                val intent = Intent("com.example.pushoflife.ACTION_WATCH_ALERT")
+                sendBroadcast(intent)
+                TwilioUtils.sendSmsWithRetrofit(
+                    "", // 수신자 번호
+                    BuildConfig.FROM_NUMBER,
+                    messageContent,
+                    BuildConfig.TWILIO_ACCOUNT_SID,
+                    BuildConfig.TWILIO_AUTH_TOKEN
+                )
+                Log.d("FallDetectionService", "Emergency SMS sent: $messageContent")
             }
         }
     }

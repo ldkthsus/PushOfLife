@@ -16,6 +16,8 @@ import kotlinx.coroutines.launch
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -42,6 +44,22 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             if (latitude != null && longitude != null) {
                 // DataStore에 위치 정보 저장
                 saveLocationToDataStore(latitude, longitude)
+                CoroutineScope(Dispatchers.IO).launch {
+                    val putDataMapRequest = PutDataMapRequest.create("/emergency_location")
+                    putDataMapRequest.dataMap.putDouble("latitude", latitude)
+                    putDataMapRequest.dataMap.putDouble("longitude", longitude)
+
+                    val putDataRequest = putDataMapRequest.asPutDataRequest().setUrgent()
+
+                    // applicationContext 사용
+                    Wearable.getDataClient(applicationContext).putDataItem(putDataRequest)
+                        .addOnSuccessListener {
+                            Log.d("Wearable", "Data sent successfully")
+                        }
+                        .addOnFailureListener {
+                            Log.e("Wearable", "Failed to send data", it)
+                        }
+                }
             }
 
             // 메시지 데이터에서 알림 타이틀과 본문 설정

@@ -1,33 +1,73 @@
 package com.example.pushoflife
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.ToneGenerator
 import android.os.Bundle
+import android.os.IBinder
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.example.pushoflife.ui.CprGuideScreen
 import kotlinx.coroutines.*
 import java.util.*
 
 class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
+    private var sensorService: SensorForegroundService? = null
+    private var isServiceBound = false
 
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as? SensorForegroundService.SensorBinder
+            sensorService = binder?.getService()
+            isServiceBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            isServiceBound = false
+            sensorService = null
+        }
+    }
     private lateinit var tts: TextToSpeech
     private var metronomeJob: Job? = null
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+    // 상태 변수 선언 (Composable에 전달할 값)
+    private var isOptimalAngle by mutableStateOf(true) // 기본값을 설정하거나 업데이트 가능
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // TTS 초기화
         tts = TextToSpeech(this, this)
+        // Service 바인딩
+        Intent(this, SensorForegroundService::class.java).also { intent ->
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        }
 
         // Compose UI 설정
         setContent {
-            CprGuideScreen(onExitClick = {
+            var totalAcceleration by remember { mutableStateOf(0.0f) }
+            LaunchedEffect(Unit) {
+                while (isServiceBound) {
+                    totalAcceleration = sensorService?.getTotalAcceleration() ?: 0.0f
+                    delay(1000L) // 주기적으로 업데이트
+                }
+            }
+            CprGuideScreen(
+                angleFeedback = isOptimalAngle,
+                totalAcceleration = totalAcceleration,
+                onExitClick = {
                 stopAudio()
                 finish() // 종료 버튼 클릭 시 액티비티 종료
             })
@@ -93,12 +133,13 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     }
 
     // T/F 값에 따라 피드백 처리
-    fun provideAngleFeedback(isOptimalAngle: Boolean) {
+    fun provideAngleFeedback(isOptimal: Boolean) {
+        isOptimalAngle = isOptimal
         if (isOptimalAngle) {
-            Log.d("CprGuideActivity", "각도 굿.")
+//            Log.d("CprGuideActivity", "각도 굿.")
             // 각도가 올바른 경우의 동작
         } else {
-            Log.d("CprGuideActivity", "손목 각도를 90도로 맞춰 주세요.")
+//            Log.d("CprGuideActivity", "손목 각도를 90도로 맞춰 주세요.")
             // 각도가 잘못된 경우의 동작
         }
     }

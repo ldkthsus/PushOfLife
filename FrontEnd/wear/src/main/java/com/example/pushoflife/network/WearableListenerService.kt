@@ -24,6 +24,7 @@ class WatchListenerService : WearableListenerService() {
             Log.d("WatchListenerService", "Message content: $message")
             // 알림 띄우기
             showNotification(message)
+            // 모바일에서 응급 환자 발생했다는 알림을 주면 그 알림을 눌러서 지도 켜지게
         }
     }
 

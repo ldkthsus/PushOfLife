@@ -131,9 +131,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                 if (!possibleFall && fallSensor.checkFall(totalAcceleration)) {
                     //Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
-                    // 낙상 감지 후 앱 실행 및 화면 켜기
-                    launchApp()
-                    turnOnScreen()
                     // 5초 후 possibleFall을 false로 설정
                     serviceScope.launch {
                         delay(5000L)  // 5초 대기
@@ -148,6 +145,9 @@ class SensorForegroundService : Service(), SensorEventListener {
                 //Log.d("SensorData", "Heartrate: $heartRate")
                 if(possibleFall && fallSensor.checkHeart(event.values[0])){
                     possibleHeart = true
+                    // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
+                    launchApp()
+                    turnOnScreen()
                     nodeId?.let {
                         messageSender.sendEmergency(
                             nodeId = it,

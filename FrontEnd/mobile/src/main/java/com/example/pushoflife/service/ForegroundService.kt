@@ -22,12 +22,20 @@ import android.os.Looper
 import android.os.Vibrator
 import android.os.VibrationEffect
 import com.example.pushoflife.BuildConfig
+import com.example.pushoflife.data.datastore.TokenPreferences
 import com.example.pushoflife.data.datastore.UserPreferences
+import com.example.pushoflife.network.RetrofitClient
+import com.example.pushoflife.network.SendLocationRequest
 import com.example.pushoflife.utils.TwilioUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 private var isMovementDetected = false
 private var isFallDetected = false
 private val handler = Handler(Looper.getMainLooper())
@@ -249,6 +257,31 @@ class FallDetectionService : Service(), SensorEventListener {
                 BuildConfig.TWILIO_ACCOUNT_SID,
                 BuildConfig.TWILIO_AUTH_TOKEN
             )
+            // DataStore에서 FCM token을 가져와서 API 요청
+            GlobalScope.launch(Dispatchers.IO) {
+                val tokenPreferences = TokenPreferences(context = applicationContext)
+                val fcmToken = tokenPreferences.getFcmToken().first()
+
+                // 서버로 전송할 LocationRequest 객체 생성
+                val sendRequest = SendLocationRequest(
+                    fcm_token = fcmToken ?: "",
+                )
+
+                RetrofitClient.apiService.askForHelp(sendRequest).enqueue(object :
+                    Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            Log.d("AskForHelp", "My Location data sent successfully.")
+                        } else {
+                            Log.e("AskForHelp", "Failed to send location data. Response code: ${response.code()}")
+                        }
+                    }
+
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
+                        Log.e("AskForHelp", "Error sending location data: ${t.message}")
+                    }
+                })
+            }
             Log.d("FallDetectionService", "Emergency SMS sent: $messageContent")
         }
     }

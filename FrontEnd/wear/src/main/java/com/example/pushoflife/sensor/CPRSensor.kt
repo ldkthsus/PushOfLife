@@ -1,128 +1,213 @@
 package com.example.pushoflife.sensor
 
-import android.util.Log
-import kotlin.math.abs
 import kotlin.math.sqrt
+import kotlin.math.sign
+import kotlin.math.max
+import kotlin.math.min
+import android.util.Log
 
-class CPRSensor {
-    private var lastTime: Long = 0
-    private var velocity = 0.0f
-    private var displacement = 0.0f
-    private var lastFusedAcc: Float = 0.0f
+class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindowSize: Int = 5) {
+    private var lastTimestamp: Long? = null  // 초기에는 null로 설정
+    private var lastDepth: Float = 0f
+    private var filteredAcc: Float = 0f
+    private var gravityCalibration: Float = 0f
+    private var isCalibrated = false
+    private val alpha = 0.6f  // Low-pass filter coefficient
+    private val maxDisplacement = 6f  // 최대 깊이 6cm로 제한
+    private val minDisplacement = 0f
+    private var lastDisplacement = 0f
+    private val frequencyTimes = mutableListOf<Float>()
+    private val depthList = mutableListOf<Float>()
+    // 이동 평균 필터용 데이터 버퍼
+    private val depthBuffer = ArrayDeque<Float>(movingAvgWindowSize)
+    private var lastTime: Long? = null
+    private var pussing = false
+    private var depthPussing = false
+    private var maxDepth = 0.0f
+    // 칼만 필터 관련 변수들
+    private var state = floatArrayOf(0f, 0f)  // 초기 상태 [displacement, velocity]
+    private var P = arrayOf(floatArrayOf(1f, 0f), floatArrayOf(0f, 1f))  // 공분산 행렬
+    private val Q = arrayOf(floatArrayOf(0.15f, 0f), floatArrayOf(0f, 0.15f))  // 프로세스 노이즈
+    private val R = arrayOf(floatArrayOf(0.05f, 0f), floatArrayOf(0f, 0.05f))  // 측정 노이즈
 
-    // 최적화를 위한 조정된 칼만 필터 파라미터
-    private var kalmanState = floatArrayOf(0.0f, 0.0f)
-    private var kalmanP = arrayOf(floatArrayOf(1.0f, 0.0f), floatArrayOf(0.0f, 1.0f))
-    private val Q = arrayOf(floatArrayOf(0.012f, 0.0f), floatArrayOf(0.0f, 0.012f))// Process noise
-    private val R = arrayOf(floatArrayOf(0.003f, 0.0f), floatArrayOf(0.0f, 0.003f))// Measurement noise
-    private val H = arrayOf(floatArrayOf(1.0f, 0.0f), floatArrayOf(0.0f, 1.0f))
-
-    // 필터 및 임계값 조정
-    private val alphaComplementary = 0.75f
-    private val maxVelocity = 40f
-    private val maxDisplacement = 4f
-    private val maxAcceleration = 8.0f // 실측 환경에 맞춘 임계값
-
-    fun feedbackCPR(accelerometer: FloatArray, gravity: FloatArray?): Float {
-        if (gravity == null) {
-            Log.d("CPRSensorLog", "중력 센서 값이 필요합니다.")
-            return 0.0f
-        }
-
-        val currentTime = System.currentTimeMillis()
-        if (lastTime == 0L) {
-            lastTime = currentTime
-            return 0.0f
-        }
-
-        var dt = (currentTime - lastTime).toFloat() / 1000.0f
-        lastTime = currentTime
-        if (dt <= 0.0001f) dt = 0.01f  // dt 안정화
-
-        // 중력 보정 후 가속도 계산
-        val gravityAcc = calculateGravityCompensatedAcc(accelerometer, gravity)
-        var linearAcc = highPassFilter(gravityAcc, alphaComplementary)
-
-        // 비정상적인 가속도 값 제한
-        if (linearAcc > maxAcceleration) linearAcc = maxAcceleration
-        else if (linearAcc < -maxAcceleration) linearAcc = -maxAcceleration
-
-        // 로그: 가속도 정보
-        Log.d("CPRSensorLog", "보정 후 가속도 (linearAcc): $linearAcc")
-
-        // 칼만 필터 적용
-        kalmanFilter(linearAcc, dt)
-
-        // 변위 조정 후 반환
-        displacement = kalmanState[0].coerceIn(-maxDisplacement, maxDisplacement)
-        Log.d("CPRSensorLog", "최종 변위 (displacement): $displacement")
-
-        return displacement
-    }
-
-    private fun highPassFilter(input: Float, alpha: Float): Float {
-        lastFusedAcc = alpha * (lastFusedAcc + input - lastFusedAcc)
-        Log.d("CPRSensorLog", "고역 필터 적용 후 가속도 (lastFusedAcc): $lastFusedAcc")
-        return lastFusedAcc
-    }
-
-    private fun calculateGravityCompensatedAcc(accelerometer: FloatArray, gravity: FloatArray): Float {
+    // 중력 보정된 가속도 계산
+    private fun calculateGravityCompensatedAcc(
+        accelerometer: FloatArray,
+        gravity: FloatArray
+    ): Float {
         val dotProduct = accelerometer[0] * gravity[0] + accelerometer[1] * gravity[1] + accelerometer[2] * gravity[2]
         val gravityMagnitude = sqrt(gravity[0] * gravity[0] + gravity[1] * gravity[1] + gravity[2] * gravity[2])
-        val gravityCompensatedAcc = dotProduct / gravityMagnitude
-        Log.d("CPRSensorLog", "중력 보정 계산된 가속도 (gravityCompensatedAcc): $gravityCompensatedAcc")
-        return gravityCompensatedAcc
+        return dotProduct / gravityMagnitude
     }
 
-    private fun kalmanFilter(input: Float, dt: Float) {
-        if (dt <= 0.0001f) return  // 매우 작은 dt 값일 때 처리하지 않음
+    // 저주파 필터 적용
+    private fun lowPassFilter(rawAcc: Float): Float {
+        filteredAcc = alpha * rawAcc + (1 - alpha) * filteredAcc
+        return filteredAcc
+    }
 
-        val F = arrayOf(floatArrayOf(1.0f, dt), floatArrayOf(0.0f, 1.0f))
+    // 이동 평균 필터 적용
+    private fun applyMovingAverageFilter(depth: Float): Float {
+        // depthBuffer에 값 추가
+        if (depthBuffer.size == movingAvgWindowSize) {
+            depthBuffer.removeFirst()
+        }
+        depthBuffer.addLast(depth)
+
+        // 평균 계산
+        return depthBuffer.average().toFloat()
+    }
+
+    // 칼만 필터 적용
+    private fun kalmanFilter(measurement: FloatArray): Float {
+        val dt = 1f / sampleRate
+        val F = arrayOf(floatArrayOf(1f, dt), floatArrayOf(0f, 1f))
+
+        // 예측 단계
         val predictedState = floatArrayOf(
-            F[0][0] * kalmanState[0] + F[0][1] * kalmanState[1],
-            F[1][0] * kalmanState[0] + F[1][1] * kalmanState[1]
+            F[0][0] * state[0] + F[0][1] * state[1],
+            F[1][0] * state[0] + F[1][1] * state[1]
         )
 
         val predictedP = arrayOf(
-            floatArrayOf(F[0][0] * kalmanP[0][0] + F[0][1] * kalmanP[1][0] + Q[0][0], F[0][0] * kalmanP[0][1] + F[0][1] * kalmanP[1][1] + Q[0][1]),
-            floatArrayOf(F[1][0] * kalmanP[0][0] + F[1][1] * kalmanP[1][0] + Q[1][0], F[1][0] * kalmanP[0][1] + F[1][1] * kalmanP[1][1] + Q[1][1])
+            floatArrayOf(F[0][0] * P[0][0] + F[0][1] * P[1][0] + Q[0][0], F[0][0] * P[0][1] + F[0][1] * P[1][1]),
+            floatArrayOf(F[1][0] * P[0][0] + F[1][1] * P[1][0], F[1][0] * P[0][1] + F[1][1] * P[1][1] + Q[1][1])
         )
 
+        // 업데이트 단계
+        val H = arrayOf(floatArrayOf(1f, 0f), floatArrayOf(0f, 1f))
         val S = arrayOf(
             floatArrayOf(predictedP[0][0] + R[0][0], predictedP[0][1] + R[0][1]),
             floatArrayOf(predictedP[1][0] + R[1][0], predictedP[1][1] + R[1][1])
         )
-
-        // NaN 방지 - S 행렬 요소가 0이거나 NaN일 경우 초기화
-        if (S[0][0].isNaN() || S[1][1].isNaN() || S[0][0] == 0f || S[1][1] == 0f) {
-            kalmanP = arrayOf(floatArrayOf(1.0f, 0.0f), floatArrayOf(0.0f, 1.0f))
-            kalmanState = floatArrayOf(0.0f, 0.0f)
-            return
-        }
 
         val K = arrayOf(
             floatArrayOf(predictedP[0][0] / S[0][0], predictedP[0][1] / S[1][1]),
             floatArrayOf(predictedP[1][0] / S[0][0], predictedP[1][1] / S[1][1])
         )
 
-        val measurement = floatArrayOf(input * dt, input)
-        val y = floatArrayOf(
-            measurement[0] - predictedState[0],
-            measurement[1] - predictedState[1]
+        val y = floatArrayOf(measurement[0] - H[0][0] * predictedState[0], measurement[1] - H[1][1] * predictedState[1])
+        state[0] = predictedState[0] + K[0][0] * y[0]
+        state[1] = predictedState[1] + K[1][1] * y[1]
+        P = arrayOf(
+            floatArrayOf((1 - K[0][0]) * predictedP[0][0], (1 - K[0][1]) * predictedP[0][1]),
+            floatArrayOf((1 - K[1][0]) * predictedP[1][0], (1 - K[1][1]) * predictedP[1][1])
         )
 
-        kalmanState[0] = predictedState[0] + K[0][0] * y[0] + K[0][1] * y[1]
-        kalmanState[1] = predictedState[1] + K[1][0] * y[0] + K[1][1] * y[1]
-
-        // 공분산 업데이트
-        kalmanP[0][0] -= K[0][0] * predictedP[0][0]
-        kalmanP[0][1] -= K[0][1] * predictedP[0][1]
-        kalmanP[1][0] -= K[1][0] * predictedP[1][0]
-        kalmanP[1][1] -= K[1][1] * predictedP[1][1]
-
-        // 업데이트 후 칼만 상태와 공분산 행렬을 로그로 출력
-        Log.d("CPRSensorLog", "업데이트 후 칼만 상태 (kalmanState): ${kalmanState.contentToString()}")
-        Log.d("CPRSensorLog", "업데이트 후 공분산 행렬 (kalmanP): ${kalmanP.contentDeepToString()}")
+        return state[0]  // 변위 값 반환
     }
 
+    // 압박 깊이 계산
+    fun feedbackCPR(accelerometer: FloatArray, gravity: FloatArray): Float {
+        val currentTimestamp = System.currentTimeMillis()
+
+        // 초기 호출 시 타임스탬프 설정
+        if (lastTimestamp == null) {
+            lastTimestamp = currentTimestamp
+            return 0f  // 첫 번째 호출 시에는 깊이 0 반환
+        }
+
+        // dt 계산 및 초기값 설정
+        val dt = max((currentTimestamp - lastTimestamp!!) / 1000.0f, 0.001f)  // 최소값을 0.001초로 설정
+        lastTimestamp = currentTimestamp
+
+        // 중력 보정된 가속도 값 계산
+        val accZ = calculateGravityCompensatedAcc(accelerometer, gravity)
+
+        // 보정된 가속도 필터링
+        val linearAcc = lowPassFilter(accZ)
+        Log.d("깊이 가속도", "가속도 : $linearAcc")
+
+        // 속도 계산
+        val velocity = linearAcc * dt
+
+        // 이동 평균 필터 적용
+        val depthAfterMovingAvg = applyMovingAverageFilter(velocity)
+
+        // 칼만 필터 적용
+        val measurement = floatArrayOf(depthAfterMovingAvg, linearAcc)
+        var displacement = kalmanFilter(measurement)
+
+        // 변위 범위 제한
+        displacement = max(min(displacement, maxDisplacement), minDisplacement)
+
+        // 순간적인 변화 제한 (5cm 제한)
+        if (kotlin.math.abs(displacement - lastDisplacement) > 0.05f) {
+            displacement = lastDisplacement + sign(displacement - lastDisplacement) * 0.05f
+        }
+
+        lastDisplacement = displacement
+        lastDepth = displacement
+        val temp_frequency = frequencyCPR(displacement*100)
+        val temp_depth = depthCPR(displacement*100)
+        if (temp_frequency != 0) {
+            Log.d("빈도 측정" , "제대로 빈도 중이니? $temp_frequency" )
+        }
+        if (temp_depth != 0) {
+            Log.d("빈도 측정" , "제대로 깊이 중이니? $temp_depth" )
+        }
+        // cm 단위로 변환하여 반환
+        return displacement * 100  // Convert to cm
+    }
+
+    private fun frequencyCPR(displacement: Float): Int {
+        if (displacement > 4.0f && !pussing) {
+            pussing = true
+            val currentTime = System.currentTimeMillis()
+
+            if (lastTime == null) {
+                lastTime = currentTime
+                return 0 // "측정중이에요"  // 첫 번째 호출 시 메시지 반환
+            }
+
+            val dt = (currentTime - lastTime!!) / 1000f
+            if (dt < 1.0) {
+                frequencyTimes.add(dt)  // frequencyTimes에 dt 값 추가
+            }
+            lastTime = currentTime
+
+            if (frequencyTimes.size >= 10) {
+                val avgDt = frequencyTimes.average()
+                Log.d("빈도 측정","frequency : ${frequencyTimes.toString()}")
+                frequencyTimes.clear()  // 평균을 계산 후 리스트 초기화
+
+                return if (avgDt in 0.5..0.6) {
+                    2 //"잘하고 있어요"  // 평균이 0.5초~0.6초일 때
+                } else if (avgDt > 0.6 ){
+                    1 //"느려요"  // 평균이 0.5초~0.6초 범위를 벗어날 때
+                } else {
+                    3 //"빨라요"
+                }
+            }
+        } else if (displacement < 1f && pussing) {
+            pussing = false
+        }
+        return 0 //"측정중이에요"  // 리스트가 다 채워지지 않았을 때
+    }
+
+    private fun depthCPR(displacement: Float): Int {
+        if (displacement != 0.0f && depthPussing) {
+            if (maxDepth < displacement) {
+                maxDepth = displacement
+            }
+        } else if (displacement == 0.0f) {
+            depthPussing = true
+            if (maxDepth != 0.0f) {
+                depthList.add(maxDepth)
+                depthPussing = false
+            }
+            if (depthList.size >= 10) {
+                val avgDepth = depthList.average()
+                Log.d("빈도 측정","depth : ${depthList.toString()}")
+                depthList.clear()
+                return if (avgDepth > 5.0){
+                    2
+                } else {
+                    1
+                }
+            }
+            maxDepth = 0.0f
+        }
+        return 0
+    }
 }

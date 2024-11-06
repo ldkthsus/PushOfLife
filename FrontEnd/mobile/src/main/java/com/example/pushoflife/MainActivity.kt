@@ -237,36 +237,48 @@ class MainActivity : ComponentActivity() {
     private lateinit var emergencyPreferences: EmergencyPreferences
     private val bleManagerViewModel: BleManagerViewModel by viewModel()
 
+    // 마지막 메시지 수신 시간을 기록하는 변수
+    private var lastMessageTime: Long = 0L
+
     private val messageListener = MessageClient.OnMessageReceivedListener { messageEvent ->
         if (messageEvent.path == "/emergency_path") {
+            val currentTime = System.currentTimeMillis()
+
+            // 마지막 메시지 수신 후 5초가 지나지 않았으면 무시
+            if (currentTime - lastMessageTime < 5000) {
+                Log.d("MessageReceiverMain", "Message ignored to prevent duplicate alerts.")
+                return@OnMessageReceivedListener
+            }
+
+            lastMessageTime = currentTime // 메시지 수신 시간을 업데이트
+
             val receivedMessage = String(messageEvent.data)
             Log.d("MessageReceiverMain", "Received message: $receivedMessage")
-            // 메시지 처리 로직 수행
-            // Retrieve token from DataStore
+
+            // DataStore에서 FCM token을 가져와서 API 요청
             GlobalScope.launch(Dispatchers.IO) {
                 val tokenPreferences = TokenPreferences(context = applicationContext)
-                val fcmToken = tokenPreferences.getFcmToken().first()  // Retrieve token as first element
+                val fcmToken = tokenPreferences.getFcmToken().first()
 
-                    // 서버로 전송할 LocationRequest 객체 생성
-                    val sendRequest = SendLocationRequest(
-                        fcm_token = fcmToken ?: "",
-                    )
+                // 서버로 전송할 LocationRequest 객체 생성
+                val sendRequest = SendLocationRequest(
+                    fcm_token = fcmToken ?: "",
+                )
 
-                    RetrofitClient.apiService.askForHelp(sendRequest).enqueue(object :
-                        Callback<Void> {
-                        override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                            if (response.isSuccessful) {
-                                Log.d("AskForHelp", "My Location data sent successfully.")
-                            } else {
-                                Log.e("AskForHelp","${sendRequest}")
-                                Log.e("AskForHelp", "Failed to send location data. Response code: ${response.code()}")
-                            }
+                RetrofitClient.apiService.askForHelp(sendRequest).enqueue(object :
+                    Callback<Void> {
+                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                        if (response.isSuccessful) {
+                            Log.d("AskForHelp", "My Location data sent successfully.")
+                        } else {
+                            Log.e("AskForHelp", "Failed to send location data. Response code: ${response.code()}")
                         }
+                    }
 
-                        override fun onFailure(call: Call<Void>, t: Throwable) {
-                            Log.e("AskForHelp", "Error sending location data: ${t.message}")
-                        }
-                    })
+                    override fun onFailure(call: Call<Void>, t: Throwable) {
+                        Log.e("AskForHelp", "Error sending location data: ${t.message}")
+                    }
+                })
             }
         }
     }
@@ -441,6 +453,7 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier,i
 
     // Wear OS 장치 연결 여부 확인
     val isWearDeviceConnected = isWearDeviceConnected(context)
+//    Log.d("isWearDeviceCOnnected", "$isWearDeviceConnected")
     // 응급상황 임시 변수
 //    var emergency by remember { mutableStateOf(false) }
 

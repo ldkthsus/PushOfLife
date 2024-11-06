@@ -442,7 +442,8 @@ class MainActivity : ComponentActivity() {
         // BroadcastReceiver 등록
         registerReceiver(
             watchAlertReceiver,
-            IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT")
+            IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT"),
+            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else null)!!
         )
     }
 

@@ -1,5 +1,8 @@
 package com.example.pushoflife
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -8,9 +11,15 @@ import com.example.pushoflife.data.datastore.EmergencyPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import android.os.Build
+import androidx.core.app.NotificationCompat
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
+    companion object {
+        private const val CHANNEL_ID = "emergency_channel"
+        private const val CHANNEL_NAME = "Emergency Alerts"
+    }
     override fun onNewToken(token: String) {
         Log.d("FCM Log Token : ", "Refreshed token: $token")
     }
@@ -32,7 +41,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 saveLocationToDataStore(latitude, longitude)
             }
 
-
+            // 메시지 알림 내용이 있을 때 알림 표시
+            remoteMessage.notification?.let { notification ->
+                val title = notification.title ?: "구조 요청 알림"
+                val body = notification.body ?: "근처에 도움이 필요한 환자가 발생했습니다."
+                sendNotification(title, body)
+            }
         }
         // Check if message contains a notification payload.
         remoteMessage.notification?.let { notification ->
@@ -59,5 +73,36 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             emergencyPreferences.saveLocation(latitude, longitude)
             Log.d("MyFirebaseMessagingService", "Location saved: latitude=$latitude, longitude=$longitude")
         }
+    }
+    // 알림 채널 생성 함수 (Android 8.0 이상 필요)
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "긴급 구조 요청 알림을 수신합니다."
+            }
+
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    // 알림을 생성하고 표시하는 함수
+    private fun sendNotification(title: String, body: String) {
+        createNotificationChannel() // 채널 생성 (Android 8.0 이상에서만 실행)
+
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher_round)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(0, notificationBuilder.build())
     }
 }

@@ -44,7 +44,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun startCprGuide() {
-        val guideText = "시작. "
+        val guideText = "시작. " +
                 "무릎을 꿇은 채로 세워 주세요." +
                 "검지, 중지, 약지를 펴고 환자의 명치에 약지를 대 주세요." +
                 "검지가 놓인 지점에 손꿈치를 대 주세요." +

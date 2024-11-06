@@ -6,10 +6,39 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.text.Layout
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.wear.compose.material.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.wear.compose.material.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+
 
 class MainActivity : ComponentActivity() {
 
@@ -42,6 +71,11 @@ class MainActivity : ComponentActivity() {
         sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
         startForegroundService(sensorServiceIntent)  // Foreground Service를 시작
 
+        // Jetpack Compose 설정
+        setContent {
+            MainScreen()
+        }
+
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -63,3 +97,117 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+val PretendardExtraLight = FontFamily(
+    Font(R.font.pretendard_extralight, FontWeight.ExtraLight)
+)
+val PretendardLight = FontFamily(
+    Font(R.font.pretendard_light, FontWeight.Normal)
+)
+
+@Composable
+fun MainScreen() {
+    // ScalingLazyColumn의 스크롤 상태 정의
+    val scrollState = rememberScalingLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current  // Compose 내에서 Context 사용
+
+    LaunchedEffect(Unit) {
+        scrollState.scrollToItem(0)
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // ScalingLazyColumn 구성
+        ScalingLazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            state = scrollState // 스크롤 상태 연결
+        ) {
+            item {
+                // 첫 번째 아이템: 메인 아이콘과 CPR 텍스트
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillParentMaxSize() // 화면 전체 채우기
+                        .clickable {
+                            // 클릭 시 CprGuideActivity로 이동
+                            val intent = Intent(context, CprGuideActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.main_icon),
+                        contentDescription = "Main Icon",
+                        modifier = Modifier
+                            .size(150.dp)
+                            .padding(top = 17.dp)
+                    )
+                    Text(
+                        text = "CPR",
+                        fontSize = 70.sp,
+                        fontFamily = PretendardExtraLight,
+                        color = Color.White,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+
+            item {
+                // 두 번째 아이템: CPR Practice와 AED Location을 가로로 배치
+                Row(
+                    modifier = Modifier
+                        .fillParentMaxSize()
+                        .padding(horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 첫 번째 Box: CPR Practice 이미지와 텍스트
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.cpr_practice),
+                            contentDescription = "CPR Practice",
+                            modifier = Modifier.size(80.dp)
+                        )
+                        Text(
+                            text = "CPR 연습",
+                            fontSize = 14.sp,
+                            fontFamily = PretendardLight,
+                            letterSpacing = (-0.5).sp,
+                            color = Color.White,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+
+                    // 두 번째 Box: AED Location 이미지와 텍스트
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.aed_location),
+                            contentDescription = "AED Location",
+                            modifier = Modifier.size(80.dp)
+                        )
+                        Text(
+                            text = "AED 위치",
+                            fontSize = 14.sp,
+                            fontFamily = PretendardLight,
+                            letterSpacing = (-0.5).sp,
+                            color = Color.White,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // 스크롤바 표시
+        PositionIndicator(
+            scalingLazyListState = scrollState // ScalingLazyColumn의 스크롤 상태에 연결
+        )
+    }
+}

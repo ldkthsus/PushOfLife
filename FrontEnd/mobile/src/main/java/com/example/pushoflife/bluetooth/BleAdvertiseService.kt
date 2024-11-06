@@ -66,8 +66,8 @@ class BleAdvertiseService : Service() {
 
         val advertiseCallback = object : AdvertiseCallback() {
             override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-                Log.d("BleAdvertiseService", "Advertising started successfully")
-                Log.d("song", "광고 보냄!") // 광고할 때마다 로그 출력
+//                Log.d("BleAdvertiseService", "Advertising started successfully")
+//                Log.d("song", "광고 보냄!") // 광고할 때마다 로그 출력
             }
 
             override fun onStartFailure(errorCode: Int) {

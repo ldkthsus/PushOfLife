@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pushoflife.utils.Event
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 
@@ -44,6 +45,8 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
         val longitude = byteBuffer.double // 뒤의 8바이트는 longitude
 
         viewModelScope.launch(Dispatchers.IO) {
+            Log.d(TAG, "Waiting 10 seconds before connecting...")
+            delay(10000) // 10-second delay
             bleRepository.sendLocationToAllDevices(latitude, longitude)
         }
     }

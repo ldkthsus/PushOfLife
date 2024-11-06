@@ -412,6 +412,9 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier,i
     // 응급상황 임시 변수
 //    var emergency by remember { mutableStateOf(false) }
 
+    if (isWearDeviceConnected && isFallDetectionEnabled) {
+        onToggleFallDetection(false)
+    }
     // 3초마다 카드 인덱스를 변경하는 LaunchedEffect
     LaunchedEffect(key1 = currentCardIndex) {
         while (true) {

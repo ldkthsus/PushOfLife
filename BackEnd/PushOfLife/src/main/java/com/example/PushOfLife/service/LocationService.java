@@ -98,7 +98,7 @@ public class LocationService {
 
             if (mongoTokenEntity != null && !mongoTokenEntity.getFcmToken().equals(fcmToken)){
                 list.add(mongoTokenEntity.getFcmToken());
-                kafkaProducerService.sendTopic(token, point.getX(),point.getY());
+                kafkaProducerService.sendTopic(mongoTokenEntity.getFcmToken(), point.getX(),point.getY());
             }
 
         }

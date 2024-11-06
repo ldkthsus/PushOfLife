@@ -204,7 +204,7 @@ class SensorForegroundService : Service(), SensorEventListener {
         fun getService(): SensorForegroundService = this@SensorForegroundService
     }
     override fun onBind(intent: Intent?): IBinder? {
-        return null
+        return binder
     }
 
     private fun createNotificationChannel() {

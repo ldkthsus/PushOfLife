@@ -73,6 +73,9 @@ import com.example.pushoflife.bluetooth.BleManagerViewModel
 import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.data.datastore.TokenPreferences
 import com.example.pushoflife.data.datastore.UserPreferences
+import com.example.pushoflife.network.CurrentLocationRequest
+import com.example.pushoflife.network.RetrofitClient
+import com.example.pushoflife.network.SendLocationRequest
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 import com.example.pushoflife.service.FallDetectionService
 import com.example.pushoflife.service.LocationUpdatesService
@@ -83,6 +86,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.first
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.nio.ByteBuffer
 
 suspend fun prepareEmergencyMessage(context: Context) {
@@ -236,6 +242,32 @@ class MainActivity : ComponentActivity() {
             val receivedMessage = String(messageEvent.data)
             Log.d("MessageReceiverMain", "Received message: $receivedMessage")
             // 메시지 처리 로직 수행
+            // Retrieve token from DataStore
+            GlobalScope.launch(Dispatchers.IO) {
+                val tokenPreferences = TokenPreferences(context = applicationContext)
+                val fcmToken = tokenPreferences.getFcmToken().first()  // Retrieve token as first element
+
+                    // 서버로 전송할 LocationRequest 객체 생성
+                    val sendRequest = SendLocationRequest(
+                        fcm_token = fcmToken ?: "",
+                    )
+
+                    RetrofitClient.apiService.askForHelp(sendRequest).enqueue(object :
+                        Callback<Void> {
+                        override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                            if (response.isSuccessful) {
+                                Log.d("AskForHelp", "My Location data sent successfully.")
+                            } else {
+                                Log.e("AskForHelp","${sendRequest}")
+                                Log.e("AskForHelp", "Failed to send location data. Response code: ${response.code()}")
+                            }
+                        }
+
+                        override fun onFailure(call: Call<Void>, t: Throwable) {
+                            Log.e("AskForHelp", "Error sending location data: ${t.message}")
+                        }
+                    })
+            }
         }
     }
     private lateinit var locationData: ByteArray // 클래스 레벨 선언으로 전환

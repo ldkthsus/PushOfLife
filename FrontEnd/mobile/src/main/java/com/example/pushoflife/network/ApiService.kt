@@ -69,5 +69,7 @@ interface ApiService {
     @POST("POL/location")
     fun locationUpdate(@Body currentLocationRequest:CurrentLocationRequest): Call<Void>
 
+    @POST("POL/location/help")
+    fun askForHelp(@Body sendLocationRequest:SendLocationRequest): Call<Void>
 
 }

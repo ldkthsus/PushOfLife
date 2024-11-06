@@ -158,7 +158,7 @@ class SensorForegroundService : Service(), SensorEventListener {
             }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])
-                //Log.d("SensorData", "Heartrate: $heartRate")
+                Log.d("SensorData", "Heartrate: $heartRate")
                 if(possibleFall ){
                     possibleHeart = true
                     // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기

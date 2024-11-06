@@ -29,8 +29,8 @@ public class KafkaConsumerService {
             String latitude = messageMap.get("latitude");
 
             System.out.println("Received message: " + message);
-//            return this.notificationService.sendNotification(fcmToken, longitude, latitude, false);
-            return this.notificationService.sendNotification(testFcmKey, longitude, latitude, false);
+            return this.notificationService.sendNotification(fcmToken, longitude, latitude, false);
+//            return this.notificationService.sendNotification(testFcmKey, longitude, latitude, false);
 
         } catch (Exception e) {
             e.printStackTrace();

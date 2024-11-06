@@ -97,35 +97,39 @@ import java.util.Locale
 
 suspend fun getAddressFromLocation(context: Context, latitude: Double, longitude: Double): String? {
     return try {
-        val geocoder = Geocoder(context, Locale.getDefault())
+        val geocoder = Geocoder(context,Locale.KOREAN)
         val addresses = geocoder.getFromLocation(latitude, longitude, 1)
         if (addresses.isNullOrEmpty()) {
-            null
+            "주소를 찾을 수 없습니다."
         } else {
             addresses[0].getAddressLine(0) // 도로명 주소 반환
         }
     } catch (e: Exception) {
         e.printStackTrace()
-        null
+        "주소를 찾을 수 없습니다."
     }
 }
 suspend fun prepareEmergencyMessage(context: Context) {
     val tokenPreferences = TokenPreferences(context)
     val userPreferences = UserPreferences(context)
-    val userProfile=userPreferences.getUserProfile().first()
-    val latitude = tokenPreferences.getLocation().first().first // latitude,longitude
-    val longitude = tokenPreferences.getLocation().first().second // latitude,longitude
-    val address = latitude?.let {
-        if (longitude != null) {
-            getAddressFromLocation(context, it, longitude)
-        }
-    } ?: "주소를 찾을 수 없습니다."
+    val userProfile = userPreferences.getUserProfile().first()
+
+    // 위도와 경도 가져오기
+    val (latitude, longitude) = tokenPreferences.getLocation().first()
+
+    // 위도와 경도를 주소로 변환
+    val address = if (latitude != null && longitude != null) {
+        getAddressFromLocation(context, latitude, longitude)
+    } else {
+        "주소를 찾을 수 없습니다."
+    }
+
     // 메시지 내용 빌드
     val messageContent = buildString {
         if (userProfile.name.isNotEmpty()) append("${userProfile.name}님의 비상 연락처입니다.\n")
         else append("비상 연락처입니다.\n")
         append("환자가 쓰러져 자동 신고되었습니다.\n")
-        append("환자 위치: ${address}")
+        append("환자 위치: $address")
     }
 
     // 메시지를 DataStore에 저장

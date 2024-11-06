@@ -140,7 +140,7 @@ fun MainScreen() {
                         painter = painterResource(id = R.drawable.main_icon),
                         contentDescription = "Main Icon",
                         modifier = Modifier
-                            .size(160.dp)
+                            .size(150.dp)
                             .padding(top = 17.dp)
                     )
                     Text(
@@ -174,8 +174,9 @@ fun MainScreen() {
                         )
                         Text(
                             text = "CPR 연습",
-                            fontSize = 15.sp,
+                            fontSize = 14.sp,
                             fontFamily = PretendardLight,
+                            letterSpacing = (-0.5).sp,
                             color = Color.White,
                             modifier = Modifier.padding(top = 4.dp)
                         )
@@ -193,8 +194,9 @@ fun MainScreen() {
                         )
                         Text(
                             text = "AED 위치",
-                            fontSize = 15.sp,
+                            fontSize = 14.sp,
                             fontFamily = PretendardLight,
+                            letterSpacing = (-0.5).sp,
                             color = Color.White,
                             modifier = Modifier.padding(top = 4.dp)
                         )

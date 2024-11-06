@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 
 
 class MainActivity : ComponentActivity() {
@@ -185,7 +186,13 @@ fun MainScreen() {
                     // 두 번째 Box: AED Location 이미지와 텍스트
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clickable {
+                                // XML Activity로 이동
+                                val intent = Intent(context, AedLocationActivity::class.java)
+                                context.startActivity(intent)
+                            }
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.aed_location),

@@ -1,16 +1,18 @@
 package com.example.pushoflife.sensor
 
 import android.util.Log
+import android.content.Context
 import kotlin.math.acos
 import kotlin.math.sqrt
 import com.example.pushoflife.CprGuideActivity
+import com.example.pushoflife.sensor.utils.GravitySensor
 
-class WristAngleSensor (private val activity: CprGuideActivity){
+class WristAngleSensor (private val activity: CprGuideActivity) : GravitySensor.GravitySensorListener {
     private val fixedF = 0.0
     private val fixedG = 0.0
     private val fixedH = 9.80665 // 중력
 
-    fun processGravityData(gravityValues: FloatArray) {
+    override fun onGravityDataChanged(gravityValues: FloatArray) {
         val x = gravityValues[0].toDouble()
         val y = gravityValues[1].toDouble()
         val z = gravityValues[2].toDouble()
@@ -37,5 +39,13 @@ class WristAngleSensor (private val activity: CprGuideActivity){
     // 소수점 두 자리로 반올림
     private fun roundToTwoDecimals(value: Double): Double {
         return (Math.round(value * 100) / 100.0)
+    }
+
+    fun initialize(context: Context) {
+        GravitySensor.initialize(context, this)
+    }
+
+    fun stop() {
+        GravitySensor.stop()
     }
 }

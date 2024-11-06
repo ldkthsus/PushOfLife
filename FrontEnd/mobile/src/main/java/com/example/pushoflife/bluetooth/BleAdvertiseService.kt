@@ -101,7 +101,7 @@ class BleAdvertiseService : Service() {
         val advertisingRunnable = object : Runnable {
             override fun run() {
                 stopAndRestartAdvertising()
-                handler.postDelayed(this, 1500) // 1초 후에 다시 실행
+                handler.postDelayed(this, 2000) // 1초 후에 다시 실행
             }
         }
 

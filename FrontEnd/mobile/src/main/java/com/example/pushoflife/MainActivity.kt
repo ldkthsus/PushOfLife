@@ -444,11 +444,18 @@ class MainActivity : ComponentActivity() {
         }
 
         // BroadcastReceiver 등록
-        registerReceiver(
-            watchAlertReceiver,
-            IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT"),
-            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else null)!!
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                watchAlertReceiver,
+                IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT"),
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            registerReceiver(
+                watchAlertReceiver,
+                IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT")
+            )
+        }
     }
 
     fun getLocationDataAsByteArray(latitude: Double, longitude: Double): ByteArray {

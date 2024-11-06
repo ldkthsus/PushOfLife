@@ -16,22 +16,21 @@ import androidx.lifecycle.MutableLiveData
 import com.example.pushoflife.MyApplication
 import com.example.pushoflife.utils.Event
 import kotlinx.coroutines.delay
-import java.lang.reflect.Method
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.schedule
 
-class BleRepository() {
+class BleRepository {
 
     private val TAG = "BleRepository"
     private val context = MyApplication.applicationContext()
-    private val bleManager: BluetoothManager =
-        context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+    private val bleManager: BluetoothManager = context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
     private val bleAdapter: BluetoothAdapter? get() = bleManager.adapter
     private var bluetoothGattServer: BluetoothGattServer? = null
     private val deviceManager = BleDeviceManager(context)
 
     private var bleGatt: BluetoothGatt? = null
+    private val connectedDevices = mutableSetOf<String>()
 
     val isScanning = MutableLiveData(Event(false))
     val listUpdate = MutableLiveData<Event<List<BluetoothDevice>?>>()
@@ -90,8 +89,6 @@ class BleRepository() {
             putDouble(longitude)
         }.array()
 
-        val connectedDevices = mutableSetOf<String>()
-
         for (device in deviceManager.getDeviceList()) {
             if (connectedDevices.contains(device.address)) {
                 Log.d(TAG, "이미 연결 중인 기기임: ${device.address}")
@@ -109,39 +106,29 @@ class BleRepository() {
             Log.d(TAG, "현재 연결 시도하는 기기 : ${device.address}")
             bleGatt = connectGattCompat(object : BluetoothGattCallback() {
 
-                override fun onConnectionStateChange(
-                    gatt: BluetoothGatt,
-                    status: Int,
-                    newState: Int
-                ) {
-                    Log.d(TAG, "기기의 연결 상태가 변경됨 : ${device.address}, status: $status, newState: $newState")
+                override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+                    Log.d(TAG, "기기의 연결 상태가 변경됨 : ${gatt.device.address}, status: $status, newState: $newState")
 
-                    if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothGatt.STATE_CONNECTED) {
-                        Log.d(TAG, "GATT 연결 성공: ${device.address}")
+                    if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_CONNECTED) {
+                        Log.d(TAG, "GATT 연결 성공: ${gatt.device.address}")
                         gatt.discoverServices()
                     } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                        Log.d(TAG, "GATT 연결 해제: ${device.address}")
-                        gatt.disconnect()
-                        gatt.close()
-                        connectedDevices.remove(device.address)
+                        Log.d(TAG, "GATT 연결 해제: ${gatt.device.address}")
+                        cleanupGattConnection(gatt)
                     } else if (status == 133) {
                         Log.e(TAG, "GATT 연결 실패 - 상태 코드: 133")
-                        gatt.disconnect() // 연결 해제
-                        gatt.close() // GATT 세션 닫기
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            connectGattCompat(this, device, true) // 딜레이 후 재연결
-                        }, 5000) // 5초 딜레이
+                        cleanupGattConnection(gatt)
+                        retryConnectionWithDelay(gatt.device, this) // 적절한 콜백 인스턴스 전달
+
                     } else {
                         Log.e(TAG, "GATT 연결 실패 - 상태 코드: $status")
-                        gatt.disconnect()
-                        gatt.close()
-                        connectedDevices.remove(device.address)
+                        cleanupGattConnection(gatt)
                     }
                 }
 
                 override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                        Log.d(TAG, "서비스 발견 성공: ${device.address}")
+                        Log.d(TAG, "서비스 발견 성공: ${gatt.device.address}")
                         val writeCharacteristic = getWriteCharacteristic(gatt)
                         writeCharacteristic?.let {
                             it.value = locationData
@@ -159,7 +146,7 @@ class BleRepository() {
                     status: Int
                 ) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                        Log.d(TAG, "데이터 작성 성공: ${device.address}")
+                        Log.d(TAG, "데이터 작성 성공: ${gatt.device.address}")
                         gatt.disconnect()
                     } else {
                         Log.e(TAG, "특성에 데이터 작성 실패 - 상태 코드: $status")
@@ -176,7 +163,8 @@ class BleRepository() {
         autoConnect: Boolean
     ): BluetoothGatt? {
         return try {
-            if (!isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                !isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
                 Log.e(TAG, "연결 권한이 없습니다.")
                 return null
             }
@@ -193,12 +181,41 @@ class BleRepository() {
         }
     }
 
-    fun getWriteCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
-        val SERVICE_UUID = UUID.fromString(SERVICE_UUID)
-        val WRITE_CHARACTERISTIC_UUID = UUID.fromString(CHARACTERISTIC_WRITE_UUID)
+    private fun cleanupGattConnection(gatt: BluetoothGatt) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                !isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+                Log.e(TAG, "연결 해제 권한이 없습니다.")
+                return
+            }
 
-        val service = gatt.getService(SERVICE_UUID)
-        return service?.getCharacteristic(WRITE_CHARACTERISTIC_UUID)
+            gatt.disconnect()
+            gatt.close()
+            connectedDevices.remove(gatt.device.address)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "SecurityException 발생: 권한 문제로 연결 해제 실패", e)
+        }
+    }
+
+    private fun retryConnectionWithDelay(device: BluetoothDevice, callback: BluetoothGattCallback) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                !isPermissionGranted(Manifest.permission.BLUETOOTH_CONNECT)) {
+                Log.e(TAG, "재연결 권한이 없습니다.")
+                return
+            }
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                connectGattCompat(callback, device, true)
+            }, 5000) // 5초 후에 재연결 시도
+        } catch (e: SecurityException) {
+            Log.e(TAG, "SecurityException 발생: 권한 문제로 재연결 실패", e)
+        }
+    }
+
+    fun getWriteCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {
+        val service = gatt.getService(UUID.fromString(SERVICE_UUID))
+        return service?.getCharacteristic(UUID.fromString(CHARACTERISTIC_WRITE_UUID))
     }
 
     private fun isPermissionGranted(permission: String): Boolean {

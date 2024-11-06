@@ -41,12 +41,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 saveLocationToDataStore(latitude, longitude)
             }
 
-            // 메시지 알림 내용이 있을 때 알림 표시
-            remoteMessage.notification?.let { notification ->
-                val title = notification.title ?: "구조 요청 알림"
-                val body = notification.body ?: "근처에 도움이 필요한 환자가 발생했습니다."
-                sendNotification(title, body)
-            }
+            // 메시지 데이터에서 알림 타이틀과 본문 설정
+            val title = remoteMessage.data["title"] ?: "구조 요청 알림"
+            val body = remoteMessage.data["body"] ?: "근처에 도움이 필요한 환자가 발생했습니다."
+            sendNotification(title, body)
         }
         // Check if message contains a notification payload.
         remoteMessage.notification?.let { notification ->
@@ -85,15 +83,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 description = "긴급 구조 요청 알림을 수신합니다."
             }
 
-            val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
 
-    // 알림을 생성하고 표시하는 함수
     private fun sendNotification(title: String, body: String) {
-        createNotificationChannel() // 채널 생성 (Android 8.0 이상에서만 실행)
+        createNotificationChannel()
 
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_round)

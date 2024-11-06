@@ -68,7 +68,10 @@
             android:enabled="true"
             android:foregroundServiceType="location">
         </service>
-
+        <service android:name=".bluetooth.BleDeviceService"
+            android:enabled="true"
+            android:exported="true">
+        </service>
         <service
             android:name=".bluetooth.BleDeviceService"
             android:exported="true"
@@ -79,7 +82,12 @@
             android:name=".service.LocationUpdatesService"
             android:enabled="true"
             android:exported="false" />
-        <receiver android:name=".service.LocationUpdatesReceiver" />
+        <receiver android:name=".service.LocationUpdatesReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="ACTION_PROCESS_UPDATES" />
+            </intent-filter>
+        </receiver>
         <service
             android:name="com.example.pushoflife.service.FallDetectionService"
             android:enabled="true"

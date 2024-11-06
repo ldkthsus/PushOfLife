@@ -66,6 +66,7 @@ class BleAdvertiseService : Service() {
 
         val advertiseCallback = object : AdvertiseCallback() {
             override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+                Log.d("BleAdvertiseService", "Advertising started successfully")
                 Log.d("song", "광고 보냄!") // 광고할 때마다 로그 출력
             }
 
@@ -106,6 +107,7 @@ class BleAdvertiseService : Service() {
 
         handler.post(advertisingRunnable) // 초기 실행
     }
+
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -158,6 +160,7 @@ class BleAdvertiseService : Service() {
 
             // 서비스에 특성 추가
             Log.d(TAG, "송신 특성 및 서비스 추가 중...")
+            Log.d(TAG, "데이터 받을려고 GATT 서버에 서비스 설정해씨유" + service)
             service.addCharacteristic(writeCharacteristic)
 
             // GATT 서버에 서비스 추가

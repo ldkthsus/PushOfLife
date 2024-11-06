@@ -2,7 +2,9 @@ package com.example.pushoflife
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -13,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.example.pushoflife.ui.aedLocation.AedLocationActivity
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -44,7 +47,16 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             // 메시지 데이터에서 알림 타이틀과 본문 설정
             val title = remoteMessage.data["title"] ?: "구조 요청 알림"
             val body = remoteMessage.data["body"] ?: "근처에 도움이 필요한 환자가 발생했습니다."
-            sendNotification(title, body)
+            if (latitude != null && longitude != null) {
+                // 위도와 경도 정보를 포함하여 알림 전송
+                sendNotification(
+                    title = remoteMessage.data["title"] ?: "구조 요청 알림",
+                    body = remoteMessage.data["body"] ?: "근처에 도움이 필요한 환자가 발생했습니다.",
+                    latitude = latitude,
+                    longitude = longitude,
+                    emergency = true
+                )
+            }
         }
         // Check if message contains a notification payload.
         remoteMessage.notification?.let { notification ->
@@ -88,8 +100,22 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun sendNotification(title: String, body: String) {
+    // 알림을 생성하고 표시하는 함수
+    private fun sendNotification(title: String, body: String, latitude: Double, longitude: Double, emergency: Boolean) {
         createNotificationChannel()
+
+        // AedLocationActivity로 이동하는 Intent 생성 및 위도, 경도 데이터 추가
+        val intent = Intent(this, AedLocationActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("emergency", emergency)
+            putExtra("patient_latitude", latitude)
+            putExtra("patient_longitude", longitude)
+        }
+
+        // PendingIntent 생성
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_round)
@@ -97,8 +123,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent)  // 알림을 눌렀을 때 PendingIntent 실행
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(0, notificationBuilder.build())
     }
+
 }

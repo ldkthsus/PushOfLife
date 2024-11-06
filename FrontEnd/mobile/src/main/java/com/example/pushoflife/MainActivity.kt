@@ -524,10 +524,9 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier,i
                     .clip(RoundedCornerShape(12.dp))
                     .clickable {
                         val intent = Intent(context, AedLocationActivity::class.java)
-                        Log.d("map","$latitude,$longitude")
                         intent.putExtra("emergency", emergency)
-                        intent.putExtra("patient_latitude", 36.35535730721076) // 임시 위도
-                        intent.putExtra("patient_longitude", 127.29817360639572) // 임시 경도
+                        intent.putExtra("patient_latitude", latitude) // 임시 위도
+                        intent.putExtra("patient_longitude", longitude) // 임시 경도
                         context.startActivity(intent)
                     }
             ) {

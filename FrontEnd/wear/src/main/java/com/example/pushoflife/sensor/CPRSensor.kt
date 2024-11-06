@@ -196,9 +196,9 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
                 Log.d("빈도 측정","depth : ${depthList.toString()}")
                 depthList.clear()
                 return if (avgDepth > 5.0){
-                    2
+                    2 // 적당한 깊이로 잘하고 있어요
                 } else {
-                    1
+                    1 // 깊이가 부족해요
                 }
             }
             maxDepth = 0.0f

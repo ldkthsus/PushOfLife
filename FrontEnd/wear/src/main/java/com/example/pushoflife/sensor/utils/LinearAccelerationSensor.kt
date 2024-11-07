@@ -13,13 +13,20 @@ object LinearAccelerationSensor : SensorEventListener {
     private var currentX: Float = 0.0f
     private var currentY: Float = 0.0f
     private var currentZ: Float = 0.0f
+    private var listener: LinearAccelerationListener? = null  // 리스너 추가
 
-    // LinearAccelerationSensor 초기화 및 리스너 등록
-    fun initialize(context: Context) {
+    // 리스너 인터페이스 정의
+    interface LinearAccelerationListener {
+        fun onLinearAccelerationDataChanged(accelerationValues: FloatArray)
+    }
+
+    // 리스너 초기화
+    fun initialize(context: Context, listener: LinearAccelerationListener) {
         sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         linearAccelerationSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        this.listener = listener  // 리스너 설정
         linearAccelerationSensor?.let {
-            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager?.registerListener(this, it, 10000)
         }
     }
 
@@ -29,6 +36,9 @@ object LinearAccelerationSensor : SensorEventListener {
         currentY = event.values[1]
         currentZ = event.values[2]
         Log.d("LinearAccelerationSensor", "Acceleration: x=$currentX, y=$currentY, z=$currentZ")
+
+        // 리스너를 통해 외부에 데이터 전달
+        listener?.onLinearAccelerationDataChanged(getCurrentAccelerationValues())
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}

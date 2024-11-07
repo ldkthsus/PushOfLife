@@ -7,16 +7,29 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import java.util.Arrays
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.util.Log
 import com.example.pushoflife.theme.wearColorPalette
+
+var screenColor = false
+
 @Composable
-fun CprGuideScreen(angleFeedback: Boolean,totalAcceleration:Float, onExitClick: () -> Unit) {
+fun CprGuideScreen(totalAcceleration:Float, cprFeedback: IntArray, onExitClick: () -> Unit) {
     // 그라데이션 색상 설정
-    val gradientColors = if (angleFeedback) {
+    Log.d("로그", "${Arrays.toString(cprFeedback)}")
+    if ((cprFeedback[0] == 1)||(cprFeedback[1] == 1)||(cprFeedback[2] == 0)||(cprFeedback[1] == 3)) {
+        screenColor = false
+    } else if ((cprFeedback[0] == 0)&&(cprFeedback[1] == 0)&&(cprFeedback[2] == 0)) {
+        Log.d("로그", "$screenColor")
+    } else {
+        screenColor = true
+    }
+    val gradientColors = if (screenColor) {
         listOf(wearColorPalette.secondary, Color.Black)
     } else {
         listOf(wearColorPalette.error, Color.Black)
@@ -34,13 +47,12 @@ fun CprGuideScreen(angleFeedback: Boolean,totalAcceleration:Float, onExitClick: 
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = if (angleFeedback) "각도 굿!" else "손목 각도를 90도로 맞춰 주세요.",
-                fontSize = 18.sp,
-                color = Color.White, // 텍스트 색상
-                modifier = Modifier
-                    .padding(vertical = 24.dp),
-            )
+//            Text(
+//                fontSize = 18.sp,
+//                color = Color.White, // 텍스트 색상
+//                modifier = Modifier
+//                    .padding(vertical = 24.dp),
+//            )
             Text(
                     text = "$totalAcceleration",
             fontSize = 18.sp,

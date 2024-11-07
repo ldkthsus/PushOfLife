@@ -99,17 +99,16 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         val patientLatitude = intent.getDoubleExtra("patient_latitude", 0.0)
         val patientLongitude = intent.getDoubleExtra("patient_longitude", 0.0)
 
-        // TMapView 초기화가 완료된 후에 응급환자 마커를 추가
         tMapView.setOnMapReadyListener {
-            tMapView.setZoomLevel(16)
+            tMapView.setZoomLevel(17)
             checkAndRequestLocationPermission()
 
-            // 지도 준비가 완료된 후 응급 상황일 경우 마커 추가
+            // 지도 준비가 완료되면 마커 추가 (현재 위치와 응급환자 위치 동시에)
             if (isEmergency) {
                 addPatientMarker(patientLatitude, patientLongitude)
             }
+            updateUserLocationOnMap()
         }
-
         tMapGpsManager = TMapGpsManager(this).apply {
             minTime = 1000
             minDistance = 10f

@@ -136,7 +136,7 @@ class BleRepository {
                     Log.d(TAG, "GATT 연결 해제 또는 실패: ${gatt.device.address}")
                     cleanupGattConnection(gatt)
                     val retries = connectionRetryMap[gatt.device.address] ?: 0
-                    if (retries < 6) { // 최대 재시도 횟수 6회
+                    if (retries < 7) { // 최대 재시도 횟수 6회
                         connectionRetryMap[gatt.device.address] = retries + 1
                         retryConnectionWithDelay(gatt.device, locationData)
                     } else {
@@ -234,7 +234,7 @@ class BleRepository {
                 bluetoothGattCallback = createBluetoothGattCallback(locationData)
                 bleGatt = connectGattCompat(bluetoothGattCallback!!, device, true)
             }
-        }, 5000)
+        }, 4000)
     }
 
     fun getWriteCharacteristic(gatt: BluetoothGatt): BluetoothGattCharacteristic? {

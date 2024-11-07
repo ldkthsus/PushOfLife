@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.text.Layout
+import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,13 +38,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
+import com.example.pushoflife.data.datastore.EmergencyPreferences
+import com.example.pushoflife.ui.aedLocation.AedLocationActivity
+import com.example.pushoflife.utils.LaunchApp
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var sensorServiceIntent: Intent
     private var lastTapTime = 0L //두 번 터치 감지를 위한 변수
+    private var emergency by mutableStateOf(false)
+    private lateinit var emergencyPreferences: EmergencyPreferences
 
     // 권한 요청 런처 설정
     private val requestPermissionLauncher =
@@ -57,7 +68,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        emergencyPreferences = EmergencyPreferences(this)
         // 안드로이드 13 이상에서 알림 권한 요청
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -70,6 +81,23 @@ class MainActivity : ComponentActivity() {
         // Foreground Service 시작
         sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
         startForegroundService(sensorServiceIntent)  // Foreground Service를 시작
+
+        lifecycleScope.launch {
+            emergencyPreferences.getLocation().collect { (latitude, longitude) ->
+                emergency = latitude != null && longitude != null
+//                emergency = true
+                if (emergency) {
+                    val extras = Bundle().apply {
+                        putBoolean("emergency", emergency)
+                        putDouble("patient_latitude", latitude ?: 0.0) // 임시 위도, null 방지
+                        putDouble("patient_longitude", longitude ?: 0.0) // 임시 경도, null 방지
+                    }
+                    // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
+                    LaunchApp.launchApp(this@MainActivity, AedLocationActivity::class.java, extras)
+                    Log.d("la&lo", "$emergency, $latitude, $longitude")
+                }
+            }
+        }
 
         // Jetpack Compose 설정
         setContent {
@@ -185,7 +213,13 @@ fun MainScreen() {
                     // 두 번째 Box: AED Location 이미지와 텍스트
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clickable {
+                                // XML Activity로 이동
+                                val intent = Intent(context, AedLocationActivity::class.java)
+                                context.startActivity(intent)
+                            }
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.aed_location),

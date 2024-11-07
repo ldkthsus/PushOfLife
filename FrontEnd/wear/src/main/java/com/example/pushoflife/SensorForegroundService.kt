@@ -18,11 +18,8 @@ import android.os.PowerManager
 import android.util.Log
 import kotlinx.coroutines.*
 import com.example.pushoflife.sensor.FallSensor
-import com.example.pushoflife.sensor.PushSensor
-import com.example.pushoflife.sensor.WristAngleSensor
 import com.example.pushoflife.network.MessageSender
-import com.example.pushoflife.SecondActivity
-import com.example.pushoflife.CprGuideActivity
+import com.example.pushoflife.utils.LaunchApp
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
@@ -34,22 +31,14 @@ class SensorForegroundService : Service(), SensorEventListener {
     private val binder = SensorBinder()
     private lateinit var sensorManager: SensorManager
     private val fallSensor = FallSensor()
-    private val pushSensor = PushSensor()
-    private val wristAngleSensor = WristAngleSensor(CprGuideActivity())
     private var possibleFall = false
     private var possibleHeart = false
-    private var gyroscope: Sensor? = null
     private var heartRateSensor: Sensor? = null
     private var gravitySensor: Sensor? = null
     private var linearAccelerationSensor: Sensor? = null
     var gravityValues: FloatArray? = null
     private var totalAcceleration: Float = 0.0f
-    private var pressure: Sensor? = null
 
-    // 가속도계 데이터를 전달하는 콜백
-    var linearAccelerationSensorDataCallback: ((FloatArray)->Unit)? = null
-    // 자이로스코프 데이터를 전달하는 콜백
-    var gyroscopeDataCallback: ((FloatArray)->Unit)? = null
     private var nodeId: String? = null
 
 
@@ -76,16 +65,11 @@ class SensorForegroundService : Service(), SensorEventListener {
         // SensorManager 초기화
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // 센서 등록 (TYPE_GRAVITY와 TYPE_LINEAR_ACCELERATION 추가)
-        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
         linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
-        pressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
 
         // 센서 리스너 등록
-        gyroscope?.also {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
-        }
         heartRateSensor?.also {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
@@ -94,9 +78,6 @@ class SensorForegroundService : Service(), SensorEventListener {
         }
         linearAccelerationSensor?.also {
             sensorManager.registerListener(this, it, 10000)
-        }
-        pressure?.also {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
         // 백그라운드 작업 시작 (센서 데이터 수집은 센서 이벤트에서 처리됨)
@@ -116,8 +97,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                 val z = String.format("%.2f", event.values[2])
                 //Log.d("SensorData", "gravity: x=$x, y=$y, z=$z")
                 gravityValues = event.values.clone()
-                // wristAngleSensor로 중력 데이터 전달
-                wristAngleSensor.processGravityData(event.values)
             }
             Sensor.TYPE_LINEAR_ACCELERATION -> {
 //                val currentTime = System.currentTimeMillis()
@@ -136,7 +115,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                     //Log.d("밑 가속도", "total gravity : $totalAccelation"
                 }
                 //Log.d("너를 통해 얻을거야", "Accelerometer: $totalAcceleration")
-                pushSensor.calculateCPRFeedback(totalAcceleration)
                 if (!possibleFall && fallSensor.checkFall(totalAcceleration)) {
                     //Log.d("FallDetection", "낙상감지됨")
                     possibleFall = true
@@ -149,20 +127,14 @@ class SensorForegroundService : Service(), SensorEventListener {
                     }
                 }
             }
-            Sensor.TYPE_GYROSCOPE -> {
-                val x = String.format("%.2f", event.values[0])
-                val y = String.format("%.2f", event.values[1])
-                val z = String.format("%.2f", event.values[2])
-                //Log.d("SensorData", "Gyroscope: x=$x, y=$y, z=$z")
-                val gyroscopeData = event.values
-            }
             Sensor.TYPE_HEART_RATE -> {
                 val heartRate = String.format("%.2f", event.values[0])
                 Log.d("SensorData", "Heartrate: $heartRate")
                 if(possibleFall ){
                     possibleHeart = true
                     // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
-                    launchApp()
+                    LaunchApp.launchApp(this, SecondActivity::class.java)
+
                     turnOnScreen()
                     nodeId?.let {
                         messageSender.sendEmergency(
@@ -174,10 +146,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                     Log.d("심정지 감지","Heartrate : $heartRate 심정지 가능성")
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
-            }
-            Sensor.TYPE_PRESSURE -> {
-                val millibarsOfPressure = event.values[0]
-                //Log.d("고도","고도 : $millibarsOfPressure" )
             }
         }
     }
@@ -223,13 +191,6 @@ class SensorForegroundService : Service(), SensorEventListener {
         }
     }
 
-    // 앱을 강제로 실행하는 메서드
-    private fun launchApp() {
-        val intent = Intent(this, SecondActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        startActivity(intent)
-    }
 
     // 화면을 강제로 켜는 메서드
     private fun turnOnScreen() {

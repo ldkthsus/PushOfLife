@@ -65,10 +65,10 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         val currentLocationButton = findViewById<ImageButton>(R.id.currentLocationButton)
 
         // TMapGpsManager 초기화 (위치 갱신을 위한 설정)
-        tMapGpsManager = TMapGpsManager(this).apply {
-            minTime = 1000 // 위치 갱신 간격 (밀리초 단위)
-            minDistance = 10f // 위치 갱신 최소 거리 (미터 단위)
-        }
+//        tMapGpsManager = TMapGpsManager(this).apply {
+//            minTime = 500 // 위치 갱신 간격 (밀리초 단위)
+//            minDistance = 10f // 위치 갱신 최소 거리 (미터 단위)
+//        }
 
         // TMapView 초기화 및 API 키 설정
         tMapView = TMapView(this).apply {
@@ -100,7 +100,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         val patientLongitude = intent.getDoubleExtra("patient_longitude", 0.0)
 
         tMapView.setOnMapReadyListener {
-            tMapView.setZoomLevel(17)
+            tMapView.setZoomLevel(18)
             checkAndRequestLocationPermission()
 
             // 지도 준비가 완료되면 마커 추가 (현재 위치와 응급환자 위치 동시에)
@@ -110,7 +110,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
             updateUserLocationOnMap()
         }
         tMapGpsManager = TMapGpsManager(this).apply {
-            minTime = 1000
+            minTime = 500
             minDistance = 10f
         }
 
@@ -241,7 +241,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         handler.removeCallbacks(delayedApiRequest)
         lastCenterPoint = centerPoint
         lastZoomLevel = zoomLevel
-        handler.postDelayed(delayedApiRequest, 1000)
+        handler.postDelayed(delayedApiRequest, 500)
     }
 
     private fun checkAndRequestLocationPermission() {

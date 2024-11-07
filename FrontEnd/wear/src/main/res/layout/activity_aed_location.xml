@@ -32,6 +32,7 @@
 
         <!-- 버튼 위에 텍스트 추가 -->
         <TextView
+            android:id="@+id/emergencyText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

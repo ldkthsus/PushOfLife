@@ -106,7 +106,12 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         val patientLongitude = intent.getDoubleExtra("patient_longitude", 0.0)
 
         // 응급상황 버튼
-        val emergencyButton = findViewById<ImageButton>(R.id.emergencyButton)
+        val emergencyButton = findViewById<ImageButton>(R.id.emergencyButton).apply {
+            visibility = View.GONE // 초기에는 버튼을 숨김
+        }
+        val emergencyText = findViewById<TextView>(R.id.emergencyText).apply {
+            visibility = View.GONE // 초기에는 텍스트 숨김
+        }
 
         tMapView.setOnMapReadyListener {
             tMapView.setZoomLevel(18)
@@ -116,6 +121,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
             if (isEmergency) {
                 addPatientMarker(patientLatitude, patientLongitude)
                 emergencyButton.visibility = View.VISIBLE
+                emergencyText.visibility = View.VISIBLE
                 emergencyButton.setOnClickListener {
                     val intent = Intent(this, CprGuideActivity::class.java)
                     startActivity(intent)

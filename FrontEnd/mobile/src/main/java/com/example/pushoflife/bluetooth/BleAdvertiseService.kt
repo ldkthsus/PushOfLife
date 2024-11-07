@@ -19,6 +19,8 @@ import androidx.core.content.ContextCompat
 import com.example.pushoflife.MyApplication
 import com.example.pushoflife.R
 import com.example.pushoflife.data.datastore.EmergencyPreferences
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -170,6 +172,22 @@ class BleAdvertiseService : Service() {
                 CoroutineScope(Dispatchers.IO).launch {
                     val emergencyPreferences = EmergencyPreferences(context)
                     emergencyPreferences.saveLocation(latitude, longitude)
+                }
+                CoroutineScope(Dispatchers.IO).launch {
+                    val putDataMapRequest = PutDataMapRequest.create("/emergency_location")
+                    putDataMapRequest.dataMap.putDouble("latitude", latitude)
+                    putDataMapRequest.dataMap.putDouble("longitude", longitude)
+
+                    val putDataRequest = putDataMapRequest.asPutDataRequest().setUrgent()
+
+                    // applicationContext 사용
+                    Wearable.getDataClient(applicationContext).putDataItem(putDataRequest)
+                        .addOnSuccessListener {
+                            Log.d("Wearable", "Data sent successfully")
+                        }
+                        .addOnFailureListener {
+                            Log.e("Wearable", "Failed to send data", it)
+                        }
                 }
                 Log.d(TAG, "위치 데이터 저장이 완료되었어용")
                 Log.d(TAG, "BLE 통신 정말 성공했어욤 !!!!!")

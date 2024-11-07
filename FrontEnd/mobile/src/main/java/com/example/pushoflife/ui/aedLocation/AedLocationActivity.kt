@@ -1,6 +1,7 @@
 package com.example.pushoflife.ui.aedLocation
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.PointF
@@ -28,6 +29,8 @@ import com.example.pushoflife.network.MapBoundsResponse
 import android.os.Handler
 import android.os.Looper
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
+import com.example.pushoflife.MainActivity
 import com.example.pushoflife.network.AedDetailResponse
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.skt.tmap.poi.TMapPOIItem
@@ -66,6 +69,16 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         backButton.setOnClickListener {
             onBackPressed()
         }
+        // 뒤로 가기 동작을 커스텀하기 위해 OnBackPressedCallback을 추가합니다.
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // 메인 화면으로 이동하는 코드
+                val intent = Intent(this@AedLocationActivity, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                finish() // 현재 Activity를 종료하여 스택에서 제거
+            }
+        })
 
         currentLocationButton.setOnClickListener {
             checkAndRequestLocationPermission()

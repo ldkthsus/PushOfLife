@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.text.Layout
+import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,14 +38,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
+import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var sensorServiceIntent: Intent
     private var lastTapTime = 0L //두 번 터치 감지를 위한 변수
+    private var emergency by mutableStateOf(false)
+    private lateinit var emergencyPreferences: EmergencyPreferences
 
     // 권한 요청 런처 설정
     private val requestPermissionLauncher =
@@ -71,6 +80,13 @@ class MainActivity : ComponentActivity() {
         // Foreground Service 시작
         sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
         startForegroundService(sensorServiceIntent)  // Foreground Service를 시작
+
+        lifecycleScope.launch {
+            emergencyPreferences.getLocation().collect { (latitude, longitude) ->
+                emergency = latitude != null && longitude != null
+                Log.d("la&lo","$emergency, $latitude, $longitude")
+            }
+        }
 
         // Jetpack Compose 설정
         setContent {

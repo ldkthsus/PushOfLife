@@ -5,26 +5,13 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothGattServer
-import android.bluetooth.BluetoothGattServerCallback
-import android.bluetooth.BluetoothGattService
-import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothProfile
-import android.bluetooth.le.AdvertiseCallback
-import android.bluetooth.le.AdvertiseData
-import android.bluetooth.le.AdvertiseSettings
-import android.bluetooth.le.BluetoothLeAdvertiser
+import android.bluetooth.*
+import android.bluetooth.le.*
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -40,11 +27,21 @@ import java.util.UUID
 
 class BleAdvertiseService : Service() {
     private lateinit var bluetoothLeAdvertiser: BluetoothLeAdvertiser
-    private lateinit var advertiseCallback: AdvertiseCallback
     private var bluetoothGattServer: BluetoothGattServer? = null
     private val context = MyApplication.applicationContext()
     private val bleManager: BluetoothManager = context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
     private val TAG = "BleAdvertiseService"
+
+    // advertiseCallback을 클래스 멤버로 설정
+    private val advertiseCallback = object : AdvertiseCallback() {
+        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+            Log.d(TAG, "광고 성공적으로 시작됨")
+        }
+
+        override fun onStartFailure(errorCode: Int) {
+            Log.e(TAG, "광고 시작 실패 - 상태 코드: $errorCode")
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -55,70 +52,37 @@ class BleAdvertiseService : Service() {
         // Notification Channel 생성
         createNotificationChannel()
 
-        startAdvertising()
+        // Start Foreground service with notification
+        val notification = NotificationCompat.Builder(this, "BLE_ADVERTISE_CHANNEL")
+            .setContentTitle("Push Of Life")
+            .setContentText("백그라운드에서 광고 중입니다...")
+            .setSmallIcon(R.drawable.ic_notification)
+            .build()
 
+        startForeground(1, notification)
+
+        // 광고 시작
+        startAdvertising()
         startServer()
     }
 
     @SuppressLint("MissingPermission")
     private fun startAdvertising() {
-        Log.d("song", "광고 하려고 데이터 빌드")
+        Log.d(TAG, "광고 데이터를 빌드하여 광고 시작")
 
-        val advertiseCallback = object : AdvertiseCallback() {
-            override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-//                Log.d("BleAdvertiseService", "Advertising started successfully")
-//                Log.d("song", "광고 보냄!") // 광고할 때마다 로그 출력
-            }
-
-            override fun onStartFailure(errorCode: Int) {
-                Log.e("song", "광고 보내기 실패애,,, 나 지금 이 상태야 : $errorCode")
-            }
-        }
-
-        fun startBLEAdvertising() {
-            val settings = AdvertiseSettings.Builder()
-                .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
-                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-                .setConnectable(true)
-                .build()
-
-            val serviceUuid = UUID.fromString(SERVICE_UUID)
-            val data = AdvertiseData.Builder()
-                .setIncludeDeviceName(false)
-                .addServiceUuid(ParcelUuid(serviceUuid))
-                .build()
-
-            bluetoothLeAdvertiser?.startAdvertising(settings, data, advertiseCallback)
-        }
-
-        fun stopAndRestartAdvertising() {
-            bluetoothLeAdvertiser?.stopAdvertising(advertiseCallback)
-            startBLEAdvertising() // 다시 광고 시작
-        }
-
-        // Handler를 사용하여 1초마다 광고를 중지하고 재시작
-        val handler = Handler(Looper.getMainLooper())
-        val advertisingRunnable = object : Runnable {
-            override fun run() {
-                stopAndRestartAdvertising()
-                handler.postDelayed(this, 2000) // 1초 후에 다시 실행
-            }
-        }
-
-        handler.post(advertisingRunnable) // 초기 실행
-    }
-
-
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val notification = NotificationCompat.Builder(this, "BLE_ADVERTISE_CHANNEL")
-            .setContentTitle("Push Of Life")
-            .setContentText("백그라운드에서 광고중이예요...")
-            .setSmallIcon(R.drawable.ic_notification)
+        val settings = AdvertiseSettings.Builder()
+            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_BALANCED)
+            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+            .setConnectable(true)
             .build()
 
-        startForeground(1, notification)
-        return START_STICKY
+        val serviceUuid = UUID.fromString(SERVICE_UUID)
+        val data = AdvertiseData.Builder()
+            .setIncludeDeviceName(false)
+            .addServiceUuid(ParcelUuid(serviceUuid))
+            .build()
+
+        bluetoothLeAdvertiser.startAdvertising(settings, data, advertiseCallback)
     }
 
     @SuppressLint("MissingPermission")
@@ -144,6 +108,7 @@ class BleAdvertiseService : Service() {
             manager.createNotificationChannel(channel)
         }
     }
+
     // 서버 기능: 광고 및 송신 특성 변경 감지
     @SuppressLint("MissingPermission")
     fun startServer() {
@@ -206,7 +171,8 @@ class BleAdvertiseService : Service() {
                     val emergencyPreferences = EmergencyPreferences(context)
                     emergencyPreferences.saveLocation(latitude, longitude)
                 }
-                Log.d(TAG, "위치 데이터 저장 완료")
+                Log.d(TAG, "위치 데이터 저장이 완료되었어용")
+                Log.d(TAG, "BLE 통신 정말 성공했어욤 !!!!!")
 
                 // 응답 전송 (권한 확인 후)
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {

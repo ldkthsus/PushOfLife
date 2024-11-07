@@ -54,7 +54,7 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             Log.d(TAG, "Waiting 10 seconds before connecting...")
-            delay(10000) // 10-second delay
+            delay(5000) // 10-second delay
             bleRepository.sendLocationToAllDevices(latitude, longitude)
         }
     }

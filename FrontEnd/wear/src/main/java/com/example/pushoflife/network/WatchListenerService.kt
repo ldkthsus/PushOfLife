@@ -32,6 +32,12 @@ class WatchListenerService : WearableListenerService() {
                     val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
                     val value = dataMap.getString("name")
                     Log.d("Wearable", "Received data: $value")
+                }else if (dataItem.uri.path == "/emergency_location") {
+                    val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                    val latitude = dataMap.getDouble("latitude")
+                    val longitude = dataMap.getDouble("longitude")
+
+                    Log.d("WatchApp", "Received latitude: $latitude, longitude: $longitude")
                 }
             }
         }
@@ -50,7 +56,7 @@ class WatchListenerService : WearableListenerService() {
             // 알림 띄우기
             showNotification(message)
             // 모바일에서 응급 환자 발생했다는 알림을 주면 그 알림을 눌러서 지도 켜지게
-        } else if (messageEvent.path == "/emergency_alert") {
+        } else if (messageEvent.path == "/emergency_location") {
             val dataString = String(messageEvent.data)
             val json = JSONObject(dataString)
 

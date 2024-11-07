@@ -2,12 +2,14 @@ package com.example.pushoflife.utils
 
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 
 object LaunchApp {
     // 앱을 강제로 실행하는 메서드
-    fun launchApp(context: Context, targetActivity: Class<*>) {
+    fun launchApp(context: Context, targetActivity: Class<*>, extras: Bundle? = null) {
         val intent = Intent(context, targetActivity).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            extras?.let { putExtras(it) } // 추가 데이터가 있으면 Intent에 추가
         }
         context.startActivity(intent)
     }

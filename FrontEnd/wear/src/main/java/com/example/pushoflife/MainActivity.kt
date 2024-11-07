@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import com.example.pushoflife.data.datastore.EmergencyPreferences
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
+import com.example.pushoflife.utils.LaunchApp
 import kotlinx.coroutines.launch
 
 
@@ -84,7 +85,16 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             emergencyPreferences.getLocation().collect { (latitude, longitude) ->
                 emergency = latitude != null && longitude != null
-                Log.d("la&lo","$emergency, $latitude, $longitude")
+                if (emergency) {
+                    val extras = Bundle().apply {
+                        putBoolean("emergency", emergency)
+                        putDouble("patient_latitude", latitude ?: 0.0) // 임시 위도, null 방지
+                        putDouble("patient_longitude", longitude ?: 0.0) // 임시 경도, null 방지
+                    }
+                    // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
+                    LaunchApp.launchApp(this@MainActivity, AedLocationActivity::class.java, extras)
+                    Log.d("la&lo", "$emergency, $latitude, $longitude")
+                }
             }
         }
 

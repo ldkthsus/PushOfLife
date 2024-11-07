@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             emergencyPreferences.getLocation().collect { (latitude, longitude) ->
                 emergency = latitude != null && longitude != null
+//                emergency = true
                 if (emergency) {
                     val extras = Bundle().apply {
                         putBoolean("emergency", emergency)

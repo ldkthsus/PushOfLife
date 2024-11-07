@@ -12,7 +12,10 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import org.json.JSONObject
-
+import com.example.pushoflife.data.datastore.EmergencyPreferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 class WatchListenerService : WearableListenerService() {
 
     override fun onCreate() {
@@ -38,6 +41,12 @@ class WatchListenerService : WearableListenerService() {
                     val longitude = dataMap.getDouble("longitude")
 
                     Log.d("WatchApp", "Received latitude: $latitude, longitude: $longitude")
+
+                    // DataStore에 위치 정보 저장
+                    val emergencyPreferences = EmergencyPreferences(this)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        emergencyPreferences.saveLocation(latitude, longitude)
+                    }
                 }
             }
         }

@@ -13,6 +13,35 @@
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent" />
 
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp">
+
+        <!-- 이미지 버튼 -->
+        <ImageButton
+            android:id="@+id/emergencyButton"
+            android:layout_width="100dp"
+            android:layout_height="36dp"
+            android:background="@drawable/cpr_start_button"
+            android:scaleType="centerInside" />
+
+        <!-- 버튼 위에 텍스트 추가 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="CPR 시작"
+            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:fontFamily="@font/pretendard_medium" />
+
+    </FrameLayout>
+
     <!-- 현재 위치 갱신 버튼 (지도 뷰 위에 렌더링) -->
     <ImageButton
         android:id="@+id/currentLocationButton"

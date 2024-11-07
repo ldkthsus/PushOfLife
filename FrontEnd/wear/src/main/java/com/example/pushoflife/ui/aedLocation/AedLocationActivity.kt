@@ -1,6 +1,7 @@
 package com.example.pushoflife.ui.aedLocation
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.PointF
@@ -27,7 +28,10 @@ import retrofit2.Response
 import com.example.pushoflife.network.MapBoundsResponse
 import android.os.Handler
 import android.os.Looper
+import android.view.View
+import android.widget.Button
 import android.widget.TextView
+import com.example.pushoflife.CprGuideActivity
 import com.example.pushoflife.network.AedDetailResponse
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.skt.tmap.poi.TMapPOIItem
@@ -43,6 +47,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
     private val handler = Handler(Looper.getMainLooper())
     private var lastCenterPoint: TMapPoint? = null
     private var lastZoomLevel: Float? = null
+    private lateinit var emergencyButton: Button
 
     // 3초 딜레이를 위한 Runnable
     private val delayedApiRequest = Runnable {
@@ -95,9 +100,13 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         // 응급상황 조건부 코드
         val isEmergency = intent.getBooleanExtra("emergency", false)
 
+
         //응급상황 시 임시 위치 데이터
         val patientLatitude = intent.getDoubleExtra("patient_latitude", 0.0)
         val patientLongitude = intent.getDoubleExtra("patient_longitude", 0.0)
+
+        // 응급상황 버튼
+        val emergencyButton = findViewById<ImageButton>(R.id.emergencyButton)
 
         tMapView.setOnMapReadyListener {
             tMapView.setZoomLevel(18)
@@ -106,6 +115,11 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
             // 지도 준비가 완료되면 마커 추가 (현재 위치와 응급환자 위치 동시에)
             if (isEmergency) {
                 addPatientMarker(patientLatitude, patientLongitude)
+                emergencyButton.visibility = View.VISIBLE
+                emergencyButton.setOnClickListener {
+                    val intent = Intent(this, CprGuideActivity::class.java)
+                    startActivity(intent)
+                }
             }
             updateUserLocationOnMap()
         }

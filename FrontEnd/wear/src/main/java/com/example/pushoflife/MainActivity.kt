@@ -1,6 +1,8 @@
 
 package com.example.pushoflife
 
+import android.app.ActivityManager // 이 줄을 추가하여 ActivityManager를 가져옵니다
+import android.content.Context // 이 줄을 추가하여 Context를 가져옵니다
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -52,7 +54,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     private lateinit var sensorServiceIntent: Intent
-    private var lastTapTime = 0L //두 번 터치 감지를 위한 변수
+    private var lastTapTime = 0L // 두 번 터치 감지를 위한 변수
     private var emergency by mutableStateOf(false)
     private lateinit var emergencyPreferences: EmergencyPreferences
 
@@ -69,44 +71,39 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         emergencyPreferences = EmergencyPreferences(this)
+
         // 안드로이드 13 이상에서 알림 권한 요청
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
-                // 권한 요청
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
 
-        // Foreground Service 시작
+        // Foreground Service 시작 (이미 실행 중인지 확인)
         sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
-        startForegroundService(sensorServiceIntent)  // Foreground Service를 시작
-
+        if (!isMyServiceRunning(SensorForegroundService::class.java, this)) {
+            startForegroundService(sensorServiceIntent)
+        }
 
         // Jetpack Compose 설정
         setContent {
             MainScreen()
         }
-
     }
+
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
             emergencyPreferences.getLocation().collect { (latitude, longitude) ->
                 emergency = latitude != null && longitude != null
-//                emergency = true
                 if (emergency) {
                     val extras = Bundle().apply {
                         putBoolean("emergency", emergency)
-                        putDouble("patient_latitude", latitude ?: 0.0) // 임시 위도, null 방지
-                        putDouble("patient_longitude", longitude ?: 0.0) // 임시 경도, null 방지
+                        putDouble("patient_latitude", latitude ?: 0.0)
+                        putDouble("patient_longitude", longitude ?: 0.0)
                     }
-                    // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
-                    LaunchApp.launchApp(
-                        this@MainActivity,
-                        AedLocationActivity::class.java,
-                        extras
-                    )
+                    LaunchApp.launchApp(this@MainActivity, AedLocationActivity::class.java, extras)
                     Log.d("la&lo", "$emergency, $latitude, $longitude")
                 }
             }
@@ -114,7 +111,6 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        //두 번 터치 감지
         if (event?.action == MotionEvent.ACTION_DOWN) {
             val currentTime = System.currentTimeMillis()
             if (currentTime - lastTapTime < 300) {
@@ -130,6 +126,17 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         stopService(sensorServiceIntent)  // 앱이 종료될 때 서비스 중지
     }
+}
+
+// 서비스가 실행 중인지 확인하는 함수
+private fun isMyServiceRunning(serviceClass: Class<*>, context: Context): Boolean {
+    val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+        if (serviceClass.name == service.service.className) {
+            return true
+        }
+    }
+    return false
 }
 
 val PretendardExtraLight = FontFamily(

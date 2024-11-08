@@ -326,9 +326,7 @@ class MainActivity : ComponentActivity() {
             }
         } else if(messageEvent.path == "/CPR_start"){
             CoroutineScope(Dispatchers.IO).launch {
-                val intent = Intent("com.example.pushoflife.ACTION_FEEDBACK_START")
-                sendBroadcast(intent)
-
+                handleFeedbackAlertReceived()
                 Log.d("CPR_start", "CPR시작 버튼 누름!, 주변 워치에게 전달")
             }
         }
@@ -437,6 +435,7 @@ class MainActivity : ComponentActivity() {
     private fun registerWatchAlertReceiver() {
         val watchAlertReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
+                Log.d("MainActivity","${intent.action}")
                 try {
                     if (intent.action == "com.example.pushoflife.ACTION_WATCH_ALERT") {
                         Log.d("MainActivity", "Watch alert received")

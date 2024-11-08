@@ -1,6 +1,7 @@
 package com.example.pushoflife.ui
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -68,12 +69,14 @@ fun SecondScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
+                    Log.d("MessageSender","$nodeId")
                     nodeId?.let {
-                        messageSender.sendEmergency(
+                        messageSender.sendCPRStart(
                             nodeId = it,
                             path = "/CPR_start",
                             message = "CPR시작"
                         )
+                        Log.d("메세지 보냄","$messageSender")
                     }
                     onNavigateToCprGuide() },
 

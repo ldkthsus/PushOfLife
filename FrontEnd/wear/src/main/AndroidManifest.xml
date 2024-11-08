@@ -53,6 +53,9 @@
         </activity>
         <activity android:name=".ui.aedLocation.AedLocationActivity"></activity>
         <activity
+            android:name=".FirstActivity"
+            android:exported="true" />
+        <activity
             android:name=".SecondActivity"
             android:exported="true" />
 

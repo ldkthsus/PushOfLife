@@ -32,7 +32,7 @@ class FirstActivity : ComponentActivity() {
         // nodeId 가져오기
         getConnectedNodeId { id ->
             nodeId = id
-            Log.d("NodeID", "Connected node ID: $nodeId")
+            Log.d("NodeID", "First Connected node ID: $nodeId")
         }
         // Compose UI 설정
         setContent {

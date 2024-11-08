@@ -37,6 +37,15 @@ class BleDeviceManager(private val context: Context) {
         }
     }
 
+    fun clearDeviceList() {
+        synchronized(deviceList) {
+            deviceList.clear()
+            addedDeviceAddresses.clear()
+            Log.d(TAG, "기기 리스트 초기화 완료")
+        }
+    }
+
+
     // 스캔된 BLE 기기 리스트를 가져오는 메서드
     fun getDeviceList(): List<BluetoothDevice> = deviceList
 }

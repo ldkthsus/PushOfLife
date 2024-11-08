@@ -8,7 +8,7 @@ import com.google.android.gms.wearable.Wearable
 
 class MessageSender(private val context: Context) {
 
-    fun sendEmergency(nodeId: String, path: String, message: String) {
+    fun sendMessages(nodeId: String, path: String, message: String) {
         val messageClient: MessageClient = Wearable.getMessageClient(context)
 
         messageClient.sendMessage(nodeId, path, message.toByteArray())

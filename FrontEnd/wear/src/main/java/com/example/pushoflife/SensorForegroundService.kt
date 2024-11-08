@@ -20,6 +20,7 @@ import kotlinx.coroutines.*
 import com.example.pushoflife.sensor.FallSensor
 import com.example.pushoflife.network.MessageSender
 import com.example.pushoflife.utils.LaunchApp
+import com.example.pushoflife.sensor.WatchVibrator
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
@@ -38,13 +39,13 @@ class SensorForegroundService : Service(), SensorEventListener {
     private var linearAccelerationSensor: Sensor? = null
     var gravityValues: FloatArray? = null
     private var totalAcceleration: Float = 0.0f
-
+    private var vibrate = WatchVibrator
     private var nodeId: String? = null
 
 
     override fun onCreate() {
         super.onCreate()
-
+        vibrate.initialize(applicationContext)
         // 이제 onCreate 내에서 초기화합니다.
         messageSender = MessageSender(applicationContext)
         // nodeId 가져오기
@@ -108,10 +109,22 @@ class SensorForegroundService : Service(), SensorEventListener {
                 //Log.d("너를 통해 얻을거야", "Accelerometer: $totalAcceleration")
                 if (!possibleFall && fallSensor.checkFall(totalAcceleration)) {
                     //Log.d("FallDetection", "낙상감지됨")
+                    vibrate.vibrate()
                     possibleFall = true
+                    LaunchApp.launchApp(this, FirstActivity::class.java)
+                    nodeId?.let {
+                        messageSender.sendMessages(
+                            nodeId = it,
+                            path = "/emergency_1",
+                            message = "낙상 상황 발생"
+                        )
+                    }
                     // 5초 후 possibleFall을 false로 설정
                     serviceScope.launch {
                         delay(5000L)  // 5초 대기
+                        if (!possibleHeart){
+                            LaunchApp.launchApp(this@SensorForegroundService, MainActivity::class.java)
+                        }
                         possibleFall = false
                         // Log.d("possibleFall", possibleFall.toString())
                         //Log.d("FallDetection", "possibleFall 초기화됨")
@@ -119,19 +132,19 @@ class SensorForegroundService : Service(), SensorEventListener {
                 }
             }
             Sensor.TYPE_HEART_RATE -> {
-                if(possibleFall ){
-                    possibleHeart = true
+                if(possibleFall && event.values[0] < 30.0f){
                     // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
+                    possibleHeart = true
+                    nodeId?.let {
+                        messageSender.sendMessages(
+                            nodeId = it,
+                            path = "/emergency_2",
+                            message = "심정지 상황 발생"
+                        )
+                    }
                     LaunchApp.launchApp(this, SecondActivity::class.java)
 
                     turnOnScreen()
-                    nodeId?.let {
-                        messageSender.sendEmergency(
-                            nodeId = it,
-                            path = "/emergency_path",
-                            message = "긴급 상황 발생"
-                        )
-                    }
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
             }

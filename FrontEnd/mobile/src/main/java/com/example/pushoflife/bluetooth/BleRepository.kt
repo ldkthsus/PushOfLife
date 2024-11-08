@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelUuid
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
@@ -41,15 +42,19 @@ class BleRepository {
     @SuppressLint("MissingPermission")
     fun startScan(onComplete: () -> Unit) {
         Log.d(TAG, "REPOSITORY에서 스캔 시작")
+        deviceManager.clearDeviceList() // 리스트 초기화
 
         if (!isPermissionGranted(Manifest.permission.BLUETOOTH_SCAN)) {
             handleMissingPermission(Manifest.permission.BLUETOOTH_SCAN)
             return
         }
 
-        val filters = emptyList<ScanFilter>()
+        val filters = listOf(
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
+                .build()
+        )
         val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
-
         bluetoothLeScanner?.startScan(filters, settings, BLEScanCallback)
         isScanning.postValue(Event(true))
 
@@ -91,7 +96,6 @@ class BleRepository {
             putDouble(latitude)
             putDouble(longitude)
         }.array()
-
         deviceQueue.clear()
         deviceQueue.addAll(deviceManager.getDeviceList())
         connectNextDevice(locationData)

@@ -85,6 +85,7 @@ class BleAdvertiseService : Service() {
             .build()
 
         bluetoothLeAdvertiser.startAdvertising(settings, data, advertiseCallback)
+        Log.d("Background Advertising", "데이터까지 만들어서 백그라운드에서 광고함요")
     }
 
     @SuppressLint("MissingPermission")
@@ -98,16 +99,18 @@ class BleAdvertiseService : Service() {
     }
 
     private fun createNotificationChannel() {
+        Log.d("Background Advertising", "채널 생성합니다.")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 "BLE_ADVERTISE_CHANNEL",
                 "BLE Advertising Service",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Channel for BLE advertising background service"
             }
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
+            Log.d("Background Advertising", "채널 생성이 되었어용")
         }
     }
 

@@ -82,6 +82,15 @@ class MainActivity : ComponentActivity() {
         sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
         startForegroundService(sensorServiceIntent)  // Foreground Service를 시작
 
+
+        // Jetpack Compose 설정
+        setContent {
+            MainScreen()
+        }
+
+    }
+    override fun onResume() {
+        super.onResume()
         lifecycleScope.launch {
             emergencyPreferences.getLocation().collect { (latitude, longitude) ->
                 emergency = latitude != null && longitude != null
@@ -93,17 +102,15 @@ class MainActivity : ComponentActivity() {
                         putDouble("patient_longitude", longitude ?: 0.0) // 임시 경도, null 방지
                     }
                     // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
-                    LaunchApp.launchApp(this@MainActivity, AedLocationActivity::class.java, extras)
+                    LaunchApp.launchApp(
+                        this@MainActivity,
+                        AedLocationActivity::class.java,
+                        extras
+                    )
                     Log.d("la&lo", "$emergency, $latitude, $longitude")
                 }
             }
         }
-
-        // Jetpack Compose 설정
-        setContent {
-            MainScreen()
-        }
-
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {

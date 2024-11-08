@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.example.pushoflife.ui.aedLocation.AedLocationActivity
+import com.example.pushoflife.sensor.CPRSensor
 
 
 class MainActivity : ComponentActivity() {

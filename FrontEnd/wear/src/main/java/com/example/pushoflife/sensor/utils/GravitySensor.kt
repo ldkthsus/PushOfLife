@@ -19,16 +19,27 @@ object GravitySensor : SensorEventListener {
         fun onGravityDataChanged(gravityValues: FloatArray)
     }
 
-    private var gravityListener: GravitySensorListener? = null
+    // 여러 리스너를 관리하기 위한 리스트
+    private val gravityListeners = mutableListOf<GravitySensorListener>()
 
-
-    // GravitySensor 초기화 및 리스너 등록
-    fun initialize(context: Context, listener: GravitySensorListener) {
+    fun initialize(context: Context) {
         sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         gravitySensor = sensorManager?.getDefaultSensor(Sensor.TYPE_GRAVITY)
         gravitySensor?.let {
-            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager?.registerListener(this, it, 10000)
         }
+    }
+
+    // 리스너 추가 메서드
+    fun addListener(listener: GravitySensorListener) {
+        if (!gravityListeners.contains(listener)) {
+            gravityListeners.add(listener)
+        }
+    }
+
+    // 리스너 제거 메서드
+    fun removeListener(listener: GravitySensorListener) {
+        gravityListeners.remove(listener)
     }
 
     // 센서 데이터가 업데이트될 때마다 호출
@@ -38,8 +49,9 @@ object GravitySensor : SensorEventListener {
         currentZ = event.values[2]
         Log.d("GravitySensor", "Gravity: x=$currentX, y=$currentY, z=$currentZ")
 
-        // 리스너를 통해 업데이트 알림
-        gravityListener?.onGravityDataChanged(floatArrayOf(currentX, currentY, currentZ))
+        // 모든 리스너에 업데이트 알림
+        val gravityValues = floatArrayOf(currentX, currentY, currentZ)
+        gravityListeners.forEach { it.onGravityDataChanged(gravityValues) }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
@@ -47,6 +59,7 @@ object GravitySensor : SensorEventListener {
     // 리스너 해제 메서드
     fun stop() {
         sensorManager?.unregisterListener(this)
+        gravityListeners.clear() // 모든 리스너 제거
     }
 
     // 외부에서 각각의 축 데이터를 개별적으로 가져올 수 있는 메서드

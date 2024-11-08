@@ -1,12 +1,22 @@
 package com.example.pushoflife.sensor
 
+import com.example.pushoflife.sensor.utils.GravitySensor
+import com.example.pushoflife.sensor.utils.LinearAccelerationSensor
 import kotlin.math.sqrt
 import kotlin.math.sign
 import kotlin.math.max
 import kotlin.math.min
+import android.content.Context
+import android.location.GnssAntennaInfo.Listener
+import com.example.pushoflife.CprGuideActivity
 import android.util.Log
+import java.util.Arrays
 
-class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindowSize: Int = 5) {
+class CPRSensor(
+    private val activity: CprGuideActivity,
+    private val sampleRate: Float = 100f,
+    private val movingAvgWindowSize: Int = 5
+): GravitySensor.GravitySensorListener, LinearAccelerationSensor.LinearAccelerationListener {
     private var lastTimestamp: Long? = null  // 초기에는 null로 설정
     private var lastDepth: Float = 0f
     private var filteredAcc: Float = 0f
@@ -29,6 +39,42 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
     private var P = arrayOf(floatArrayOf(1f, 0f), floatArrayOf(0f, 1f))  // 공분산 행렬
     private val Q = arrayOf(floatArrayOf(0.15f, 0f), floatArrayOf(0f, 0.15f))  // 프로세스 노이즈
     private val R = arrayOf(floatArrayOf(0.05f, 0f), floatArrayOf(0f, 0.05f))  // 측정 노이즈
+    private var gravityList = floatArrayOf(0.0f, 0.0f, 0.0f)
+    private var accelerometerList = floatArrayOf(0.0f, 0.0f, 0.0f)
+    private var gravityValues = floatArrayOf(0.0f, 0.0f, 0.0f)
+    private var accelerationValues = floatArrayOf(0.0f, 0.0f, 0.0f)
+
+
+    fun initialize(context: Context) {
+        GravitySensor.initialize(context)  // GravitySensor 초기화 (중복 초기화 방지)
+        GravitySensor.addListener(this)    // 리스너로 현재 CPRSensor를 추가
+        LinearAccelerationSensor.initialize(context, this)
+    }
+    override fun onGravityDataChanged(gravityValues: FloatArray) {
+        this.gravityValues = gravityValues
+        Log.d("gravity", "중력 ${Arrays.toString(this.gravityValues)}, ${Arrays.toString(gravityValues)}")
+        if (accelerationValues != floatArrayOf(0.0f, 0.0f, 0.0f)) {
+            processSensorData()
+        }
+    }
+
+    override fun onLinearAccelerationDataChanged(accelerationValues: FloatArray) {
+        this.accelerationValues = accelerationValues
+        if (gravityValues != floatArrayOf(0.0f, 0.0f, 0.0f)) {
+            processSensorData()
+        }
+    }
+
+    private fun processSensorData() {
+        gravityList = gravityValues
+        accelerometerList = accelerationValues
+        Log.d("왜 난?","중력 : ${Arrays.toString(gravityList)}, 가속도: ${Arrays.toString(accelerometerList)}")
+
+        feedbackCPR(accelerometerList, gravityList)
+
+    }
+
+
 
     // 중력 보정된 가속도 계산
     private fun calculateGravityCompensatedAcc(
@@ -98,15 +144,16 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
     }
 
     // 압박 깊이 계산
-    fun feedbackCPR(accelerometer: FloatArray, gravity: FloatArray): IntArray {
+    fun feedbackCPR(accelerometer: FloatArray, gravity: FloatArray) {
         val currentTimestamp = System.currentTimeMillis()
 
         // 초기 호출 시 타임스탬프 설정
         if (lastTimestamp == null) {
             lastTimestamp = currentTimestamp
-            return intArrayOf(0, 0) // 첫 번째 호출 시에는 깊이 0 반환
+            activity.updateDepthFeedback(0) // 첫 호출에서는 0 반환
+            activity.updateFrequencyFeedback(0)
+            return
         }
-
         // dt 계산 및 초기값 설정
         val dt = max((currentTimestamp - lastTimestamp!!) / 1000.0f, 0.001f)  // 최소값을 0.001초로 설정
         lastTimestamp = currentTimestamp
@@ -138,11 +185,18 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
 
         lastDisplacement = displacement
         lastDepth = displacement
-        val temp_frequency = frequencyCPR(displacement*100)
-        val temp_depth = depthCPR(displacement*100)
-        val tempList = intArrayOf(temp_frequency, temp_depth)
-        // cm 단위로 변환하여 반환
-        return tempList// Convert to cm
+//        val temp_frequency = frequencyCPR(displacement*100)
+//        val temp_depth = depthCPR(displacement*100)
+//        val tempList = intArrayOf(temp_frequency, temp_depth)
+//        // cm 단위로 변환하여 반환
+//        return tempList// Convert to cm
+
+        // 각 피드백을 직접 전달
+        val depthFeedback = depthCPR(displacement * 100)
+        val frequencyFeedback = frequencyCPR(displacement * 100)
+
+        activity.updateDepthFeedback(depthFeedback)
+        activity.updateFrequencyFeedback(frequencyFeedback)
     }
 
     private fun frequencyCPR(displacement: Float): Int {
@@ -203,6 +257,6 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             }
             maxDepth = 0.0f
         }
-        return 0
+        return 0 // "측정 중이에요"
     }
 }

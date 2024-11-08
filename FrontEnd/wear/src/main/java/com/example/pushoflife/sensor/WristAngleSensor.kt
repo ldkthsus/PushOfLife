@@ -21,8 +21,10 @@ class WristAngleSensor (private val activity: CprGuideActivity) : GravitySensor.
         val angle = calculateAngle(x, y, z)
 
         // CprGuideActivity로 전달
-        val isOptimalAngle = angle in 80.0 .. 100.0
-        activity.provideAngleFeedback(isOptimalAngle)
+        val angleFeedback = if(angle in 80.0 .. 100.0) 2 else 1
+        Log.d("WristAngleSensor", "손목!!!!!!!!!!!!!!!: $angleFeedback")
+        activity.updateWristAngleFeedback(angleFeedback)
+
     }
 
     // 3D 벡터 각도 계산 함수
@@ -42,7 +44,8 @@ class WristAngleSensor (private val activity: CprGuideActivity) : GravitySensor.
     }
 
     fun initialize(context: Context) {
-        GravitySensor.initialize(context, this)
+        GravitySensor.initialize(context)  // GravitySensor 초기화 (중복 초기화 방지)
+        GravitySensor.addListener(this)    // 리스너로 현재 CPRSensor를 추가
     }
 
     fun stop() {

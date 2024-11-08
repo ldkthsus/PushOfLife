@@ -132,7 +132,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                 }
             }
             Sensor.TYPE_HEART_RATE -> {
-                if(possibleFall && event.values[0] < 30.0f){
+                if(possibleFall && event.values[0] < 30.0f && !possibleHeart){
                     // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
                     possibleHeart = true
                     nodeId?.let {
@@ -144,7 +144,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                     }
                     LaunchApp.launchApp(this, SecondActivity::class.java)
 
-                    turnOnScreen()
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
             }

@@ -12,10 +12,10 @@ import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.Wearable
-
+import androidx.compose.runtime.mutableStateOf
 class FirstActivity : ComponentActivity() {
     private lateinit var messageSender: MessageSender
-    private var nodeId: String? = null
+    private val nodeIdState = mutableStateOf<String?>(null)  // nodeId를 상태로 관리
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -29,15 +29,15 @@ class FirstActivity : ComponentActivity() {
         // MessageSender 초기화
         messageSender = MessageSender(applicationContext)
 
-        // nodeId 가져오기
+        // nodeId 가져오기 비동기 작업
         getConnectedNodeId { id ->
-            nodeId = id
-            Log.d("NodeID", "First Connected node ID: $nodeId")
+            nodeIdState.value = id  // nodeId 상태 업데이트
+            Log.d("NodeID", "Connected node ID: ${nodeIdState.value}")
         }
         // Compose UI 설정
         setContent {
             SecondScreen(
-                nodeId = nodeId,
+                nodeId = nodeIdState.value,  // nodeId 상태 전달
                 messageSender = messageSender,
                 onNavigateToCprGuide = {
                     val intent = Intent(this, CprGuideActivity::class.java)

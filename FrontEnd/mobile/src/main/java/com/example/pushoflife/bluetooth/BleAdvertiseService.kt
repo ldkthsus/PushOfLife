@@ -170,27 +170,42 @@ class BleAdvertiseService : Service() {
                 val latitude = ByteBuffer.wrap(value.sliceArray(0 until 8)).double
                 val longitude = ByteBuffer.wrap(value.sliceArray(8 until 16)).double
                 Log.d(TAG, "위치 데이터 수신 - 위도: $latitude, 경도: $longitude")
+                if(longitude>10000&&latitude>10000){
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val putDataMapRequest = PutDataMapRequest.create("/feedback_start")
+                        val putDataRequest = putDataMapRequest.asPutDataRequest().setUrgent()
 
-                // 위치 데이터 저장 (비동기 처리)
-                CoroutineScope(Dispatchers.IO).launch {
-                    val emergencyPreferences = EmergencyPreferences(context)
-                    emergencyPreferences.saveLocation(latitude, longitude)
-                }
-                CoroutineScope(Dispatchers.IO).launch {
-                    val putDataMapRequest = PutDataMapRequest.create("/emergency_location")
-                    putDataMapRequest.dataMap.putDouble("latitude", latitude)
-                    putDataMapRequest.dataMap.putDouble("longitude", longitude)
+                        // applicationContext 사용
+                        Wearable.getDataClient(applicationContext).putDataItem(putDataRequest)
+                            .addOnSuccessListener {
+                                Log.d("Wearable", "feedbackStart successfully")
+                            }
+                            .addOnFailureListener {
+                                Log.e("Wearable", "Failed to send data", it)
+                            }
+                    }
+                }else {
+                    // 위치 데이터 저장 (비동기 처리)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val emergencyPreferences = EmergencyPreferences(context)
+                        emergencyPreferences.saveLocation(latitude, longitude)
+                    }
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val putDataMapRequest = PutDataMapRequest.create("/emergency_location")
+                        putDataMapRequest.dataMap.putDouble("latitude", latitude)
+                        putDataMapRequest.dataMap.putDouble("longitude", longitude)
 
-                    val putDataRequest = putDataMapRequest.asPutDataRequest().setUrgent()
+                        val putDataRequest = putDataMapRequest.asPutDataRequest().setUrgent()
 
-                    // applicationContext 사용
-                    Wearable.getDataClient(applicationContext).putDataItem(putDataRequest)
-                        .addOnSuccessListener {
-                            Log.d("Wearable", "Data sent successfully")
-                        }
-                        .addOnFailureListener {
-                            Log.e("Wearable", "Failed to send data", it)
-                        }
+                        // applicationContext 사용
+                        Wearable.getDataClient(applicationContext).putDataItem(putDataRequest)
+                            .addOnSuccessListener {
+                                Log.d("Wearable", "Data sent successfully")
+                            }
+                            .addOnFailureListener {
+                                Log.e("Wearable", "Failed to send data", it)
+                            }
+                    }
                 }
                 Log.d(TAG, "위치 데이터 저장이 완료되었어용")
                 Log.d(TAG, "BLE 통신 정말 성공했어욤 !!!!!")

@@ -324,6 +324,13 @@ class MainActivity : ComponentActivity() {
                 )
                 Log.d("FallDetectionService", "Emergency SMS sent: $messageContent")
             }
+        } else if(messageEvent.path == "/CPR_start"){
+            CoroutineScope(Dispatchers.IO).launch {
+                val intent = Intent("com.example.pushoflife.ACTION_FEEDBACK_START")
+                sendBroadcast(intent)
+
+                Log.d("CPR_start", "CPR시작 버튼 누름!, 주변 워치에게 전달")
+            }
         }
     }
     private lateinit var locationData: ByteArray // 클래스 레벨 선언으로 전환
@@ -434,7 +441,11 @@ class MainActivity : ComponentActivity() {
                     if (intent.action == "com.example.pushoflife.ACTION_WATCH_ALERT") {
                         Log.d("MainActivity", "Watch alert received")
                         handleWatchAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리
-                    } else {
+                    } else if(intent.action == "com.example.pushoflife.ACTION_FEEDBACK_START"){
+                        Log.d("MainActivity", "CPR 피드백 시작 알림 받음")
+                        handleFeedbackAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리
+                    }
+                    else {
                         Log.e("MainActivity", "Unexpected action received: ${intent.action}")
                     }
                 } catch (e: Exception) {
@@ -469,6 +480,11 @@ class MainActivity : ComponentActivity() {
     private fun handleWatchAlertReceived() {
         Log.d("MainActivity", "낙상 감지 알림 탐지")
         bleManagerViewModel.onWatchAlertReceived(locationData)
+    }
+    // ViewModel과 상호작용하는 메서드
+    private fun handleFeedbackAlertReceived() {
+        Log.d("MainActivity", "CPR피드백 알림 탐지")
+        bleManagerViewModel.onWatchAlertReceived(getLocationDataAsByteArray(10000.11,10000.11))
     }
 
     override fun onDestroy() {

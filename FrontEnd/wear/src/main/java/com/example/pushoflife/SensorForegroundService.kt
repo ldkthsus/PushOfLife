@@ -111,8 +111,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                     //Log.d("FallDetection", "낙상감지됨")
                     vibrate.vibrate()
                     possibleFall = true
-                    val intent = Intent(this, FirstActivity::class.java)
-                    startActivity(intent)
+                    LaunchApp.launchApp(this, FirstActivity::class.java)
                     nodeId?.let {
                         messageSender.sendMessages(
                             nodeId = it,
@@ -124,9 +123,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                     serviceScope.launch {
                         delay(5000L)  // 5초 대기
                         if (!possibleHeart){
-                            val intent = Intent(this@SensorForegroundService, MainActivity::class.java)
-                            startActivity(intent)
-                            //LaunchApp.launchApp(this@SensorForegroundService, MainActivity::class.java)
+                            LaunchApp.launchApp(this@SensorForegroundService, MainActivity::class.java)
                         }
                         possibleFall = false
                         // Log.d("possibleFall", possibleFall.toString())
@@ -145,8 +142,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                             message = "심정지 상황 발생"
                         )
                     }
-                    val intent = Intent(this, SecondActivity::class.java)
-                    startActivity(intent)
+                    LaunchApp.launchApp(this, SecondActivity::class.java)
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
             }

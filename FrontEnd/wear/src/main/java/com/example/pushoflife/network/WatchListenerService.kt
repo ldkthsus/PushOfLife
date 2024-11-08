@@ -5,6 +5,7 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.example.pushoflife.MainActivity
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import com.example.pushoflife.SecondActivity
@@ -47,6 +48,9 @@ class WatchListenerService : WearableListenerService() {
                     CoroutineScope(Dispatchers.IO).launch {
                         emergencyPreferences.saveLocation(latitude, longitude)
                     }
+                    // 위치 정보 알림 표시
+                    val message = "근처에 도움이 필요한 환자가 발생했습니다"
+                    showNotification(message)
                 }
             }
         }
@@ -80,14 +84,14 @@ class WatchListenerService : WearableListenerService() {
         val notificationId = 1
         val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
 
-        val intent = Intent(this, SecondActivity::class.java)
+        val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("새 알림")
+            .setContentTitle("구조 요청 알림")
             .setContentText(message)
             .setSmallIcon(com.example.pushoflife.R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)

@@ -24,10 +24,11 @@ object GravitySensor : SensorEventListener {
 
     // GravitySensor 초기화 및 리스너 등록
     fun initialize(context: Context, listener: GravitySensorListener) {
+        gravityListener = listener  // 리스너 설정
         sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         gravitySensor = sensorManager?.getDefaultSensor(Sensor.TYPE_GRAVITY)
         gravitySensor?.let {
-            sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager?.registerListener(this, it, 10000)
         }
     }
 

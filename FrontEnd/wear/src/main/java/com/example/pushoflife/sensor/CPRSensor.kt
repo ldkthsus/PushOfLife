@@ -5,6 +5,7 @@ import kotlin.math.sign
 import kotlin.math.max
 import kotlin.math.min
 import android.util.Log
+import kotlin.math.acos
 
 class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindowSize: Int = 5) {
     private var lastTimestamp: Long? = null  // 초기에는 null로 설정
@@ -16,6 +17,9 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
     private val maxDisplacement = 6f  // 최대 깊이 6cm로 제한
     private val minDisplacement = 0f
     private var lastDisplacement = 0f
+    private val fixedH = 9.80665
+    private val fixedF = 0.0
+    private val fixedG = 0.0
     private val frequencyTimes = mutableListOf<Float>()
     private val depthList = mutableListOf<Float>()
     // 이동 평균 필터용 데이터 버퍼
@@ -104,7 +108,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
         // 초기 호출 시 타임스탬프 설정
         if (lastTimestamp == null) {
             lastTimestamp = currentTimestamp
-            return intArrayOf(0, 0) // 첫 번째 호출 시에는 깊이 0 반환
+            return intArrayOf(0, 0, 0) // 첫 번째 호출 시 초기값 반환
         }
 
         // dt 계산 및 초기값 설정
@@ -140,7 +144,8 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
         lastDepth = displacement
         val temp_frequency = frequencyCPR(displacement*100)
         val temp_depth = depthCPR(displacement*100)
-        val tempList = intArrayOf(temp_frequency, temp_depth)
+        val temp_angle = calculateAngle(accelerometer[0].toDouble(),accelerometer[1].toDouble(),accelerometer[2].toDouble())
+        val tempList = intArrayOf(temp_depth, temp_frequency, temp_angle)
         // cm 단위로 변환하여 반환
         return tempList// Convert to cm
     }
@@ -205,4 +210,20 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
         }
         return 0
     }
+
+    // 3D 벡터 각도 계산 함수
+    private fun calculateAngle(c: Double, d: Double, e: Double): Int {
+        val s = (c * fixedF) + (d * fixedG) + (e * fixedH)
+        val t = sqrt((c * c) + (d * d) + (e * e))
+        val r = sqrt((fixedF * fixedF) + (fixedG * fixedG) + (fixedH * fixedH))
+        val u = s / (t * r)
+        val inv = Math.toDegrees(acos(u))
+
+        if(inv in 80.0 .. 100.0) {
+            return 2
+        } else {
+            return 0
+        }
+    }
+
 }

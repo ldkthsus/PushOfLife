@@ -77,7 +77,7 @@ class SensorForegroundService : Service(), SensorEventListener {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
         linearAccelerationSensor?.also {
-            sensorManager.registerListener(this, it, 10000)
+            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
         }
 
         // 백그라운드 작업 시작 (센서 데이터 수집은 센서 이벤트에서 처리됨)
@@ -92,9 +92,6 @@ class SensorForegroundService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent) {
         when (event.sensor.type) {
             Sensor.TYPE_GRAVITY -> {
-                val x = String.format("%.2f", event.values[0])
-                val y = String.format("%.2f", event.values[1])
-                val z = String.format("%.2f", event.values[2])
                 //Log.d("SensorData", "gravity: x=$x, y=$y, z=$z")
                 gravityValues = event.values.clone()
             }
@@ -104,12 +101,6 @@ class SensorForegroundService : Service(), SensorEventListener {
 //                if (currentTime - lastLinearAccelerationUpdateTime >= 50 ){
 //                    lastLinearAccelerationUpdateTime = currentTime
 //                }
-                val x = event.values[0]
-                val y = event.values[1]
-                val z = event.values[2]
-                //Log.d("acceleration", "acceleration : x=$x, y=$y, z=$z")
-                val linearAccelerationSensorData = event.values.clone()
-
                 gravityValues?.let { gravity ->
                     totalAcceleration = fallSensor.calculateAcceleration(event.values, gravity)
                     //Log.d("밑 가속도", "total gravity : $totalAccelation"
@@ -128,8 +119,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                 }
             }
             Sensor.TYPE_HEART_RATE -> {
-                val heartRate = String.format("%.2f", event.values[0])
-                Log.d("SensorData", "Heartrate: $heartRate")
                 if(possibleFall ){
                     possibleHeart = true
                     // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
@@ -143,7 +132,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                             message = "긴급 상황 발생"
                         )
                     }
-                    Log.d("심정지 감지","Heartrate : $heartRate 심정지 가능성")
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
             }
@@ -213,9 +201,5 @@ class SensorForegroundService : Service(), SensorEventListener {
             Log.e("NodeID", "Failed to get connected node ID", it)
             onNodeIdReceived(null)
         }
-    }
-
-    fun getTotalAcceleration(): Float {
-        return totalAcceleration
     }
 }

@@ -439,7 +439,7 @@ class MainActivity : ComponentActivity() {
                 try {
                     if (intent.action == "com.example.pushoflife.ACTION_WATCH_ALERT") {
                         Log.d("MainActivity", "Watch alert received")
-                        handleWatchAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리
+//                        handleWatchAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리
                     } else if(intent.action == "com.example.pushoflife.ACTION_FEEDBACK_START"){
                         Log.d("MainActivity", "CPR 피드백 시작 알림 받음")
                         handleFeedbackAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리

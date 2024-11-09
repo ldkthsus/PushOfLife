@@ -61,7 +61,7 @@ class BleRepository {
         Handler(Looper.getMainLooper()).postDelayed({
             stopScan()
             onComplete()
-        }, 8000)
+        }, 6000)
     }
 
     @SuppressLint("MissingPermission")

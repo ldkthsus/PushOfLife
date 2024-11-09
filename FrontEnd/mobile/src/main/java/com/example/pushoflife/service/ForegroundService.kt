@@ -128,7 +128,7 @@ class FallDetectionService : Service(), SensorEventListener, TextToSpeech.OnInit
         val guideText = "심폐소생술 가이드를 시작합니다. 무릎을 꿇은 채로 세워 주세요. " +
                 "손목과 팔의 각도를 90도로 유지해 주세요. 박자에 맞춰 5cm 깊이로 흉부 압박을 시작합니다. " +
                 "3, 2, 1."
-
+Log.d("CPR가이드","$guideText")
         tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
 
@@ -204,12 +204,16 @@ class FallDetectionService : Service(), SensorEventListener, TextToSpeech.OnInit
                     isTTSStart = true
                     Log.d("FallDetectionService", "Movement detected! Stopping siren.")
                     stopSiren()
-                    startCprGuide()
+                    startCprGuideWithDelay()
                 }
             }
         }
     }
-
+    private fun startCprGuideWithDelay() {
+        handler.postDelayed({
+            startCprGuide()
+        }, 3000) // 3000ms = 3초
+    }
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
     private val checkForMovementRunnable = Runnable {
         if (!isMovementDetected) {

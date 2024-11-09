@@ -102,9 +102,15 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         // 분기 조건에 따라 TTS 및 메트로놈 실행
         when (previousActivity) {
             "SecondActivity" -> {
-                // 워치가 있는 헬퍼에게 CPR을 받는 환자
-                startCprGuide()// 가이드 tts
-                startMetronome() // 메트로놈 시작
+                // SecondActivity에서 넘어온 경우: 가이드 TTS와 메트로놈 시작
+                startCprGuide() // 가이드 TTS: "시작. 무릎을 꿇은 채로..."
+                tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {}
+                    override fun onDone(utteranceId: String?) {
+                        runOnUiThread { startMetronome() }
+                    }
+                    override fun onError(utteranceId: String?) {}
+                })
             }
             "fromNotification" -> {
                 // 워치가 있는 환자에게 CPR 시행하는 헬퍼

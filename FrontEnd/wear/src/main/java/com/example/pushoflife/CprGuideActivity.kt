@@ -1,3 +1,4 @@
+
 package com.example.pushoflife
 
 import android.content.Context
@@ -43,6 +44,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private lateinit var sensorServiceIntent: Intent
     private lateinit var cprSensor: CPRSensor
     private var feedbackCPR by mutableStateOf(intArrayOf(0, 0, 0))  // 세 개의 값으로 초기화
+    private var inputFeedback by mutableStateOf(intArrayOf(0, 0, 0))
     private var feedbackTurn = 1 // 피드백 우선순위 턴을 관리하는 변수
     private lateinit var tts: TextToSpeech
     private var metronomeJob: Job? = null
@@ -81,12 +83,9 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         // Compose UI 설정
         setContent {
             var totalAcceleration by remember { mutableStateOf(0.0f) }
-            var inputFeedback by remember { mutableStateOf(intArrayOf(0, 0, 0)) }
+
             LaunchedEffect(inputFeedback) {
                 // feedbackCPR이 변경된 경우만 CprGuideScreen에 값 전달
-                if (feedbackCPR[0] != 0 && feedbackCPR[1] != 0 && feedbackCPR[2] != 0) {
-                    inputFeedback = feedbackCPR.copyOf()  // 이전 값 업데이트
-                }
             }
 
             CprGuideScreen(
@@ -151,6 +150,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         feedbackCPR = cprSensor.feedbackCPR(latestAccelerationValues, latestGravityValues)
         if ((feedbackCPR[0] != 0)&&(feedbackCPR[1] != 0)&&(feedbackCPR[2] != 0)) {
             Log.d("CPR Feedback Calculation", "Calculated Feedback - Depth: ${feedbackCPR[0]}, Frequency: ${feedbackCPR[1]}, Angle: ${feedbackCPR[2]}")
+            inputFeedback = feedbackCPR.copyOf()  // 이전 값 업데이트
             processFeedback()
         }
     }
@@ -254,3 +254,4 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         LinearAccelerationSensor.stop() // 가속도 센서 업데이트 중지
     }
 }
+

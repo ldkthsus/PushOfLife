@@ -56,14 +56,19 @@ class SecondActivity : ComponentActivity() {
                     nodeId = nodeIdState.value,
                     messageSender = messageSender,
                     onNavigateToCprGuide = {
-                        val intent = Intent(this, CprGuideActivity::class.java)
-                        startActivity(intent)
+                        navigateToCprGuide()
                     }
                 )
             }
         }
     }
-
+    private fun navigateToCprGuide() {
+        val intent = Intent(this, CprGuideActivity::class.java).apply {
+            putExtra("previous_activity", "SecondActivity")  // 이전 액티비티 정보 추가
+        }
+        startActivity(intent)
+        finish() // 현재 액티비티 종료
+    }
     // 연결된 노드 ID를 가져오는 메서드
     private fun getConnectedNodeId(onNodeIdReceived: (String?) -> Unit) {
         val nodeClient: NodeClient = Wearable.getNodeClient(this)

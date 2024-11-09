@@ -27,7 +27,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private var feedbackTurn = 1 // 피드백 우선순위 턴을 관리하는 변수
     private lateinit var tts: TextToSpeech
     private var metronomeJob: Job? = null
-    private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+    private val toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
     private var feedbackJob: Job? = null
     private var previousFeedback: IntArray? = null
 
@@ -54,7 +54,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         feedbackJob = CoroutineScope(Dispatchers.Main).launch {
             while (isActive){
                 delay(5000) // 5초
-                processFeedback()
+                //processFeedback()
             }
         }
 
@@ -96,8 +96,9 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     // 두 센서의 데이터를 모두 확인하여 CPR 피드백 업데이트
     private fun checkAndUpdateCprFeedback() {
         feedbackCPR = cprSensor.feedbackCPR(latestAccelerationValues, latestGravityValues)
-        if ((feedbackCPR[0] != 0)||(feedbackCPR[1] != 0)) {
+        if ((feedbackCPR[0] != 0)&&(feedbackCPR[1] != 0)&&(feedbackCPR[2] != 0)) {
             Log.d("CPR Feedback Calculation", "Calculated Feedback - Depth: ${feedbackCPR[0]}, Frequency: ${feedbackCPR[1]}, Angle: ${feedbackCPR[2]}")
+            processFeedback()
         }
     }
 
@@ -168,6 +169,9 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     }
 
     private fun startMetronome() {
+        // 이미 메트로놈이 실행 중일 경우 중복 실행 방지
+        if (metronomeJob?.isActive == true) return
+
         val intervalMillis = (60000 / 110).toLong()
 
         metronomeJob = CoroutineScope(Dispatchers.Main).launch {

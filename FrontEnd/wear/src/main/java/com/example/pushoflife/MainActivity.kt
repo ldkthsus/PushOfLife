@@ -174,7 +174,7 @@ fun MainScreen() {
                         .fillParentMaxSize() // 화면 전체 채우기
                         .clickable {
                             // 클릭 시 CprGuideActivity로 이동
-                            val intent = Intent(context, CprGuideActivity::class.java)
+                            val intent = Intent(context, CprWaitingActivity::class.java)
                             context.startActivity(intent)
                         }
                 ) {

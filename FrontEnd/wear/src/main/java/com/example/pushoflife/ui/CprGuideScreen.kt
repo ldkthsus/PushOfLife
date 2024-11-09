@@ -22,12 +22,10 @@ var screenColor = false
 fun CprGuideScreen(totalAcceleration:Float, cprFeedback: IntArray, onExitClick: () -> Unit) {
     // 그라데이션 색상 설정
     Log.d("로그", "${Arrays.toString(cprFeedback)}")
-    if ((cprFeedback[0] == 1)||(cprFeedback[1] == 1)||(cprFeedback[2] == 0)||(cprFeedback[1] == 3)) {
-        screenColor = false
-    } else if ((cprFeedback[0] == 0)&&(cprFeedback[1] == 0)&&(cprFeedback[2] == 0)) {
-        Log.d("로그", "$screenColor")
-    } else {
+    if ((cprFeedback[0] == 2)&&(cprFeedback[1] == 2)&&(cprFeedback[2] == 2)) {
         screenColor = true
+   } else {
+        screenColor = false
     }
     val gradientColors = if (screenColor) {
         listOf(wearColorPalette.secondary, Color.Black)

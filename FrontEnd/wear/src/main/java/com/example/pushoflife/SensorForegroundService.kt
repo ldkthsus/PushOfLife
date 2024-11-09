@@ -111,13 +111,9 @@ class SensorForegroundService : Service(), SensorEventListener {
                     //Log.d("FallDetection", "낙상감지됨")
                     vibrate.vibrate()
                     possibleFall = true
-                    LaunchApp.launchApp(this, FirstActivity::class.java)
                     // 5초 후 possibleFall을 false로 설정
                     serviceScope.launch {
                         delay(5000L)  // 5초 대기
-                        if (!possibleHeart){
-                            LaunchApp.launchApp(this@SensorForegroundService, MainActivity::class.java)
-                        }
                         possibleFall = false
                         // Log.d("possibleFall", possibleFall.toString())
                         //Log.d("FallDetection", "possibleFall 초기화됨")
@@ -135,7 +131,8 @@ class SensorForegroundService : Service(), SensorEventListener {
                             message = "심정지 상황 발생"
                         )
                     }
-                    LaunchApp.launchApp(this, SecondActivity::class.java)
+                    LaunchApp.launchApp(this, FirstActivity::class.java)
+                    possibleHeart = false
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")
             }

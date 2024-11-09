@@ -43,7 +43,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private lateinit var sensorServiceIntent: Intent
     private lateinit var cprSensor: CPRSensor
     private var feedbackCPR by mutableStateOf(intArrayOf(0, 0, 0))  // 세 개의 값으로 초기화
-    private var inputFeedback by mutableStateOf(intArrayOf(0, 0, 0))
     private var feedbackTurn = 1 // 피드백 우선순위 턴을 관리하는 변수
     private lateinit var tts: TextToSpeech
     private var metronomeJob: Job? = null
@@ -82,7 +81,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         // Compose UI 설정
         setContent {
             var totalAcceleration by remember { mutableStateOf(0.0f) }
-
+            var inputFeedback by remember { mutableStateOf(intArrayOf(0, 0, 0)) }
             LaunchedEffect(inputFeedback) {
                 // feedbackCPR이 변경된 경우만 CprGuideScreen에 값 전달
                 if (feedbackCPR[0] != 0 && feedbackCPR[1] != 0 && feedbackCPR[2] != 0) {

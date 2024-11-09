@@ -170,9 +170,12 @@ class BleAdvertiseService : Service() {
                 val latitude = ByteBuffer.wrap(value.sliceArray(0 until 8)).double
                 val longitude = ByteBuffer.wrap(value.sliceArray(8 until 16)).double
                 Log.d(TAG, "위치 데이터 수신 - 위도: $latitude, 경도: $longitude")
-                if(longitude>10000&&latitude>10000){
+                if(longitude>=10000&&latitude>=10000){
+                    Log.d(TAG, "잘 넘어옴")
                     CoroutineScope(Dispatchers.IO).launch {
-                        val putDataMapRequest = PutDataMapRequest.create("/feedback_start")
+                        val putDataMapRequest = PutDataMapRequest.create("/emergency_location")
+                        putDataMapRequest.dataMap.putBoolean("trigger", true)
+
                         val putDataRequest = putDataMapRequest.asPutDataRequest().setUrgent()
 
                         // applicationContext 사용

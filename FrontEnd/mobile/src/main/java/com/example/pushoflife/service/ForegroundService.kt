@@ -190,7 +190,7 @@ Log.d("CPR가이드","$guideText")
                 // 중력 기반 가속도 계산
                 val acceleration = calculateAcceleration(linearAccelerationValues, gravityValues)
 
-                if (acceleration > 10) { // 임계값 설정
+                if (acceleration > 10 && !isFallDetected) { // 임계값 설정
                     isFallDetected = true
                     Log.d("FallDetectionService", "Fall detected! Triggering siren.")
                     triggerSiren()
@@ -204,6 +204,7 @@ Log.d("CPR가이드","$guideText")
                     isTTSStart = true
                     Log.d("FallDetectionService", "Movement detected! Stopping siren.")
                     stopSiren()
+                    startCprGuide()
                     startCprGuideWithDelay()
                 }
             }
@@ -211,7 +212,7 @@ Log.d("CPR가이드","$guideText")
     }
     private fun startCprGuideWithDelay() {
         handler.postDelayed({
-            startCprGuide()
+            Log.d("lat","지연")
         }, 3000) // 3000ms = 3초
     }
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}

@@ -146,7 +146,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
         lastDepth = displacement
         val temp_frequency = frequencyCPR(displacement*100)
         val temp_depth = depthCPR(displacement*100)
-        val temp_angle = calculateAngle(accelerometer[0].toDouble(),accelerometer[1].toDouble(),accelerometer[2].toDouble())
+        val temp_angle = calculateAngle(gravity[0].toDouble(),gravity[1].toDouble(),gravity[2].toDouble())
 
         if (temp_frequency != 0 || temp_depth != 0) {
             val tempList = intArrayOf(temp_depth, temp_frequency, temp_angle)

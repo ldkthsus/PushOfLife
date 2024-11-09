@@ -19,6 +19,25 @@ import com.example.pushoflife.sensor.utils.LinearAccelerationSensor
 import com.example.pushoflife.sensor.CPRSensor
 import android.view.WindowManager
 
+
+/*
+----------
+1. SecondActivity에서 넘어온 경우 (환자 워치에서 모든 가이드를 담당)
+    -> 가이드 tts + 메트로놈 tts
+    -> 신고 로직 끝 (확인)
+4. BLE통신을 통해 넘어오는 경우 (fromNotification에서 옴)
+    -> 피드백 tts
+    -> 신고 로직 중복 신고 해야 하는 건지 통신 팀에게 질문 (안 함)
+---------
+
+2. CprWaitingActivity(가제)에서 넘어온 경우 (POL유저가 아닌 환자 발견 시에 헬퍼가 들어오는 곳)
+    -> 가이드 tts + 메트로놈 tts + 피드백 tts
+    -> 신고 로직 없음 (넣어야 함)
+3. MainActivity에서 {cpr 연습 버튼}을 눌러 넘어오는 경우
+    -> 가이드 tts + 메트로놈 tts + 피드백 tts
+    -> 신고하면 안 됨
+ */
+
 class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     GravitySensor.GravitySensorListener, LinearAccelerationSensor.LinearAccelerationListener {
     private lateinit var sensorServiceIntent: Intent
@@ -38,7 +57,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        // TTS 초기화
+        // 이전 페이지를 기록하는 내비게이션
         val previousActivity = intent.getStringExtra("previous_activity")
         Log.d("ActivityInfo", "Navigated from $previousActivity")
         tts = TextToSpeech(this, this)
@@ -46,7 +65,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
         stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
 
-        // 센서 초기화 및 리스너 설정
         GravitySensor.initialize(this, this)
         LinearAccelerationSensor.initialize(this, this)
 
@@ -80,6 +98,34 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
                 },
                 cprFeedback = feedbackCPR
             )
+        }
+        // 분기 조건에 따라 TTS 및 메트로놈 실행
+        when (previousActivity) {
+            "SecondActivity" -> {
+                // 워치가 있는 헬퍼에게 CPR을 받는 환자
+                startCprGuide()// 가이드 tts
+                startMetronome() // 메트로놈 시작
+            }
+            "fromNotification" -> {
+                // 워치가 있는 환자에게 CPR 시행하는 헬퍼
+                processFeedback()
+            }
+            "CprWaitingActivity","MainActivity" -> {
+                // 가이드 tts + 메트로놈 + 피드백 tts
+                startCprGuide()
+                tts.setOnUtteranceProgressListener(object: UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {}
+                    override fun onDone(utteranceId: String?) {
+                        // 가이드 tts 완료
+                        // 메트로놈 + 피드백 tts 시작
+                        runOnUiThread {
+                            startMetronome()
+                            processFeedback()
+                        }
+                    }
+                    override fun onError(utteranceId: String?) {}
+                })
+            }
         }
     }
 

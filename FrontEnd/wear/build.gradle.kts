@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.material)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.core.ktx)
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))

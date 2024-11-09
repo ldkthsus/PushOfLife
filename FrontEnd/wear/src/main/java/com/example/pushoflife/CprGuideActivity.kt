@@ -1,146 +1,205 @@
 package com.example.pushoflife
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.media.AudioManager
-import android.media.MediaPlayer
 import android.media.ToneGenerator
 import android.os.Bundle
-import android.os.IBinder
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import android.util.Log
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import com.example.pushoflife.ui.CprGuideScreen
 import kotlinx.coroutines.*
 import java.util.*
+import com.example.pushoflife.sensor.utils.GravitySensor
+import com.example.pushoflife.sensor.utils.LinearAccelerationSensor
+import com.example.pushoflife.sensor.CPRSensor
+import android.view.WindowManager
 
-class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener {
-    private var sensorService: SensorForegroundService? = null
-    private var isServiceBound = false
-
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as? SensorForegroundService.SensorBinder
-            sensorService = binder?.getService()
-            isServiceBound = true
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            isServiceBound = false
-            sensorService = null
-        }
-    }
+class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
+    GravitySensor.GravitySensorListener, LinearAccelerationSensor.LinearAccelerationListener {
+    private lateinit var sensorServiceIntent: Intent
+    private lateinit var cprSensor: CPRSensor
+    private var feedbackCPR by mutableStateOf(intArrayOf(0, 0, 0))  // 세 개의 값으로 초기화
+    private var feedbackTurn = 1 // 피드백 우선순위 턴을 관리하는 변수
     private lateinit var tts: TextToSpeech
     private var metronomeJob: Job? = null
-    private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
-    // 상태 변수 선언 (Composable에 전달할 값)
-    private var isOptimalAngle by mutableStateOf(true) // 기본값을 설정하거나 업데이트 가능
+    private val toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
+    private var feedbackJob: Job? = null
+    private var previousFeedback: IntArray? = null
+
+    // 최근에 수신된 중력값과 가속도값을 저장
+    private var latestGravityValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
+    private var latestAccelerationValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // TTS 초기화
+        val previousActivity = intent.getStringExtra("previous_activity")
+        Log.d("ActivityInfo", "Navigated from $previousActivity")
         tts = TextToSpeech(this, this)
-        // Service 바인딩
-        Intent(this, SensorForegroundService::class.java).also { intent ->
-            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        // Foreground Service 중지
+        sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
+        stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
+
+        // 센서 초기화 및 리스너 설정
+        GravitySensor.initialize(this, this)
+        LinearAccelerationSensor.initialize(this, this)
+
+        // CPRSensor 초기화
+        cprSensor = CPRSensor()
+
+        feedbackJob = CoroutineScope(Dispatchers.Main).launch {
+            while (isActive){
+                delay(5000) // 5초
+                //processFeedback()
+            }
         }
 
         // Compose UI 설정
         setContent {
             var totalAcceleration by remember { mutableStateOf(0.0f) }
-            LaunchedEffect(Unit) {
-                while (isServiceBound) {
-                    totalAcceleration = sensorService?.getTotalAcceleration() ?: 0.0f
-                    delay(1000L) // 주기적으로 업데이트
+            var previousFeedback by remember { mutableStateOf(intArrayOf(0, 0, 0)) }
+
+            LaunchedEffect(feedbackCPR) {
+                // feedbackCPR이 변경된 경우만 CprGuideScreen에 값 전달
+                if (!feedbackCPR.contentEquals(previousFeedback)) {
+                    previousFeedback = feedbackCPR.copyOf()  // 이전 값 업데이트
                 }
             }
+
             CprGuideScreen(
-                angleFeedback = isOptimalAngle,
                 totalAcceleration = totalAcceleration,
                 onExitClick = {
-                stopAudio()
-                finish() // 종료 버튼 클릭 시 액티비티 종료
-            })
+                    stopAudio()
+                    finish()
+                },
+                cprFeedback = feedbackCPR
+            )
         }
     }
+
+    // GravitySensor 데이터 변경 시 호출
+    override fun onGravityDataChanged(gravityValues: FloatArray) {
+        latestGravityValues = gravityValues
+        checkAndUpdateCprFeedback() // 중력 데이터가 변경될 때마다 피드백 업데이트 시도
+    }
+
+    // LinearAccelerationSensor 데이터 변경 시 호출
+    override fun onLinearAccelerationDataChanged(accelerationValues: FloatArray) {
+        latestAccelerationValues = accelerationValues
+        checkAndUpdateCprFeedback() // 가속도 데이터가 변경될 때마다 피드백 업데이트 시도
+    }
+
+    // 두 센서의 데이터를 모두 확인하여 CPR 피드백 업데이트
+    private fun checkAndUpdateCprFeedback() {
+        feedbackCPR = cprSensor.feedbackCPR(latestAccelerationValues, latestGravityValues)
+        if ((feedbackCPR[0] != 0)&&(feedbackCPR[1] != 0)&&(feedbackCPR[2] != 0)) {
+            Log.d("CPR Feedback Calculation", "Calculated Feedback - Depth: ${feedbackCPR[0]}, Frequency: ${feedbackCPR[1]}, Angle: ${feedbackCPR[2]}")
+            processFeedback()
+        }
+    }
+
+    private fun processFeedback() {
+        val priorityOrder = when (feedbackTurn) {
+            1 -> listOf(0, 1, 2)  // 깊이, 빈도, 각도
+            2 -> listOf(1, 0, 2)  // 빈도, 깊이, 각도
+            3 -> listOf(2, 0, 1)  // 각도, 깊이, 빈도
+            else -> listOf(0, 1, 2)  // 깊이, 빈도, 각도 (반복)
+        }
+
+        for (i in priorityOrder) {
+            when (feedbackCPR[i]) {
+                1 -> { // 나쁨 상태일 때
+                    val message = when (i) {
+                        0 -> "더 깊게 압박해주세요"  // 깊이 피드백
+                        1 -> "압박 빈도가 느립니다"  // 빈도 피드백
+                        2 -> "팔을 90도로 세워 주세요"  // 각도 피드백
+                        else -> ""
+                    }
+                    giveFeedback(message)
+                    break
+                }
+                3 -> { // 빈도가 빠름 상태일 때
+                    if (i == 1) {  // 빈도 피드백에서만 "빠름" 메시지 제공
+                        giveFeedback("압박 빈도가 빠릅니다")
+                        break
+                    }
+                }
+                2 -> { // 좋음 상태일 때
+                    if (i == priorityOrder.last() && feedbackCPR.all { it == 2 }) {
+                        Log.d("CPR Feedback", "All parameters are optimal")
+                    }
+                }
+            }
+        }
+
+        feedbackTurn = (feedbackTurn % 3) + 1  // 턴 업데이트
+    }
+
+    private fun giveFeedback(message: String) {
+        if (tts.isSpeaking) tts.stop()
+        tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, "CPR_FEEDBACK")
+    }
+
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             tts.language = Locale.KOREAN
-            startCprGuide()  // 초기화 완료 후 TTS 시작
+            startCprGuide()
         } else {
             Log.e("CprGuideActivity", "TTS 초기화 실패")
         }
     }
 
     private fun startCprGuide() {
-        val guideText = "심폐소생술 가이드를 시작합니다. " +
-                "무릎을 꿇은 채로 세워 주세요." +
-                "검지, 중지, 약지를 펴고 환자의 명치에 약지를 대 주세요." +
-                "검지가 놓인 지점에 손꿈치를 대 주세요." +
-                "손목과 팔의 각도를 90도로 유지해 주세요." +
-                "박자에 맞춰 5cm 깊이로 흉부 압박 시작합니다." +
-                "3,2,1."
+        val guideText = "시작. 무릎을 꿇은 채로 세워 주세요... 박자에 맞춰 5cm 깊이로 흉부 압박 시작합니다. 3,2,1."
 
         tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {
-                runOnUiThread {
-                    startMetronome() // TTS가 완료되면 메트로놈 시작
-                }
+                runOnUiThread { startMetronome() }
             }
             override fun onError(utteranceId: String?) {}
         })
 
-        // TTS로 안내 방송 시작
         tts.speak(guideText, TextToSpeech.QUEUE_FLUSH, null, "CPR_GUIDE")
     }
 
     private fun startMetronome() {
-        val intervalMillis = (60000 / 110).toLong() // 110Bpm에 맞춘 간격: 약 545ms
+        // 이미 메트로놈이 실행 중일 경우 중복 실행 방지
+        if (metronomeJob?.isActive == true) return
+
+        val intervalMillis = (60000 / 110).toLong()
 
         metronomeJob = CoroutineScope(Dispatchers.Main).launch {
             while (isActive) {
-                toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 100) // 100ms 길이의 톤 생성
+                toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 100)
                 delay(intervalMillis)
             }
         }
     }
 
     private fun stopAudio() {
-        if (tts.isSpeaking) {
-            tts.stop()
-        }
+        if (tts.isSpeaking) tts.stop()
         tts.shutdown()
 
         metronomeJob?.cancel()
-        toneGenerator.release() //리소스 해제
+        toneGenerator.release()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        stopAudio() // 액티비티 종료 시 오디오 정지
+        stopAudio()
     }
-
-    // T/F 값에 따라 피드백 처리
-    fun provideAngleFeedback(isOptimal: Boolean) {
-        isOptimalAngle = isOptimal
-        if (isOptimalAngle) {
-//            Log.d("CprGuideActivity", "각도 굿.")
-            // 각도가 올바른 경우의 동작
-        } else {
-//            Log.d("CprGuideActivity", "손목 각도를 90도로 맞춰 주세요.")
-            // 각도가 잘못된 경우의 동작
-        }
+    override fun onStop() {
+        super.onStop()
+        stopAudio() // TTS와 메트로놈을 멈춤
+        GravitySensor.stop() // 중력 센서 업데이트 중지
+        LinearAccelerationSensor.stop() // 가속도 센서 업데이트 중지
     }
 }

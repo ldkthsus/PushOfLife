@@ -1,6 +1,7 @@
 package com.example.pushoflife.ui.aedLocation
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.PointF
@@ -27,7 +28,10 @@ import retrofit2.Response
 import com.example.pushoflife.network.MapBoundsResponse
 import android.os.Handler
 import android.os.Looper
+import android.view.View
+import android.widget.Button
 import android.widget.TextView
+import com.example.pushoflife.CprGuideActivity
 import com.example.pushoflife.network.AedDetailResponse
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.skt.tmap.poi.TMapPOIItem
@@ -43,6 +47,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
     private val handler = Handler(Looper.getMainLooper())
     private var lastCenterPoint: TMapPoint? = null
     private var lastZoomLevel: Float? = null
+    private lateinit var emergencyButton: Button
 
     // 3초 딜레이를 위한 Runnable
     private val delayedApiRequest = Runnable {
@@ -65,10 +70,10 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         val currentLocationButton = findViewById<ImageButton>(R.id.currentLocationButton)
 
         // TMapGpsManager 초기화 (위치 갱신을 위한 설정)
-        tMapGpsManager = TMapGpsManager(this).apply {
-            minTime = 1000 // 위치 갱신 간격 (밀리초 단위)
-            minDistance = 10f // 위치 갱신 최소 거리 (미터 단위)
-        }
+//        tMapGpsManager = TMapGpsManager(this).apply {
+//            minTime = 500 // 위치 갱신 간격 (밀리초 단위)
+//            minDistance = 10f // 위치 갱신 최소 거리 (미터 단위)
+//        }
 
         // TMapView 초기화 및 API 키 설정
         tMapView = TMapView(this).apply {
@@ -95,23 +100,37 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         // 응급상황 조건부 코드
         val isEmergency = intent.getBooleanExtra("emergency", false)
 
+
         //응급상황 시 임시 위치 데이터
         val patientLatitude = intent.getDoubleExtra("patient_latitude", 0.0)
         val patientLongitude = intent.getDoubleExtra("patient_longitude", 0.0)
 
-        // TMapView 초기화가 완료된 후에 응급환자 마커를 추가
-        tMapView.setOnMapReadyListener {
-            tMapView.setZoomLevel(16)
-            checkAndRequestLocationPermission()
-
-            // 지도 준비가 완료된 후 응급 상황일 경우 마커 추가
-            if (isEmergency) {
-                addPatientMarker(patientLatitude, patientLongitude)
-            }
+        // 응급상황 버튼
+        val emergencyButton = findViewById<ImageButton>(R.id.emergencyButton).apply {
+            visibility = View.GONE // 초기에는 버튼을 숨김
+        }
+        val emergencyText = findViewById<TextView>(R.id.emergencyText).apply {
+            visibility = View.GONE // 초기에는 텍스트 숨김
         }
 
+        tMapView.setOnMapReadyListener {
+            tMapView.setZoomLevel(18)
+            checkAndRequestLocationPermission()
+
+            // 지도 준비가 완료되면 마커 추가 (현재 위치와 응급환자 위치 동시에)
+            if (isEmergency) {
+                addPatientMarker(patientLatitude, patientLongitude)
+                emergencyButton.visibility = View.VISIBLE
+                emergencyText.visibility = View.VISIBLE
+                emergencyButton.setOnClickListener {
+                    val intent = Intent(this, CprGuideActivity::class.java)
+                    startActivity(intent)
+                }
+            }
+            updateUserLocationOnMap()
+        }
         tMapGpsManager = TMapGpsManager(this).apply {
-            minTime = 1000
+            minTime = 500
             minDistance = 10f
         }
 
@@ -242,7 +261,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         handler.removeCallbacks(delayedApiRequest)
         lastCenterPoint = centerPoint
         lastZoomLevel = zoomLevel
-        handler.postDelayed(delayedApiRequest, 1000)
+        handler.postDelayed(delayedApiRequest, 500)
     }
 
     private fun checkAndRequestLocationPermission() {

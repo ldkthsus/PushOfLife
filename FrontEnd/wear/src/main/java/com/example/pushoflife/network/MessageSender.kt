@@ -8,7 +8,7 @@ import com.google.android.gms.wearable.Wearable
 
 class MessageSender(private val context: Context) {
 
-    fun sendEmergency(nodeId: String, path: String, message: String) {
+    fun sendMessages(nodeId: String, path: String, message: String) {
         val messageClient: MessageClient = Wearable.getMessageClient(context)
 
         messageClient.sendMessage(nodeId, path, message.toByteArray())
@@ -21,7 +21,15 @@ class MessageSender(private val context: Context) {
     }
 
     fun sendCPRStart(nodeId: String, path: String, message: String) {
+        val messageClient: MessageClient = Wearable.getMessageClient(context)
 
+        messageClient.sendMessage(nodeId, path, message.toByteArray())
+            .addOnSuccessListener {
+                Log.d("MessageSender", "CPRstartMessage sent successfully to $nodeId")
+            }
+            .addOnFailureListener {
+                Log.e("MessageSender", "Failed to send message", it)
+            }
     }
 
     fun sendCPREnd(nodeId: String, path: String, message: String) {

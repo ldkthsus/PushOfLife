@@ -97,35 +97,39 @@ import java.util.Locale
 
 suspend fun getAddressFromLocation(context: Context, latitude: Double, longitude: Double): String? {
     return try {
-        val geocoder = Geocoder(context, Locale.getDefault())
+        val geocoder = Geocoder(context,Locale.KOREAN)
         val addresses = geocoder.getFromLocation(latitude, longitude, 1)
         if (addresses.isNullOrEmpty()) {
-            null
+            "주소를 찾을 수 없습니다."
         } else {
             addresses[0].getAddressLine(0) // 도로명 주소 반환
         }
     } catch (e: Exception) {
         e.printStackTrace()
-        null
+        "주소를 찾을 수 없습니다."
     }
 }
 suspend fun prepareEmergencyMessage(context: Context) {
     val tokenPreferences = TokenPreferences(context)
     val userPreferences = UserPreferences(context)
-    val userProfile=userPreferences.getUserProfile().first()
-    val latitude = tokenPreferences.getLocation().first().first // latitude,longitude
-    val longitude = tokenPreferences.getLocation().first().second // latitude,longitude
-    val address = latitude?.let {
-        if (longitude != null) {
-            getAddressFromLocation(context, it, longitude)
-        }
-    } ?: "주소를 찾을 수 없습니다."
+    val userProfile = userPreferences.getUserProfile().first()
+
+    // 위도와 경도 가져오기
+    val (latitude, longitude) = tokenPreferences.getLocation().first()
+
+    // 위도와 경도를 주소로 변환
+    val address = if (latitude != null && longitude != null) {
+        getAddressFromLocation(context, latitude, longitude)
+    } else {
+        "주소를 찾을 수 없습니다."
+    }
+
     // 메시지 내용 빌드
     val messageContent = buildString {
         if (userProfile.name.isNotEmpty()) append("${userProfile.name}님의 비상 연락처입니다.\n")
         else append("비상 연락처입니다.\n")
         append("환자가 쓰러져 자동 신고되었습니다.\n")
-        append("환자 위치: ${address}")
+        append("환자 위치: $address")
     }
 
     // 메시지를 DataStore에 저장
@@ -320,6 +324,11 @@ class MainActivity : ComponentActivity() {
                 )
                 Log.d("FallDetectionService", "Emergency SMS sent: $messageContent")
             }
+        } else if(messageEvent.path == "/CPR_start"){
+            CoroutineScope(Dispatchers.IO).launch {
+                handleFeedbackAlertReceived()
+                Log.d("CPR_start", "CPR시작 버튼 누름!, 주변 워치에게 전달")
+            }
         }
     }
     private lateinit var locationData: ByteArray // 클래스 레벨 선언으로 전환
@@ -426,11 +435,16 @@ class MainActivity : ComponentActivity() {
     private fun registerWatchAlertReceiver() {
         val watchAlertReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
+                Log.d("MainActivity","${intent.action}")
                 try {
                     if (intent.action == "com.example.pushoflife.ACTION_WATCH_ALERT") {
                         Log.d("MainActivity", "Watch alert received")
-                        handleWatchAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리
-                    } else {
+//                        handleWatchAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리
+                    } else if(intent.action == "com.example.pushoflife.ACTION_FEEDBACK_START"){
+                        Log.d("MainActivity", "CPR 피드백 시작 알림 받음")
+                        handleFeedbackAlertReceived() // ViewModel과 상호작용을 직접 호출을 통해 처리
+                    }
+                    else {
                         Log.e("MainActivity", "Unexpected action received: ${intent.action}")
                     }
                 } catch (e: Exception) {
@@ -440,11 +454,18 @@ class MainActivity : ComponentActivity() {
         }
 
         // BroadcastReceiver 등록
-        registerReceiver(
-            watchAlertReceiver,
-            IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT"),
-            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else null)!!
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                watchAlertReceiver,
+                IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT"),
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            registerReceiver(
+                watchAlertReceiver,
+                IntentFilter("com.example.pushoflife.ACTION_WATCH_ALERT")
+            )
+        }
     }
 
     fun getLocationDataAsByteArray(latitude: Double, longitude: Double): ByteArray {
@@ -458,6 +479,11 @@ class MainActivity : ComponentActivity() {
     private fun handleWatchAlertReceived() {
         Log.d("MainActivity", "낙상 감지 알림 탐지")
         bleManagerViewModel.onWatchAlertReceived(locationData)
+    }
+    // ViewModel과 상호작용하는 메서드
+    private fun handleFeedbackAlertReceived() {
+        Log.d("MainActivity", "CPR피드백 알림 탐지")
+        bleManagerViewModel.onWatchAlertReceived(getLocationDataAsByteArray(10000.11,10000.11))
     }
 
     override fun onDestroy() {

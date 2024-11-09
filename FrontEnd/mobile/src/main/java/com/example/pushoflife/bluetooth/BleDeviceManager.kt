@@ -11,10 +11,10 @@ import android.Manifest
 
 class BleDeviceManager(private val context: Context) {
 
-    // 스캔된 BLE 기기를 저장할 리스트
-    private val deviceList: ArrayList<BluetoothDevice> = ArrayList()
-
     private val TAG = "BleDeviceManager" // 로그 태그 정의
+
+    private val deviceList = mutableListOf<BluetoothDevice>()
+    private val addedDeviceAddresses = mutableSetOf<String>() // 추가된 기기 MAC 주소 추적용 Set
 
     @SuppressLint("MissingPermission")
     fun addDevice(device: BluetoothDevice) {
@@ -26,12 +26,22 @@ class BleDeviceManager(private val context: Context) {
             }
         }
 
-        // MAC 주소를 기준으로 중복 기기 검사
-        if (deviceList.none { it.address == device.address }) {
-            deviceList.add(device)
-            Log.d(TAG, "방금 기기가 추가 되었어용 : ${device.name} (${device.address})")
-        } else {
-            Log.d(TAG, "기기 중복으로 추가하지 않음: ${device.address}")
+        // 중복 추가 방지: Set을 사용하여 중복 MAC 주소 확인
+        synchronized(deviceList) {
+            if (addedDeviceAddresses.add(device.address)) { // Set에 새 주소 추가 성공 시만 실행
+                deviceList.add(device)
+                Log.d(TAG, "방금 기기가 추가 되었어용 : ${device.name ?: "Unknown"} (${device.address})")
+            } else {
+                Log.d(TAG, "기기 중복으로 추가하지 않음: ${device.address}")
+            }
+        }
+    }
+
+    fun clearDeviceList() {
+        synchronized(deviceList) {
+            deviceList.clear()
+            addedDeviceAddresses.clear()
+            Log.d(TAG, "기기 리스트 초기화 완료")
         }
     }
 
@@ -39,6 +49,3 @@ class BleDeviceManager(private val context: Context) {
     // 스캔된 BLE 기기 리스트를 가져오는 메서드
     fun getDeviceList(): List<BluetoothDevice> = deviceList
 }
-
-
-

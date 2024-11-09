@@ -5,6 +5,8 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.example.pushoflife.CprGuideActivity
+import com.example.pushoflife.MainActivity
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import com.example.pushoflife.SecondActivity
@@ -12,7 +14,10 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import org.json.JSONObject
-
+import com.example.pushoflife.data.datastore.EmergencyPreferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 class WatchListenerService : WearableListenerService() {
 
     override fun onCreate() {
@@ -32,6 +37,24 @@ class WatchListenerService : WearableListenerService() {
                     val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
                     val value = dataMap.getString("name")
                     Log.d("Wearable", "Received data: $value")
+                }else if (dataItem.uri.path == "/emergency_location") {
+                    val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                    val latitude = dataMap.getDouble("latitude")
+                    val longitude = dataMap.getDouble("longitude")
+
+                    Log.d("WatchApp", "Received latitude: $latitude, longitude: $longitude")
+
+                    // DataStore에 위치 정보 저장
+                    val emergencyPreferences = EmergencyPreferences(this)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        emergencyPreferences.saveLocation(latitude, longitude)
+                    }
+                    // 위치 정보 알림 표시
+                    val message = "근처에 도움이 필요한 환자가 발생했습니다"
+                    showNotification(message)
+                } else if (dataItem.uri.path == "/feedback_start"){
+                    val message = "CPR가이드를 시작합니다"
+                    showCPRNotification(message)
                 }
             }
         }
@@ -50,7 +73,7 @@ class WatchListenerService : WearableListenerService() {
             // 알림 띄우기
             showNotification(message)
             // 모바일에서 응급 환자 발생했다는 알림을 주면 그 알림을 눌러서 지도 켜지게
-        } else if (messageEvent.path == "/emergency_alert") {
+        } else if (messageEvent.path == "/emergency_location") {
             val dataString = String(messageEvent.data)
             val json = JSONObject(dataString)
 
@@ -65,14 +88,34 @@ class WatchListenerService : WearableListenerService() {
         val notificationId = 1
         val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
 
-        val intent = Intent(this, SecondActivity::class.java)
+        val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("새 알림")
+            .setContentTitle("구조 요청 알림")
+            .setContentText(message)
+            .setSmallIcon(com.example.pushoflife.R.mipmap.ic_launcher)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        NotificationManagerCompat.from(this).notify(notificationId, notification)
+    }
+    private fun showCPRNotification(message: String) {
+        val notificationId = 2
+        val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
+
+        val intent = Intent(this, CprGuideActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle("CPR 가이드")
             .setContentText(message)
             .setSmallIcon(com.example.pushoflife.R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)

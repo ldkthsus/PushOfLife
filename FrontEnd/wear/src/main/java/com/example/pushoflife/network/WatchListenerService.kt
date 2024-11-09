@@ -105,7 +105,7 @@ class WatchListenerService : WearableListenerService() {
         NotificationManagerCompat.from(this).notify(notificationId, notification)
     }
     private fun showCPRNotification(message: String) {
-        val notificationId = 1
+        val notificationId = 2
         val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
 
         val intent = Intent(this, CprGuideActivity::class.java)

@@ -36,15 +36,20 @@ class FirstActivity : ComponentActivity() {
         }
         // Compose UI 설정
         setContent {
-            SecondScreen(
-                nodeId = nodeIdState.value,  // nodeId 상태 전달
-                messageSender = messageSender,
-                onNavigateToCprGuide = {
-                    val intent = Intent(this, CprGuideActivity::class.java)
-                    startActivity(intent)
-                }
-            )
-
+            if (nodeIdState.value == null) {
+//                // 로딩 화면을 보여줌
+//                LoadingScreen()
+            } else {
+                // nodeId가 설정된 후 SecondScreen을 표시
+                SecondScreen(
+                    nodeId = nodeIdState.value,
+                    messageSender = messageSender,
+                    onNavigateToCprGuide = {
+                        val intent = Intent(this, CprGuideActivity::class.java)
+                        startActivity(intent)
+                    }
+                )
+            }
         }
     }
     // 연결된 노드 ID를 가져오는 메서드

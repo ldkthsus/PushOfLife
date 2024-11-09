@@ -23,10 +23,12 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
 
     private lateinit var cprSensor: CPRSensor
     private var feedbackCPR by mutableStateOf(intArrayOf(0, 0, 0))  // 세 개의 값으로 초기화
-
+    private var feedbackTurn = 1 // 피드백 우선순위 턴을 관리하는 변수
     private lateinit var tts: TextToSpeech
     private var metronomeJob: Job? = null
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+    private var feedbackJob: Job? = null
+    private var previousFeedback: IntArray? = null
 
     // 최근에 수신된 중력값과 가속도값을 저장
     private var latestGravityValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
@@ -44,6 +46,13 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
 
         // CPRSensor 초기화
         cprSensor = CPRSensor()
+
+        feedbackJob = CoroutineScope(Dispatchers.Main).launch {
+            while (isActive){
+                delay(5000) // 5초
+                processFeedback()
+            }
+        }
 
         // Compose UI 설정
         setContent {
@@ -87,6 +96,49 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
             Log.d("CPR Feedback Calculation", "Calculated Feedback - Depth: ${feedbackCPR[0]}, Frequency: ${feedbackCPR[1]}, Angle: ${feedbackCPR[2]}")
         }
     }
+
+    private fun processFeedback() {
+        val priorityOrder = when (feedbackTurn) {
+            1 -> listOf(0, 1, 2)  // 깊이, 빈도, 각도
+            2 -> listOf(1, 0, 2)  // 빈도, 깊이, 각도
+            3 -> listOf(2, 0, 1)  // 각도, 깊이, 빈도
+            else -> listOf(0, 1, 2)  // 깊이, 빈도, 각도 (반복)
+        }
+
+        for (i in priorityOrder) {
+            when (feedbackCPR[i]) {
+                1 -> { // 나쁨 상태일 때
+                    val message = when (i) {
+                        0 -> "더 깊게 압박해주세요"  // 깊이 피드백
+                        1 -> "압박 빈도가 느립니다"  // 빈도 피드백
+                        2 -> "팔을 90도로 세워 주세요"  // 각도 피드백
+                        else -> ""
+                    }
+                    giveFeedback(message)
+                    break
+                }
+                3 -> { // 빈도가 빠름 상태일 때
+                    if (i == 1) {  // 빈도 피드백에서만 "빠름" 메시지 제공
+                        giveFeedback("압박 빈도가 빠릅니다")
+                        break
+                    }
+                }
+                2 -> { // 좋음 상태일 때
+                    if (i == priorityOrder.last() && feedbackCPR.all { it == 2 }) {
+                        Log.d("CPR Feedback", "All parameters are optimal")
+                    }
+                }
+            }
+        }
+
+        feedbackTurn = (feedbackTurn % 3) + 1  // 턴 업데이트
+    }
+
+    private fun giveFeedback(message: String) {
+        if (tts.isSpeaking) tts.stop()
+        tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, "CPR_FEEDBACK")
+    }
+
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {

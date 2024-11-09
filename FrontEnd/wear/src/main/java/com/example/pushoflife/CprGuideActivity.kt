@@ -64,7 +64,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         // Compose UI 설정
         setContent {
             var totalAcceleration by remember { mutableStateOf(0.0f) }
-            var previousFeedback by remember { mutableStateOf(intArrayOf(0, 0, 0)) }
 
             LaunchedEffect(inputFeedback) {
                 // feedbackCPR이 변경된 경우만 CprGuideScreen에 값 전달

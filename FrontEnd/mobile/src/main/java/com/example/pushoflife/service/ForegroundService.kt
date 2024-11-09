@@ -10,6 +10,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.media.AudioManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -17,6 +18,7 @@ import androidx.core.app.NotificationCompat
 import com.example.pushoflife.MainActivity
 import com.example.pushoflife.R
 import android.media.MediaPlayer
+import android.media.ToneGenerator
 import android.os.Handler
 import android.os.Looper
 import android.os.Vibrator
@@ -35,12 +37,20 @@ import kotlinx.coroutines.flow.first
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import android.view.GestureDetector
+import android.view.MotionEvent
+import kotlinx.coroutines.*
+import org.w3c.dom.Text
+import java.util.*
 
 private var isMovementDetected = false
 private var isFallDetected = false
+private var isTTSStart = false
 private val handler = Handler(Looper.getMainLooper())
 
-class FallDetectionService : Service(), SensorEventListener {
+class FallDetectionService : Service(), SensorEventListener, TextToSpeech.OnInitListener {
 
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
@@ -51,6 +61,11 @@ class FallDetectionService : Service(), SensorEventListener {
     private val gravityValues = FloatArray(3)
     private val linearAccelerationValues = FloatArray(3)
     private val sirenHandler = Handler(Looper.getMainLooper())
+    private lateinit var tts: TextToSpeech
+    private var metronomeJob: Job? = null
+    private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+    private lateinit var gestureDetector: GestureDetector
+
     private val sirenRunnable = object : Runnable {
         override fun run() {
             if (isFallDetected && !isMovementDetected) {
@@ -70,6 +85,8 @@ class FallDetectionService : Service(), SensorEventListener {
 
                 // 반복 실행 - 1초 대기 후 다시 실행
                 sirenHandler.postDelayed(this, 1000)
+
+
             }
         }
     }
@@ -88,12 +105,62 @@ class FallDetectionService : Service(), SensorEventListener {
 
         // MediaPlayer 초기화 (사이렌 사운드 파일 추가)
         mediaPlayer = MediaPlayer.create(this, R.raw.alarm_sound) // R.raw.siren_sound는 미리 추가한 사이렌 음원 파일
+
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         // 포그라운드 알림 설정
         createNotificationChannel()
         val notification = createNotification()
         startForeground(1, notification)
+
+        tts = TextToSpeech(this, this)
     }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts.language = Locale.KOREAN
+            // startCprGuide() // TTS 초기화가 완료되면 안내문구 재생 시작
+        } else {
+            Log.e("SensorForegroundService", "TTS 초기화 실패")
+        }
+    }
+
+    private fun startCprGuide() {
+        val guideText = "심폐소생술 가이드를 시작합니다. 무릎을 꿇은 채로 세워 주세요. " +
+                "손목과 팔의 각도를 90도로 유지해 주세요. 박자에 맞춰 5cm 깊이로 흉부 압박을 시작합니다. " +
+                "3, 2, 1."
+
+        tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+
+            override fun onDone(utteranceId: String?) {
+                startMetronome() // TTS 완료 후 메트로놈 시작
+            }
+
+            override fun onError(utteranceId: String?) {}
+        })
+
+        tts.speak(guideText, TextToSpeech.QUEUE_FLUSH, null, "CPR_GUIDE")
+    }
+
+    private fun startMetronome() {
+        val intervalMillis = (60000 / 110).toLong() // 110 BPM (약 545ms 간격)
+
+        metronomeJob = CoroutineScope(Dispatchers.Main).launch {
+            while (isActive) {
+                toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 100) // 톤 생성
+                delay(intervalMillis) // 간격
+            }
+        }
+    }
+    private fun stopAudio() {
+        tts.apply {
+            if (isSpeaking) stop()
+            shutdown()
+        }
+        metronomeJob?.cancel()
+        toneGenerator.release() // 리소스 해제
+    }
+
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         return START_STICKY
@@ -127,10 +194,17 @@ class FallDetectionService : Service(), SensorEventListener {
                     isFallDetected = true
                     Log.d("FallDetectionService", "Fall detected! Triggering siren.")
                     triggerSiren()
+                } else if (acceleration > 3 && isTTSStart){
+                    isTTSStart = false;
+                    Log.d("FallDetectionService", "end TTS")
+                    stopAudio()
+
                 } else if (acceleration > 3 && isFallDetected) {
                     isMovementDetected = true
+                    isTTSStart = true
                     Log.d("FallDetectionService", "Movement detected! Stopping siren.")
                     stopSiren()
+                    startCprGuide()
                 }
             }
         }
@@ -168,6 +242,10 @@ class FallDetectionService : Service(), SensorEventListener {
 
         isFallDetected=false
         isMovementDetected = false
+
+        // 특정 음성 파일 재생
+
+
     }
     fun calculateAcceleration(linearAcceleration: FloatArray, gravity: FloatArray): Float {
         val dotProduct = linearAcceleration[0] * gravity[0] +

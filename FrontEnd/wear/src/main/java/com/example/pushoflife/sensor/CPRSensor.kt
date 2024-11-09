@@ -28,12 +28,14 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
     private var pussing = false
     private var depthPussing = false
     private var maxDepth = 0.0f
+    private var trigger_init = false
+    private var total_inv: Double = 0.0
     // 칼만 필터 관련 변수들
     private var state = floatArrayOf(0f, 0f)  // 초기 상태 [displacement, velocity]
     private var P = arrayOf(floatArrayOf(1f, 0f), floatArrayOf(0f, 1f))  // 공분산 행렬
     private val Q = arrayOf(floatArrayOf(0.15f, 0f), floatArrayOf(0f, 0.15f))  // 프로세스 노이즈
     private val R = arrayOf(floatArrayOf(0.05f, 0f), floatArrayOf(0f, 0.05f))  // 측정 노이즈
-
+    private var angle_cnt = 0
     // 중력 보정된 가속도 계산
     private fun calculateGravityCompensatedAcc(
         accelerometer: FloatArray,
@@ -144,7 +146,11 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
         lastDepth = displacement
         val temp_frequency = frequencyCPR(displacement*100)
         val temp_depth = depthCPR(displacement*100)
-        val temp_angle = calculateAngle(accelerometer[0].toDouble(),accelerometer[1].toDouble(),accelerometer[2].toDouble())
+        val temp_angle = calculateAngle(gravity[0].toDouble(),gravity[1].toDouble(),gravity[2].toDouble())
+
+        if (temp_frequency != 0 || temp_depth != 0) {
+            val tempList = intArrayOf(temp_depth, temp_frequency, temp_angle)
+        }
         val tempList = intArrayOf(temp_depth, temp_frequency, temp_angle)
         // cm 단위로 변환하여 반환
         return tempList// Convert to cm
@@ -166,7 +172,8 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             }
             lastTime = currentTime
 
-            if (frequencyTimes.size >= 10) {
+            if (!trigger_init && frequencyTimes.size >= 10 && depthList.size >= 10) {
+                trigger_init = true
                 val avgDt = frequencyTimes.average()
                 Log.d("빈도 측정","frequency : ${frequencyTimes.toString()}")
                 frequencyTimes.clear()  // 평균을 계산 후 리스트 초기화
@@ -196,17 +203,17 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
                 depthList.add(maxDepth)
                 depthPussing = false
             }
-            if (depthList.size >= 10) {
-                val avgDepth = depthList.average()
-                Log.d("빈도 측정","depth : ${depthList.toString()}")
-                depthList.clear()
-                return if (avgDepth > 5.0){
-                    2 // 적당한 깊이로 잘하고 있어요
-                } else {
-                    1 // 깊이가 부족해요
-                }
-            }
             maxDepth = 0.0f
+        }
+        if (trigger_init) {
+            val avgDepth = depthList.average()
+            Log.d("빈도 측정","depth : ${depthList.toString()}")
+            depthList.clear()
+            return if (avgDepth > 5.0){
+                2 // 적당한 깊이로 잘하고 있어요
+            } else {
+                1 // 깊이가 부족해요
+            }
         }
         return 0
     }
@@ -217,13 +224,26 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
         val t = sqrt((c * c) + (d * d) + (e * e))
         val r = sqrt((fixedF * fixedF) + (fixedG * fixedG) + (fixedH * fixedH))
         val u = s / (t * r)
-        val inv = Math.toDegrees(acos(u))
+        val inv = Math.toDegrees(acos(u)).toDouble()
 
-        if(inv in 80.0 .. 100.0) {
-            return 2
+        if (trigger_init) {
+            trigger_init = false
+            // angle_cnt가 0이 아닌지 확인
+            val inv_avg = if (angle_cnt != 0) total_inv / angle_cnt else 0.0
+            total_inv = 0.0
+            angle_cnt = 0
+            Log.d("빈도 측정", "angle : $inv_avg")
+            return if (inv_avg in 80.0..100.0) {
+                2
+            } else {
+                1
+            }
         } else {
+            total_inv += inv
+            angle_cnt += 1
             return 0
         }
     }
+
 
 }

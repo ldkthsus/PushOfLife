@@ -1,6 +1,7 @@
 package com.example.pushoflife
 
 import android.content.Context
+import android.content.Intent
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Bundle
@@ -20,7 +21,7 @@ import android.view.WindowManager
 
 class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     GravitySensor.GravitySensorListener, LinearAccelerationSensor.LinearAccelerationListener {
-
+    private lateinit var sensorServiceIntent: Intent
     private lateinit var cprSensor: CPRSensor
     private var feedbackCPR by mutableStateOf(intArrayOf(0, 0, 0))  // 세 개의 값으로 초기화
     private var feedbackTurn = 1 // 피드백 우선순위 턴을 관리하는 변수
@@ -39,6 +40,9 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // TTS 초기화
         tts = TextToSpeech(this, this)
+        // Foreground Service 중지
+        sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
+        stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
 
         // 센서 초기화 및 리스너 설정
         GravitySensor.initialize(this, this)

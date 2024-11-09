@@ -112,13 +112,6 @@ class SensorForegroundService : Service(), SensorEventListener {
                     vibrate.vibrate()
                     possibleFall = true
                     LaunchApp.launchApp(this, FirstActivity::class.java)
-                    nodeId?.let {
-                        messageSender.sendMessages(
-                            nodeId = it,
-                            path = "/emergency_1",
-                            message = "낙상 상황 발생"
-                        )
-                    }
                     // 5초 후 possibleFall을 false로 설정
                     serviceScope.launch {
                         delay(5000L)  // 5초 대기
@@ -138,7 +131,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                     nodeId?.let {
                         messageSender.sendMessages(
                             nodeId = it,
-                            path = "/emergency_2",
+                            path = "/emergency_path",
                             message = "심정지 상황 발생"
                         )
                     }

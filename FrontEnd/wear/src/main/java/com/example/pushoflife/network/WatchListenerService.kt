@@ -108,7 +108,9 @@ class WatchListenerService : WearableListenerService() {
         val notificationId = 1
         val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
 
-        val intent = Intent(this, CprGuideActivity::class.java)
+        val intent = Intent(this, CprGuideActivity::class.java).apply {
+            putExtra("previous_activity", "fromNotification")  // 여기에 데이터를 추가
+        }
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

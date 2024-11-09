@@ -17,7 +17,6 @@ class SecondActivity : ComponentActivity() {
 
     private lateinit var messageSender: MessageSender
     private var nodeId: String? = null
-    private lateinit var sensorServiceIntent: Intent  // Foreground Service Intent 선언
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

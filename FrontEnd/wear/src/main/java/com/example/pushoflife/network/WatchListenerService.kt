@@ -41,6 +41,15 @@ class WatchListenerService : WearableListenerService() {
                     val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
                     val latitude = dataMap.getDouble("latitude")
                     val longitude = dataMap.getDouble("longitude")
+                    val trigger = dataMap.getBoolean("trigger")
+
+                    Log.d("WatchApp","$trigger")
+
+                    if (trigger){
+                        val message = "CPR가이드를 시작합니다"
+                        Log.d("WatchApp","feedback start ")
+                        showCPRNotification(message)
+                    }
 
                     Log.d("WatchApp", "Received latitude: $latitude, longitude: $longitude")
 
@@ -53,7 +62,12 @@ class WatchListenerService : WearableListenerService() {
                     val message = "근처에 도움이 필요한 환자가 발생했습니다"
                     showNotification(message)
                 } else if (dataItem.uri.path == "/feedback_start"){
+                    val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                    val trigger = dataMap.getBoolean("trigger")
+                    Log.d("WatchApp", "$trigger")
+
                     val message = "CPR가이드를 시작합니다"
+                    Log.d("WatchApp","feedback start ")
                     showCPRNotification(message)
                 }
             }
@@ -105,7 +119,7 @@ class WatchListenerService : WearableListenerService() {
         NotificationManagerCompat.from(this).notify(notificationId, notification)
     }
     private fun showCPRNotification(message: String) {
-        val notificationId = 1
+        val notificationId = 2
         val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
 
         val intent = Intent(this, CprGuideActivity::class.java).apply {

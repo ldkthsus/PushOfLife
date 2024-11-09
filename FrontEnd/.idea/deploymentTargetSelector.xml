@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-07T04:56:57.463632300Z">
+        <DropdownSelection timestamp="2024-11-09T05:34:53.788179600Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.137.217:35259;connection=3efc4109" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.219.223:42055;connection=f0d4f765" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -26,10 +26,10 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-07T04:56:57.463632300Z">
+        <DropdownSelection timestamp="2024-11-09T05:34:53.788179600Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.137.217:35259;connection=3efc4109" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.219.223:42055;connection=f0d4f765" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -37,10 +37,10 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-07T04:56:57.463632300Z">
+        <DropdownSelection timestamp="2024-11-09T05:34:53.788179600Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.137.217:35259;connection=3efc4109" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.219.223:42055;connection=f0d4f765" />
             </handle>
           </Target>
         </DropdownSelection>

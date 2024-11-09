@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.mutableStateOf
 import com.example.pushoflife.ui.SecondScreen
 import com.example.pushoflife.network.MessageSender
 import com.google.android.gms.tasks.Task
@@ -17,9 +18,15 @@ class SecondActivity : ComponentActivity() {
 
     private lateinit var messageSender: MessageSender
     private var nodeId: String? = null
+    private val nodeIdState = mutableStateOf<String?>(null)  // nodeId를 상태로 관리
+    private lateinit var sensorServiceIntent: Intent  // Foreground Service Intent 선언
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Foreground Service 중지
+        sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
+        stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
 
         // 화면 밝기를 최대로 설정
         window.attributes = window.attributes.apply {
@@ -32,24 +39,28 @@ class SecondActivity : ComponentActivity() {
         // MessageSender 초기화
         messageSender = MessageSender(applicationContext)
 
-        // nodeId 가져오기
+        // nodeId 가져오기 비동기 작업
         getConnectedNodeId { id ->
-            nodeId = id
-            Log.d("NodeID", "Second Connected node ID: $nodeId")
+            nodeIdState.value = id  // nodeId 상태 업데이트
+            Log.d("NodeID", "Connected node ID: ${nodeIdState.value}")
         }
 
         // Compose UI 설정
         setContent {
-            SecondScreen(
-                nodeId = nodeId,
-                messageSender = messageSender,
-                onNavigateToCprGuide = {
-                    val intent = Intent(this, CprGuideActivity::class.java).apply {
-                        putExtra("previous_activity", "SecondActivity")  // 여기에 데이터를 추가
+            if (nodeIdState.value == null) {
+//                // 로딩 화면을 보여줌
+//                LoadingScreen()
+            } else {
+                // nodeId가 설정된 후 SecondScreen을 표시
+                SecondScreen(
+                    nodeId = nodeIdState.value,
+                    messageSender = messageSender,
+                    onNavigateToCprGuide = {
+                        val intent = Intent(this, CprGuideActivity::class.java)
+                        startActivity(intent)
                     }
-                    this.startActivity(intent)
-                }
-            )
+                )
+            }
         }
     }
 

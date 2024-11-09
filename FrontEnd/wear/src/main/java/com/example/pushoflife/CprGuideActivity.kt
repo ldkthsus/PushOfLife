@@ -37,6 +37,8 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // TTS 초기화
+        val previousActivity = intent.getStringExtra("previous_activity")
+        Log.d("ActivityInfo", "Navigated from $previousActivity")
         tts = TextToSpeech(this, this)
         // Foreground Service 중지
         sensorServiceIntent = Intent(this, SensorForegroundService::class.java)

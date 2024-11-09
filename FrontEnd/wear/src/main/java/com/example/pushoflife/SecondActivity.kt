@@ -22,10 +22,6 @@ class SecondActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Foreground Service 중지
-        sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
-        stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
-
         // 화면 밝기를 최대로 설정
         window.attributes = window.attributes.apply {
             screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
@@ -49,8 +45,10 @@ class SecondActivity : ComponentActivity() {
                 nodeId = nodeId,
                 messageSender = messageSender,
                 onNavigateToCprGuide = {
-                    val intent = Intent(this, CprGuideActivity::class.java)
-                    startActivity(intent)
+                    val intent = Intent(this, CprGuideActivity::class.java).apply {
+                        putExtra("previous_activity", "SecondActivity")  // 여기에 데이터를 추가
+                    }
+                    this.startActivity(intent)
                 }
             )
         }

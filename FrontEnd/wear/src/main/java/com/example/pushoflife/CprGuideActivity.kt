@@ -1,3 +1,4 @@
+
 package com.example.pushoflife
 
 import android.content.Context
@@ -81,7 +82,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
 
         // Compose UI 설정
         setContent {
-
             LaunchedEffect(inputFeedback,totalAcceleration) {
                 // feedbackCPR이 변경된 경우만 CprGuideScreen에 값 전달
             }
@@ -256,3 +256,4 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         LinearAccelerationSensor.stop() // 가속도 센서 업데이트 중지
     }
 }
+

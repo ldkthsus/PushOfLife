@@ -50,7 +50,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
     private var feedbackJob: Job? = null
     private var previousFeedback: IntArray? = null
-    private var totalAcceleration : Float = 0.0f
+    private var totalAcceleration by mutableStateOf(0.0f)
 
     // 최근에 수신된 중력값과 가속도값을 저장
     private var latestGravityValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
@@ -76,7 +76,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         feedbackJob = CoroutineScope(Dispatchers.Main).launch {
             while (isActive){
                 delay(5000) // 5초
-                //processFeedback()
+                processFeedback()
             }
         }
 
@@ -99,6 +99,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         when (previousActivity) {
             "SecondActivity" -> {
                 // SecondActivity에서 넘어온 경우: 가이드 TTS와 메트로놈 시작
+                feedbackJob?.cancel()
                 startCprGuide() // 가이드 TTS: "시작. 무릎을 꿇은 채로..."
                 tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {}
@@ -121,6 +122,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
                         // 가이드 tts 완료
                         // 메트로놈 + 피드백 tts 시작
                         runOnUiThread {
+                            Log.d("로그", "너 일하고 있니?")
                             startMetronome()
                             processFeedback()
                         }

@@ -50,7 +50,8 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
     private var feedbackJob: Job? = null
     private var previousFeedback: IntArray? = null
-    private var totalAcceleration by mutableStateOf(0.0f)
+    private var totalAcceleration : Float = 0.0f
+
     // 최근에 수신된 중력값과 가속도값을 저장
     private var latestGravityValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
     private var latestAccelerationValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
@@ -61,28 +62,35 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         // 이전 페이지를 기록하는 내비게이션
         val previousActivity = intent.getStringExtra("previous_activity")
         Log.d("ActivityInfo", "Navigated from $previousActivity")
-        tts = TextToSpeech(this, this)
         // Foreground Service 중지
         sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
         stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
 
-        GravitySensor.initialize(this, this)
-        LinearAccelerationSensor.initialize(this, this)
+        // 분기 조건에 따라 TTS 및 메트로놈 실행
+        when (previousActivity) {
+            "SecondActivity" -> {
+                tts = TextToSpeech(this, this)
+                startCprGuide()
+            }
+            "fromNotification" -> {
+                GravitySensor.initialize(this, this)
+                LinearAccelerationSensor.initialize(this, this)
 
-        // CPRSensor 초기화
-        cprSensor = CPRSensor()
+                // CPRSensor 초기화
+                cprSensor = CPRSensor()
+            }
+            "CprWaitingActivity","MainActivity" -> {
+                tts = TextToSpeech(this, this)
+                startCprGuide()
+                GravitySensor.initialize(this, this)
+                LinearAccelerationSensor.initialize(this, this)
 
-        feedbackJob = CoroutineScope(Dispatchers.Main).launch {
-            while (isActive){
-                delay(5000) // 5초
-                //processFeedback()
+                // CPRSensor 초기화
+                cprSensor = CPRSensor()
             }
         }
-
         // Compose UI 설정
         setContent {
-
-
             LaunchedEffect(inputFeedback,totalAcceleration) {
                 // feedbackCPR이 변경된 경우만 CprGuideScreen에 값 전달
             }
@@ -95,40 +103,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
                 },
                 cprFeedback = inputFeedback
             )
-        }
-        // 분기 조건에 따라 TTS 및 메트로놈 실행
-        when (previousActivity) {
-            "SecondActivity" -> {
-                // SecondActivity에서 넘어온 경우: 가이드 TTS와 메트로놈 시작
-                startCprGuide() // 가이드 TTS: "시작. 무릎을 꿇은 채로..."
-                tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) {}
-                    override fun onDone(utteranceId: String?) {
-                        runOnUiThread { startMetronome() }
-                    }
-                    override fun onError(utteranceId: String?) {}
-                })
-            }
-            "fromNotification" -> {
-                // 워치가 있는 환자에게 CPR 시행하는 헬퍼
-                processFeedback()
-            }
-            "CprWaitingActivity","MainActivity" -> {
-                // 가이드 tts + 메트로놈 + 피드백 tts
-                startCprGuide()
-                tts.setOnUtteranceProgressListener(object: UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) {}
-                    override fun onDone(utteranceId: String?) {
-                        // 가이드 tts 완료
-                        // 메트로놈 + 피드백 tts 시작
-                        runOnUiThread {
-                            startMetronome()
-                            processFeedback()
-                        }
-                    }
-                    override fun onError(utteranceId: String?) {}
-                })
-            }
         }
     }
 
@@ -151,7 +125,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
 // feedbackCPR에 0번부터 2번 인덱스에 해당하는 depth, frequency, angle 값을 넣기
         feedbackCPR = intArrayOf(tempData.depth, tempData.frequency, tempData.angle)
         totalAcceleration = tempData.accZ
-        Log.d("가속도 확인", "가속도 : $totalAcceleration")
         if ((feedbackCPR[0] != 0)&&(feedbackCPR[1] != 0)&&(feedbackCPR[2] != 0)) {
             Log.d("CPR Feedback Calculation", "Calculated Feedback - Depth: ${feedbackCPR[0]}, Frequency: ${feedbackCPR[1]}, Angle: ${feedbackCPR[2]}")
             inputFeedback = feedbackCPR.copyOf()  // 이전 값 업데이트
@@ -205,7 +178,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             tts.language = Locale.KOREAN
-            startCprGuide()
         } else {
             Log.e("CprGuideActivity", "TTS 초기화 실패")
         }

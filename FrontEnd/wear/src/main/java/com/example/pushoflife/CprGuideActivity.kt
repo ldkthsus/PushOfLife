@@ -50,8 +50,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
     private var feedbackJob: Job? = null
     private var previousFeedback: IntArray? = null
-    private var totalAcceleration : Float = 0.0f
-
+    private var totalAcceleration by mutableStateOf(0.0f)
     // 최근에 수신된 중력값과 가속도값을 저장
     private var latestGravityValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
     private var latestAccelerationValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
@@ -82,6 +81,8 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
 
         // Compose UI 설정
         setContent {
+
+
             LaunchedEffect(inputFeedback,totalAcceleration) {
                 // feedbackCPR이 변경된 경우만 CprGuideScreen에 값 전달
             }
@@ -150,6 +151,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
 // feedbackCPR에 0번부터 2번 인덱스에 해당하는 depth, frequency, angle 값을 넣기
         feedbackCPR = intArrayOf(tempData.depth, tempData.frequency, tempData.angle)
         totalAcceleration = tempData.accZ
+        Log.d("가속도 확인", "가속도 : $totalAcceleration")
         if ((feedbackCPR[0] != 0)&&(feedbackCPR[1] != 0)&&(feedbackCPR[2] != 0)) {
             Log.d("CPR Feedback Calculation", "Calculated Feedback - Depth: ${feedbackCPR[0]}, Frequency: ${feedbackCPR[1]}, Angle: ${feedbackCPR[2]}")
             inputFeedback = feedbackCPR.copyOf()  // 이전 값 업데이트

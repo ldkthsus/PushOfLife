@@ -50,7 +50,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
     private var feedbackJob: Job? = null
     private var previousFeedback: IntArray? = null
-    private var totalAcceleration : Float = 0.0f
+    private var totalAcceleration by mutableStateOf(0.0f)
 
     // 최근에 수신된 중력값과 가속도값을 저장
     private var latestGravityValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)

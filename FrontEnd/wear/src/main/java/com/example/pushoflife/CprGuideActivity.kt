@@ -19,7 +19,6 @@ import com.example.pushoflife.sensor.utils.LinearAccelerationSensor
 import com.example.pushoflife.sensor.CPRSensor
 import android.view.WindowManager
 
-
 /*
 ----------
 1. SecondActivity에서 넘어온 경우 (환자 워치에서 모든 가이드를 담당)
@@ -43,12 +42,14 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private lateinit var sensorServiceIntent: Intent
     private lateinit var cprSensor: CPRSensor
     private var feedbackCPR by mutableStateOf(intArrayOf(0, 0, 0))  // 세 개의 값으로 초기화
+    private var inputFeedback by mutableStateOf(intArrayOf(0, 0, 0))
     private var feedbackTurn = 1 // 피드백 우선순위 턴을 관리하는 변수
     private lateinit var tts: TextToSpeech
     private var metronomeJob: Job? = null
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
     private var feedbackJob: Job? = null
     private var previousFeedback: IntArray? = null
+    private var totalAcceleration : Float = 0.0f
 
     // 최근에 수신된 중력값과 가속도값을 저장
     private var latestGravityValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
@@ -80,13 +81,9 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
 
         // Compose UI 설정
         setContent {
-            var totalAcceleration by remember { mutableStateOf(0.0f) }
-            var inputFeedback by remember { mutableStateOf(intArrayOf(0, 0, 0)) }
-            LaunchedEffect(inputFeedback) {
+
+            LaunchedEffect(inputFeedback,totalAcceleration) {
                 // feedbackCPR이 변경된 경우만 CprGuideScreen에 값 전달
-                if (feedbackCPR[0] != 0 && feedbackCPR[1] != 0 && feedbackCPR[2] != 0) {
-                    inputFeedback = feedbackCPR.copyOf()  // 이전 값 업데이트
-                }
             }
 
             CprGuideScreen(
@@ -148,9 +145,14 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
 
     // 두 센서의 데이터를 모두 확인하여 CPR 피드백 업데이트
     private fun checkAndUpdateCprFeedback() {
-        feedbackCPR = cprSensor.feedbackCPR(latestAccelerationValues, latestGravityValues)
+        // CPRData 객체 반환받기
+        val tempData = cprSensor.feedbackCPR(latestAccelerationValues, latestGravityValues)
+// feedbackCPR에 0번부터 2번 인덱스에 해당하는 depth, frequency, angle 값을 넣기
+        feedbackCPR = intArrayOf(tempData.depth, tempData.frequency, tempData.angle)
+        totalAcceleration = tempData.accZ
         if ((feedbackCPR[0] != 0)&&(feedbackCPR[1] != 0)&&(feedbackCPR[2] != 0)) {
             Log.d("CPR Feedback Calculation", "Calculated Feedback - Depth: ${feedbackCPR[0]}, Frequency: ${feedbackCPR[1]}, Angle: ${feedbackCPR[2]}")
+            inputFeedback = feedbackCPR.copyOf()  // 이전 값 업데이트
             processFeedback()
         }
     }

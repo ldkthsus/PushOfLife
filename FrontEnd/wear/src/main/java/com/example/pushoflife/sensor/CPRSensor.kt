@@ -157,7 +157,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
     }
 
     private fun frequencyCPR(displacement: Float): Int {
-        if (displacement > 4.0f && !pussing) {
+        if (displacement > 5.0f && !pussing) {
             pussing = true
             val currentTime = System.currentTimeMillis()
 
@@ -178,9 +178,9 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
                 //Log.d("빈도 측정","frequency : ${frequencyTimes.toString()}")
                 frequencyTimes.clear()  // 평균을 계산 후 리스트 초기화
 
-                return if (avgDt in 0.5..0.6) {
+                return if (avgDt in 0.45..0.65) {
                     2 //"잘하고 있어요"  // 평균이 0.5초~0.6초일 때
-                } else if (avgDt > 0.6 ){
+                } else if (avgDt > 0.65 ){
                     1 //"느려요"  // 평균이 0.5초~0.6초 범위를 벗어날 때
                 } else {
                     3 //"빨라요"

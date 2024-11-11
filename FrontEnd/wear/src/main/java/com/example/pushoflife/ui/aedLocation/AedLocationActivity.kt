@@ -32,13 +32,14 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import com.example.pushoflife.CprGuideActivity
+import com.example.pushoflife.SensorForegroundService
 import com.example.pushoflife.network.AedDetailResponse
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.skt.tmap.poi.TMapPOIItem
 
 
 class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChangedListener, TMapView.OnClickListenerCallback {
-
+    private lateinit var sensorServiceIntent: Intent
     private lateinit var tMapView: TMapView
     private lateinit var tMapGpsManager: TMapGpsManager
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -68,6 +69,9 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         // tMapViewContainer와 currentLocationButton UI 요소 참조 가져오기
         val tmapViewContainer = findViewById<FrameLayout>(R.id.tmapViewContainer)
         val currentLocationButton = findViewById<ImageButton>(R.id.currentLocationButton)
+        // Foreground Service 중지
+        sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
+        stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
 
         // TMapGpsManager 초기화 (위치 갱신을 위한 설정)
 //        tMapGpsManager = TMapGpsManager(this).apply {

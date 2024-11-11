@@ -38,12 +38,16 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
     private val R = arrayOf(floatArrayOf(0.05f, 0f), floatArrayOf(0f, 0.05f))  // 측정 노이즈
     private var angle_cnt = 0
     // 중력 보정된 가속도 계산
-    private fun calculateGravityCompensatedAcc(
-        accelerometer: FloatArray,
-        gravity: FloatArray
-    ): Float {
+    private fun calculateGravityCompensatedAcc(accelerometer: FloatArray, gravity: FloatArray): Float {
         val dotProduct = accelerometer[0] * gravity[0] + accelerometer[1] * gravity[1] + accelerometer[2] * gravity[2]
         val gravityMagnitude = sqrt(gravity[0] * gravity[0] + gravity[1] * gravity[1] + gravity[2] * gravity[2])
+
+        // gravityMagnitude가 0이면 NaN 방지
+        if (gravityMagnitude == 0f) {
+            Log.e("CPRSensor", "Gravity magnitude is zero, cannot calculate compensated acceleration")
+            return 0f
+        }
+
         return dotProduct / gravityMagnitude
     }
 
@@ -229,7 +233,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             total_inv = 0.0
             angle_cnt = 0
             Log.d("빈도 측정", "angle : $inv_avg")
-            return if (inv_avg in 75.0..105.0) {
+            return if (inv_avg in 80.0..100.0) {
                 2
             } else {
                 1

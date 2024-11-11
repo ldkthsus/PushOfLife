@@ -163,6 +163,9 @@ Log.d("CPR가이드","$guideText")
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_STOP_SIREN -> stopSiren()
+        }
         return START_STICKY
     }
 
@@ -201,18 +204,23 @@ Log.d("CPR가이드","$guideText")
 
                 } else if (acceleration > 3 && isFallDetected) {
                     isMovementDetected = true
-                    isTTSStart = true
                     Log.d("FallDetectionService", "Movement detected! Stopping siren.")
-                    stopSiren()
+                    stopSirenForHelper()
                     startCprGuide()
                     startCprGuideWithDelay()
                 }
             }
         }
     }
+
+    companion object {
+        const val ACTION_STOP_SIREN = "com.example.pushoflife.service.ACTION_STOP_SIREN"
+    }
+
     private fun startCprGuideWithDelay() {
         handler.postDelayed({
-            Log.d("lat","지연")
+            isTTSStart = true
+
         }, 3000) // 3000ms = 3초
     }
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
@@ -232,9 +240,19 @@ Log.d("CPR가이드","$guideText")
         // 진동과 알림을 30초간 반복
         sirenHandler.post(sirenRunnable)
         handler.postDelayed(checkForMovementRunnable, 30_000) // 30초 타이머 설정
+
     }
 
+    private fun stopSirenForHelper() {
+        if (mediaPlayer.isPlaying) {
+            mediaPlayer.pause()
+            mediaPlayer.seekTo(0)
+        }
+        vibrator.cancel()
+        handler.postDelayed(checkForMovementRunnable, 30_000) // 30초 타이머 설정
 
+
+    }
     private fun stopSiren() {
         if (mediaPlayer.isPlaying) {
             mediaPlayer.pause()
@@ -277,7 +295,7 @@ Log.d("CPR가이드","$guideText")
 
         return NotificationCompat.Builder(this, "FallDetectionChannel")
             .setContentTitle("낙상 감지 !")
-            .setContentText("흔들면 종료됩니다")
+            .setContentText("알림을 눌러 종료")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)

@@ -34,7 +34,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private var totalAcceleration: Float = 0.0f
     private var latestGravityValues = floatArrayOf(0.0f, 0.0f, 0.0f)
     private var latestAccelerationValues = floatArrayOf(0.0f, 0.0f, 0.0f)
-    private lateinit var sensorServiceIntent: Intent
+
     private lateinit var previousActivity: String
     private var collectSensorData = false
 
@@ -80,11 +80,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
             tts.language = Locale.KOREAN
             when (previousActivity) {
                 "SecondActivity" -> startCprGuide() // 가이드 TTS 후 메트로놈만
-                "fromNotification" -> {
-                    sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
-                    stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
-                    startSensorDataCollection()
-                } // 센서 데이터 수집 및 피드백 TTS만
+                "fromNotification" -> startSensorDataCollection() // 센서 데이터 수집 및 피드백 TTS만
                 "CprWaitingActivity", "MainActivity" -> {
                     startCprGuide() // 가이드 TTS 후 메트로놈 시작, 센서 데이터 수집 포함
                 }

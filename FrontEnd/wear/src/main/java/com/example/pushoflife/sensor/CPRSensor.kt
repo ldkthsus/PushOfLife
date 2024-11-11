@@ -127,7 +127,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
 
         // 보정된 가속도 필터링
         val linearAcc = lowPassFilter(accZ)
-        Log.d("깊이 가속도", "가속도 : $linearAcc")
+        //Log.d("깊이 가속도", "가속도 : $linearAcc")
 
         // 속도 계산
         val velocity = linearAcc * dt
@@ -175,7 +175,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             if (!trigger_init && frequencyTimes.size >= 10 && depthList.size >= 10) {
                 trigger_init = true
                 val avgDt = frequencyTimes.average()
-                Log.d("빈도 측정","frequency : ${frequencyTimes.toString()}")
+                //Log.d("빈도 측정","frequency : ${frequencyTimes.toString()}")
                 frequencyTimes.clear()  // 평균을 계산 후 리스트 초기화
 
                 return if (avgDt in 0.5..0.6) {
@@ -207,7 +207,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
         }
         if (trigger_init) {
             val avgDepth = depthList.average()
-            Log.d("빈도 측정","depth : ${depthList.toString()}")
+            //Log.d("빈도 측정","depth : ${depthList.toString()}")
             depthList.clear()
             return if (avgDepth > 5.0){
                 2 // 적당한 깊이로 잘하고 있어요
@@ -232,7 +232,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             val inv_avg = if (angle_cnt != 0) total_inv / angle_cnt else 0.0
             total_inv = 0.0
             angle_cnt = 0
-            Log.d("빈도 측정", "angle : $inv_avg")
+            //Log.d("빈도 측정", "angle : $inv_avg")
             return if (inv_avg in 80.0..100.0) {
                 2
             } else {

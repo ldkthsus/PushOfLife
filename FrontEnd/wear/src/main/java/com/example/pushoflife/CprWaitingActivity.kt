@@ -44,7 +44,7 @@ class CprWaitingActivity : ComponentActivity() {
         // nodeId 가져오기
         getConnectedNodeId { id ->
             nodeId = id
-            Log.d("NodeID", "Second Connected node ID: $nodeId")
+            //Log.d("NodeID", "Second Connected node ID: $nodeId")
         }
 
         // Compose UI 설정

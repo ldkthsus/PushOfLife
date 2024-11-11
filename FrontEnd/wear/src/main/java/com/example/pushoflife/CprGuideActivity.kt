@@ -43,7 +43,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         previousActivity = intent.getStringExtra("previous_activity") ?: ""
-        Log.d("ActivityInfo", "Navigated from $previousActivity")
+
 
         tts = TextToSpeech(this, this)
 
@@ -152,7 +152,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
                     break
                 }
                 2 -> if (i == priorityOrder.last() && feedbackCPR.all { it == 2 }) {
-                    Log.d("CPR Feedback", "All parameters are optimal")
+
                 }
             }
         }

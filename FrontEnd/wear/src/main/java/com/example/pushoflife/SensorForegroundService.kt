@@ -51,7 +51,7 @@ class SensorForegroundService : Service(), SensorEventListener {
         // nodeId 가져오기
         getConnectedNodeId(applicationContext) { id ->
             nodeId = id
-            Log.d("NodeID", "Connected node ID: $nodeId")
+            //Log.d("NodeID", "Connected node ID: $nodeId")
         }
         // Foreground 알림 생성
         createNotificationChannel()
@@ -178,7 +178,7 @@ class SensorForegroundService : Service(), SensorEventListener {
             notificationManager.createNotificationChannel(channel)
 
             // 채널 생성 확인용 로그
-            Log.d("NotificationChannel", "Notification channel created with ID: $channelId")
+            //Log.d("NotificationChannel", "Notification channel created with ID: $channelId")
         }
     }
 

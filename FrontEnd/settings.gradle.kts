@@ -1,9 +1,11 @@
 pluginManagement {
     repositories {
+        flatDir {
+            dirs("libs")
+        }
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven { url = uri("https://devrepo.kakao.com/nexus/repository/kakaomap-releases/") }
     }
 }
 dependencyResolutionManagement {
@@ -11,7 +13,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://devrepo.kakao.com/nexus/repository/kakaomap-releases/") }
     }
 }
 rootProject.name = "PushOfLife"

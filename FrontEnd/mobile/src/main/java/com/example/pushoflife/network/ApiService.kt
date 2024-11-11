@@ -30,7 +30,7 @@ interface ApiService {
 
     // 로그인
     @POST("login")
-    fun loginUser(@Body loginRequest: LoginRequest): Call<LoginResponse>
+    fun loginUser(@Body loginRequest: LoginRequest): Call<Void>
 
     // 로그아웃
     @POST("users/logout")
@@ -45,5 +45,31 @@ interface ApiService {
     fun updateUser(
         @Header("Authorization") token: String,
         @Body updateUserRequest: UpdateUserRequest
-    ): Call<Void>
+    ): Call<UserInfoResponse>
+
+    //회원정보 조회
+    @GET("POL/users/info")
+    fun getUserInfo(
+        @Header("Authorization") token: String
+    ): Call<UserInfoResponse>
+
+    @GET("POL/aed/within-bounds")
+    fun sendMapBounds(
+        @Query("nor_latitude") norLatitude: Double,
+        @Query("nor_longitude") norLongitude: Double,
+        @Query("sou_latitude") souLatitude: Double,
+        @Query("sou_longitude") souLongitude: Double
+    ): Call<List<MapBoundsResponse>>
+
+    @GET("POL/aed/details/{aedId}")
+    fun sendAedDetail(
+        @Path("aedId") aedId: Int
+    ): Call<AedDetailResponse>
+
+    @POST("POL/location")
+    fun locationUpdate(@Body currentLocationRequest:CurrentLocationRequest): Call<Void>
+
+    @POST("POL/location/help")
+    fun askForHelp(@Body sendLocationRequest:SendLocationRequest): Call<Void>
+
 }

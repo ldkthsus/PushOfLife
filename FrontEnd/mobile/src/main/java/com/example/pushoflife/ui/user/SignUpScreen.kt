@@ -29,14 +29,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pushoflife.data.datastore.TokenPreferences
+import com.example.pushoflife.network.LoginRequest
 import com.example.pushoflife.network.RetrofitClient.apiService
 import com.example.pushoflife.network.SignUpRequest
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SignUpScreen(navController: NavController) {
     var user_phone by remember { mutableStateOf(TextFieldValue("")) } // 전화번호 상태
-    var password1 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호1 상태
-    var password2 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호2 상태
+    var user_password1 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호1 상태
+    var user_password2 by remember { mutableStateOf(TextFieldValue("")) } // 비밀번호2 상태
     val PretendardBold = FontFamily(
         Font(R.font.pretendard_semibold, FontWeight.SemiBold) // res/font/Poppins-ExtraLight.ttf 파일 참조
     )
@@ -47,6 +50,7 @@ fun SignUpScreen(navController: NavController) {
     var user_disease by remember { mutableStateOf(TextFieldValue("")) }
     var user_protector by remember { mutableStateOf(TextFieldValue("")) }
     val context = LocalContext.current
+    val tokenPreferences = TokenPreferences(context)
     val userPreferences = UserPreferences(context)
     // 데이터 불러오기
     LaunchedEffect(Unit) {
@@ -79,7 +83,9 @@ fun SignUpScreen(navController: NavController) {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.backicon),
-                    contentDescription = "뒤로 가기"
+                    contentDescription = "뒤로 가기",
+                    modifier = Modifier
+                    .size(25.dp) // 아이콘 크기
                 )
             }
 
@@ -134,8 +140,8 @@ fun SignUpScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
         // 비밀번호 입력 필드 (아이콘 포함)
         TextField(
-            value = password1,
-            onValueChange = { password1 = it },
+            value = user_password1,
+            onValueChange = { user_password1 = it },
             label = { Text(text = "비밀번호") },  // "비밀번호" 레이블
             leadingIcon = {
                 Icon(
@@ -150,8 +156,8 @@ fun SignUpScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(8.dp))  // 간격 추가
         // 비밀번호 확인 입력 필드 (아이콘 포함)
         TextField(
-            value = password2,
-            onValueChange = { password2 = it },
+            value = user_password2,
+            onValueChange = { user_password2 = it },
             label = { Text(text = "비밀번호 확인") },  // "비밀번호 확인" 레이블
             leadingIcon = {
                 Icon(
@@ -172,22 +178,42 @@ fun SignUpScreen(navController: NavController) {
                 CoroutineScope(Dispatchers.IO).launch {
                     val signUpRequest = SignUpRequest(
                         user_name = if (user_name.text.isNotEmpty()) user_name.text else null,
-                        password1 = password1.text,
-                        password2 = password2.text,
-                        user_birthday = user_birthdate.text.toIntOrNull(),
+                        user_password1 = user_password1.text,
+                        user_password2 = user_password2.text,
+                        user_birthday = if(user_birthdate.text.isNotEmpty())user_birthdate.text else null,
                         user_gender = if (user_gender.text.isNotEmpty()) user_gender.text else null,
                         user_disease = if (user_disease.text.isNotEmpty()) user_disease.text else null,
                         user_phone = user_phone.text,
                         user_protector = if (user_protector.text.isNotEmpty()) user_protector.text else null
                     )
 
-                    // API 요청 보내기
-                    val response = apiService.signUpUser(signUpRequest).execute()
-                    if (response.isSuccessful) {
-                        // 회원가입 성공 시 처리
-                        navController.navigate("next_screen")  // 다음 화면으로 이동 예시
+                    // 회원가입 API 요청 보내기
+                    val signUpResponse = apiService.signUpUser(signUpRequest).execute()
+                    if (signUpResponse.isSuccessful) {
+                        // 회원가입 성공 시 로그인 API 요청
+                        val loginRequest = LoginRequest(
+                            user_phone = user_phone.text,
+                            user_password = user_password1.text
+                        )
+                        val loginResponse = apiService.loginUser(loginRequest).execute()
+                        if (loginResponse.isSuccessful) {
+                            // Authorization 헤더에서 토큰 추출
+                            val authToken = loginResponse.headers()["Authorization"]
+
+                            // authToken이 null이 아닌 경우 DataStore에 저장
+                            authToken?.let { token ->
+                                tokenPreferences.saveAuthToken(token)
+                            }
+                            withContext(Dispatchers.Main) {
+                                navController.navigate("main_screen") // navigate 호출을 메인 스레드에서 실행
+                            }
+                        } else {
+                            // 로그인 실패 처리
+                            println("Login failed: ${loginResponse.message()}")
+                        }
                     } else {
-                        // 에러 처리
+                        // 회원가입 실패 처리
+                        println("Sign up failed: ${signUpResponse.message()}")
                     }
                 }
             },

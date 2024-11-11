@@ -8,7 +8,7 @@ import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.example.pushoflife.ui.SecondScreen
+import com.example.pushoflife.ui.CprWaitingScreen
 import com.example.pushoflife.network.MessageSender
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
@@ -19,7 +19,6 @@ class CprWaitingActivity : ComponentActivity() {
 
     private lateinit var messageSender: MessageSender
     private var nodeId: String? = null
-    private lateinit var sensorServiceIntent: Intent  // Foreground Service Intent 선언
 
     private val handler = Handler(Looper.getMainLooper()) // Handler 생성
 
@@ -45,11 +44,11 @@ class CprWaitingActivity : ComponentActivity() {
 
         // Compose UI 설정
         setContent {
-            SecondScreen(
+            CprWaitingScreen(
                 nodeId = nodeId,
                 messageSender = messageSender,
                 onNavigateToCprGuide = {
-                    navigateToCprGuide()  // 버튼 클릭 시 CPRGuideActivity로 이동
+                    navigateToMain()  // 버튼 클릭 시 MainActivity로 이동
                 }
             )
         }
@@ -65,6 +64,13 @@ class CprWaitingActivity : ComponentActivity() {
         val intent = Intent(this, CprGuideActivity::class.java).apply {
             putExtra("previous_activity", "CprWaitingActivity")  // 이전 액티비티 정보 추가
         }
+        startActivity(intent)
+        finish() // 현재 액티비티 종료
+    }
+
+    // MainActivity로 이동하는 함수
+    private fun navigateToMain() {
+        val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish() // 현재 액티비티 종료
     }

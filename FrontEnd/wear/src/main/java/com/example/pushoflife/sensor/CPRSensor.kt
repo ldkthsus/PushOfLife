@@ -6,6 +6,7 @@ import kotlin.math.max
 import kotlin.math.min
 import android.util.Log
 import kotlin.math.acos
+import com.example.pushoflife.sensor.utils.CPRData
 
 class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindowSize: Int = 5) {
     private var lastTimestamp: Long? = null  // 초기에는 null로 설정
@@ -104,13 +105,13 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
     }
 
     // 압박 깊이 계산
-    fun feedbackCPR(accelerometer: FloatArray, gravity: FloatArray): IntArray {
+    fun feedbackCPR(accelerometer: FloatArray, gravity: FloatArray): CPRData {
         val currentTimestamp = System.currentTimeMillis()
 
         // 초기 호출 시 타임스탬프 설정
         if (lastTimestamp == null) {
             lastTimestamp = currentTimestamp
-            return intArrayOf(0, 0, 0) // 첫 번째 호출 시 초기값 반환
+            return CPRData(0, 0, 0, 0.0f) // 첫 번째 호출 시 초기값 반환
         }
 
         // dt 계산 및 초기값 설정
@@ -148,12 +149,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
         val temp_depth = depthCPR(displacement*100)
         val temp_angle = calculateAngle(gravity[0].toDouble(),gravity[1].toDouble(),gravity[2].toDouble())
 
-        if (temp_frequency != 0 || temp_depth != 0) {
-            val tempList = intArrayOf(temp_depth, temp_frequency, temp_angle)
-        }
-        val tempList = intArrayOf(temp_depth, temp_frequency, temp_angle)
-        // cm 단위로 변환하여 반환
-        return tempList// Convert to cm
+        return CPRData(temp_depth, temp_frequency, temp_angle, accZ)// Convert to cm
     }
 
     private fun frequencyCPR(displacement: Float): Int {

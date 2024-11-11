@@ -20,12 +20,12 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 val PrimaryPink = Color(0xFFE90162)
 val LightGrey = Color(0xFFC4C4C4)
-
+val buttonColor = Color(0xFFEE675C) // 버튼 색상 설정
 internal val wearColorPalette: Colors = Colors(
-    primary = Purple500,
+    primary = White,
     primaryVariant = Purple700,
     secondary = Teal,
-    secondaryVariant = Teal,
+    secondaryVariant = buttonColor,
     error = Red,
     onPrimary = Color.Black,
     onSecondary = Color.Black,

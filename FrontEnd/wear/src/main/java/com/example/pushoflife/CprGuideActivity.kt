@@ -46,12 +46,13 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private var inputFeedback by mutableStateOf(intArrayOf(0, 0, 0))
     private var feedbackTurn = 1 // 피드백 우선순위 턴을 관리하는 변수
     private lateinit var tts: TextToSpeech
+
     private var metronomeJob: Job? = null
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
     private var feedbackJob: Job? = null
     private var previousFeedback: IntArray? = null
     private var totalAcceleration : Float = 0.0f
-
+    private var isActive = false
     // 최근에 수신된 중력값과 가속도값을 저장
     private var latestGravityValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
     private var latestAccelerationValues: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f)
@@ -69,10 +70,11 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         // 분기 조건에 따라 TTS 및 메트로놈 실행
         when (previousActivity) {
             "SecondActivity" -> {
+                isActive = true
                 tts = TextToSpeech(this, this)
-                startCprGuide()
             }
             "fromNotification" -> {
+                tts = TextToSpeech(this, this)
                 GravitySensor.initialize(this, this)
                 LinearAccelerationSensor.initialize(this, this)
 
@@ -80,8 +82,8 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
                 cprSensor = CPRSensor()
             }
             "CprWaitingActivity","MainActivity" -> {
+                isActive = true
                 tts = TextToSpeech(this, this)
-                startCprGuide()
                 GravitySensor.initialize(this, this)
                 LinearAccelerationSensor.initialize(this, this)
 
@@ -170,7 +172,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     }
 
     private fun giveFeedback(message: String) {
-        if (tts.isSpeaking) tts.stop()
+        if (tts.isSpeaking) return
         tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, "CPR_FEEDBACK")
     }
 
@@ -178,6 +180,9 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             tts.language = Locale.KOREAN
+            if (isActive == true) {
+                startCprGuide()
+            }
         } else {
             Log.e("CprGuideActivity", "TTS 초기화 실패")
         }

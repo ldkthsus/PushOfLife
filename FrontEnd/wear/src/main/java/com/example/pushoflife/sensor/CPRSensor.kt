@@ -229,7 +229,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             total_inv = 0.0
             angle_cnt = 0
             Log.d("빈도 측정", "angle : $inv_avg")
-            return if (inv_avg in 80.0..100.0) {
+            return if (inv_avg in 75.0..105.0) {
                 2
             } else {
                 1

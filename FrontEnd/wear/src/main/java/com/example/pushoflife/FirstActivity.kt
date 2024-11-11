@@ -10,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
 import com.example.pushoflife.network.MessageSender
+import com.example.pushoflife.ui.CprWaitingScreen
 import com.example.pushoflife.ui.SecondScreen
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
@@ -42,12 +43,12 @@ class FirstActivity : ComponentActivity() {
         // nodeId 가져오기 비동기 작업
         getConnectedNodeId { id ->
             nodeIdState.value = id  // nodeId 상태 업데이트
-            Log.d("NodeID", "Connected node ID: ${nodeIdState.value}")
+            //Log.d("NodeID", "Connected node ID: ${nodeIdState.value}")
         }
 
         // Compose UI 설정
         setContent {
-            SecondScreen(
+            CprWaitingScreen(
                 nodeId = nodeIdState.value,  // nodeId 상태 전달
                 messageSender = messageSender,
                 onNavigateToCprGuide = {

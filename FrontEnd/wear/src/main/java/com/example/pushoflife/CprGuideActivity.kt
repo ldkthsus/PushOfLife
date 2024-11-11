@@ -1,4 +1,3 @@
-
 package com.example.pushoflife
 
 import android.content.Context
@@ -198,4 +197,3 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         LinearAccelerationSensor.stop()
     }
 }
-

@@ -366,14 +366,14 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
     // 응급환자 위치 마커
     private fun addPatientMarker(latitude: Double, longitude: Double) {
         val originalIcon = ContextCompat.getDrawable(this@AedLocationActivity, R.drawable.patient_marker)?.toBitmap()
-        val resizedIcon = originalIcon?.let {
-            // 원래 아이콘을 원하는 크기로 조정 (예: 100x100)
-            Bitmap.createScaledBitmap(it, 150, 150, false)
-        }
+//        val resizedIcon = originalIcon?.let {
+//            // 원래 아이콘을 원하는 크기로 조정 (예: 100x100)
+//            Bitmap.createScaledBitmap(it, 150, 150, false)
+//        }
         val patientMarker = TMapMarkerItem().apply {
             tMapPoint = TMapPoint(latitude, longitude) // 위도, 경도 설정
             name = "응급환자 위치" // 마커 이름 설정
-            icon = resizedIcon
+            icon = originalIcon
             id = "patient_marker" // 마커 ID 설정
         }
         tMapView.addTMapMarkerItem(patientMarker)

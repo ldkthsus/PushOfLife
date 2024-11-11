@@ -163,7 +163,17 @@ val PretendardRegular = FontFamily(
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
     private lateinit var messageClient: MessageClient
+    override fun onResume() {
+        super.onResume()
+        stopSirenInService()
+    }
 
+    private fun stopSirenInService() {
+        val stopSirenIntent = Intent(this, FallDetectionService::class.java).apply {
+            action = FallDetectionService.ACTION_STOP_SIREN
+        }
+        startService(stopSirenIntent)
+    }
     private val requestMultiplePermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -328,6 +338,22 @@ class MainActivity : ComponentActivity() {
             CoroutineScope(Dispatchers.IO).launch {
                 handleFeedbackAlertReceived()
                 Log.d("CPR_start", "CPR시작 버튼 누름!, 주변 워치에게 전달")
+            }
+        } else if(messageEvent.path == "/emergency_call"){
+            CoroutineScope(Dispatchers.IO).launch {
+                val userPreferences = UserPreferences(context = applicationContext)
+                val messageContent = userPreferences.emergencyMessage.first() // 저장된 메시지 불러오기
+                // Broadcast 전송
+                val intent = Intent("com.example.pushoflife.ACTION_WATCH_ALERT")
+                sendBroadcast(intent)
+                TwilioUtils.sendSmsWithRetrofit(
+                    "", // 수신자 번호
+                    BuildConfig.FROM_NUMBER,
+                    messageContent,
+                    BuildConfig.TWILIO_ACCOUNT_SID,
+                    BuildConfig.TWILIO_AUTH_TOKEN
+                )
+                Log.d("FallDetectionService", "Emergency SMS sent: $messageContent")
             }
         }
     }

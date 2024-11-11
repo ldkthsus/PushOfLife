@@ -163,7 +163,17 @@ val PretendardRegular = FontFamily(
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
     private lateinit var messageClient: MessageClient
+    override fun onResume() {
+        super.onResume()
+        stopSirenInService()
+    }
 
+    private fun stopSirenInService() {
+        val stopSirenIntent = Intent(this, FallDetectionService::class.java).apply {
+            action = FallDetectionService.ACTION_STOP_SIREN
+        }
+        startService(stopSirenIntent)
+    }
     private val requestMultiplePermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->

@@ -43,7 +43,7 @@ class FirstActivity : ComponentActivity() {
         // nodeId 가져오기 비동기 작업
         getConnectedNodeId { id ->
             nodeIdState.value = id  // nodeId 상태 업데이트
-            Log.d("NodeID", "Connected node ID: ${nodeIdState.value}")
+            //Log.d("NodeID", "Connected node ID: ${nodeIdState.value}")
         }
 
         // Compose UI 설정

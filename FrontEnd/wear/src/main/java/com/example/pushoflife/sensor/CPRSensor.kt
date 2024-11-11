@@ -157,7 +157,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
     }
 
     private fun frequencyCPR(displacement: Float): Int {
-        if (displacement > 4.0f && !pussing) {
+        if (displacement > 5.0f && !pussing) {
             pussing = true
             val currentTime = System.currentTimeMillis()
 

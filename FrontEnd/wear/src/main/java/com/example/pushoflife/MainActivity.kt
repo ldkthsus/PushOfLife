@@ -90,6 +90,20 @@ class MainActivity : ComponentActivity() {
         setContent {
             MainScreen()
         }
+        lifecycleScope.launch {
+            emergencyPreferences.getLocation().collect { (latitude, longitude) ->
+                emergency = latitude != null && longitude != null
+                if (emergency) {
+                    val extras = Bundle().apply {
+                        putBoolean("emergency", emergency)
+                        putDouble("patient_latitude", latitude ?: 0.0)
+                        putDouble("patient_longitude", longitude ?: 0.0)
+                    }
+                    LaunchApp.launchApp(this@MainActivity, AedLocationActivity::class.java, extras)
+                    Log.d("la&lo", "$emergency, $latitude, $longitude")
+                }
+            }
+        }
     }
 
 //    override fun onResume() {

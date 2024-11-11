@@ -1,6 +1,7 @@
 package com.example.pushoflife.ui.aedLocation
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.PointF
@@ -28,6 +29,8 @@ import com.example.pushoflife.network.MapBoundsResponse
 import android.os.Handler
 import android.os.Looper
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
+import com.example.pushoflife.MainActivity
 import com.example.pushoflife.network.AedDetailResponse
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.skt.tmap.poi.TMapPOIItem
@@ -66,6 +69,16 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         backButton.setOnClickListener {
             onBackPressed()
         }
+        // 뒤로 가기 동작을 커스텀하기 위해 OnBackPressedCallback을 추가합니다.
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // 메인 화면으로 이동하는 코드
+                val intent = Intent(this@AedLocationActivity, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                finish() // 현재 Activity를 종료하여 스택에서 제거
+            }
+        })
 
         currentLocationButton.setOnClickListener {
             checkAndRequestLocationPermission()
@@ -90,19 +103,21 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         val patientLatitude = intent.getDoubleExtra("patient_latitude", 0.0)
         val patientLongitude = intent.getDoubleExtra("patient_longitude", 0.0)
 
+        // 로직 수정
         // TMapView 초기화가 완료된 후에 응급환자 마커를 추가
         tMapView.setOnMapReadyListener {
             tMapView.setZoomLevel(17)
             checkAndRequestLocationPermission()
 
-            // 지도 준비가 완료된 후 응급 상황일 경우 마커 추가
+            // 지도 준비가 완료되면 마커 추가 (현재 위치와 응급환자 위치 동시에)
             if (isEmergency) {
                 addPatientMarker(patientLatitude, patientLongitude)
             }
+            updateUserLocationOnMap()
         }
 
         tMapGpsManager = TMapGpsManager(this).apply {
-            minTime = 1000
+            minTime = 500
             minDistance = 10f
         }
 
@@ -196,8 +211,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         }
     }
 
-
-    // 현재 위치를 지도에 업데이트하는 함수
+// 로직 수정
     private fun updateUserLocationOnMap() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
@@ -233,7 +247,7 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
         handler.removeCallbacks(delayedApiRequest)
         lastCenterPoint = centerPoint
         lastZoomLevel = zoomLevel
-        handler.postDelayed(delayedApiRequest, 1000)
+        handler.postDelayed(delayedApiRequest, 500)
     }
 
     private fun checkAndRequestLocationPermission() {

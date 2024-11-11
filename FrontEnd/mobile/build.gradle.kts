@@ -130,4 +130,5 @@ dependencies {
 
     // 다른 의존성들
 //    implementation("androidx.databinding:databinding-runtime:7.0.0") // Android Gradle Plugin 버전에 맞게 설정
+    implementation("androidx.compose.material3:material3:1.1.0")
 }

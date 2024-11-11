@@ -56,7 +56,7 @@ class SensorForegroundService : Service(), SensorEventListener {
         // Foreground 알림 생성
         createNotificationChannel()
         val notification: Notification = Notification.Builder(this, "sensor_channel")
-            .setContentTitle("Sensor Service")
+            .setContentTitle("센서 서비스")
             .setContentText("백그라운드에서 센서 데이터를 수집 중")
             .setSmallIcon(com.example.pushoflife.R.mipmap.ic_launcher_round)
             .build()
@@ -168,9 +168,11 @@ class SensorForegroundService : Service(), SensorEventListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channelId = "sensor_channel"//"notification_channel_id"
             val channelName = "Watch Notification Channel"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(channelId, channelName, importance)
-
+            // 알림 채널의 소리와 진동 비활성화
+            channel.setSound(null, null) // 소리 제거
+            channel.enableVibration(false) // 진동 제거
             // NotificationManager에 채널을 등록
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)

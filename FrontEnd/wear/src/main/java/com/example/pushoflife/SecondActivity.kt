@@ -24,9 +24,9 @@ class SecondActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Foreground Service 중지
-        sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
-        stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
+//        // Foreground Service 중지
+//        sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
+//        st44opService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
 
         // 화면 밝기를 최대로 설정
         window.attributes = window.attributes.apply {
@@ -42,7 +42,7 @@ class SecondActivity : ComponentActivity() {
         // nodeId 가져오기 비동기 작업
         getConnectedNodeId { id ->
             nodeIdState.value = id  // nodeId 상태 업데이트
-            Log.d("NodeID", "Connected node ID: ${nodeIdState.value}")
+            //Log.d("NodeID", "Connected node ID: ${nodeIdState.value}")
         }
 
         // Compose UI 설정

@@ -51,7 +51,7 @@ fun SecondScreen(
             delay(500) // 0.5초마다 깜빡임
         }
     }
-    Log.d("nodeID","$nodeId")
+    //Log.d("nodeID","$nodeId")
     // 배경색과 텍스트/아이콘 색상을 조건부로 설정
     val backgroundColor = if (isVisible) Color.White else Color.Black
     val textColor = if (isVisible) Color.Black else Color.White
@@ -69,14 +69,14 @@ fun SecondScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    Log.d("MessageSender","$nodeId")
+                    //Log.d("MessageSender","$nodeId")
                     nodeId?.let {
                         messageSender.sendCPRStart(
                             nodeId = it,
                             path = "/CPR_start",
                             message = "CPR시작"
                         )
-                        Log.d("메세지 보냄","$messageSender")
+                        //Log.d("메세지 보냄","$messageSender")
                     }
                     onNavigateToCprGuide() },
 

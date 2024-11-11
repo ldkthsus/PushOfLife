@@ -51,12 +51,12 @@ class SensorForegroundService : Service(), SensorEventListener {
         // nodeId 가져오기
         getConnectedNodeId(applicationContext) { id ->
             nodeId = id
-            Log.d("NodeID", "Connected node ID: $nodeId")
+            //Log.d("NodeID", "Connected node ID: $nodeId")
         }
         // Foreground 알림 생성
         createNotificationChannel()
         val notification: Notification = Notification.Builder(this, "sensor_channel")
-            .setContentTitle("Sensor Service")
+            .setContentTitle("센서 서비스")
             .setContentText("백그라운드에서 센서 데이터를 수집 중")
             .setSmallIcon(com.example.pushoflife.R.mipmap.ic_launcher_round)
             .build()
@@ -168,15 +168,17 @@ class SensorForegroundService : Service(), SensorEventListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channelId = "sensor_channel"//"notification_channel_id"
             val channelName = "Watch Notification Channel"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(channelId, channelName, importance)
-
+            // 알림 채널의 소리와 진동 비활성화
+            channel.setSound(null, null) // 소리 제거
+            channel.enableVibration(false) // 진동 제거
             // NotificationManager에 채널을 등록
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
 
             // 채널 생성 확인용 로그
-            Log.d("NotificationChannel", "Notification channel created with ID: $channelId")
+            //Log.d("NotificationChannel", "Notification channel created with ID: $channelId")
         }
     }
 

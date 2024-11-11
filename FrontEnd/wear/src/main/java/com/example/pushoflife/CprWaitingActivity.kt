@@ -19,7 +19,7 @@ class CprWaitingActivity : ComponentActivity() {
 
     private lateinit var messageSender: MessageSender
     private var nodeId: String? = null
-
+    private lateinit var sensorServiceIntent: Intent
     private val handler = Handler(Looper.getMainLooper()) // Handler 생성
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,10 +36,15 @@ class CprWaitingActivity : ComponentActivity() {
         // MessageSender 초기화
         messageSender = MessageSender(applicationContext)
 
+        // Foreground Service 중지
+        sensorServiceIntent = Intent(this, SensorForegroundService::class.java)
+        stopService(sensorServiceIntent) // SecondActivity에 진입할 때 Foreground Service 종료
+
+
         // nodeId 가져오기
         getConnectedNodeId { id ->
             nodeId = id
-            Log.d("NodeID", "Second Connected node ID: $nodeId")
+            //Log.d("NodeID", "Second Connected node ID: $nodeId")
         }
 
         // Compose UI 설정

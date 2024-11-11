@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-11T01:37:35.297529300Z">
+        <DropdownSelection timestamp="2024-11-11T04:06:54.284635300Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.137.72:33935;connection=8d241f0a" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=RFAX51HWGKJ" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-10T07:02:43.110742300Z">
+        <DropdownSelection timestamp="2024-11-11T04:04:46.697837Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\SSAFY\.android\avd\POL.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=R3CN70ARHPT" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -26,10 +26,10 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-10T07:02:43.110742300Z">
+        <DropdownSelection timestamp="2024-11-11T04:04:46.697837Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\SSAFY\.android\avd\POL.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=R3CN70ARHPT" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -37,10 +37,10 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-10T07:02:43.110742300Z">
+        <DropdownSelection timestamp="2024-11-11T04:04:46.697837Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\SSAFY\.android\avd\POL.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=R3CN70ARHPT" />
             </handle>
           </Target>
         </DropdownSelection>

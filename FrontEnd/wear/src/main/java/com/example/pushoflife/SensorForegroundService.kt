@@ -15,6 +15,7 @@ import android.hardware.SensorManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.provider.Settings
 import android.util.Log
 import kotlinx.coroutines.*
 import com.example.pushoflife.sensor.FallSensor
@@ -55,6 +56,7 @@ class SensorForegroundService : Service(), SensorEventListener {
         }
         // Foreground 알림 생성
         createNotificationChannel()
+        createHighPriorityNotificationChannel()
         val notification: Notification = Notification.Builder(this, "sensor_channel")
             .setContentTitle("센서 서비스")
             .setContentText("백그라운드에서 센서 데이터를 수집 중")
@@ -179,6 +181,24 @@ class SensorForegroundService : Service(), SensorEventListener {
 
             // 채널 생성 확인용 로그
             //Log.d("NotificationChannel", "Notification channel created with ID: $channelId")
+        }
+    }
+    private fun createHighPriorityNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelId = "sensor_high_priority_channel"
+            val channelName = "High Priority Notifications"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(channelId, channelName, importance)
+
+            // 소리와 진동 설정
+            channel.enableVibration(true)
+            channel.setSound(
+                Settings.System.DEFAULT_NOTIFICATION_URI,
+                Notification.AUDIO_ATTRIBUTES_DEFAULT
+            )
+
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
         }
     }
 

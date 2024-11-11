@@ -1,5 +1,6 @@
 package com.example.pushoflife.network
 
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.util.Log
@@ -49,7 +50,7 @@ class WatchListenerService : WearableListenerService() {
                         val message = "CPR가이드를 시작합니다"
                         Log.d("WatchApp","feedback start ")
                         showCPRNotification(message)
-                    }
+                    }else{
 
                     Log.d("WatchApp", "Received latitude: $latitude, longitude: $longitude")
 
@@ -61,6 +62,8 @@ class WatchListenerService : WearableListenerService() {
                     // 위치 정보 알림 표시
                     val message = "근처에 도움이 필요한 환자가 발생했습니다"
                     showNotification(message)
+                    }
+
                 } else if (dataItem.uri.path == "/feedback_start"){
                     val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
                     val trigger = dataMap.getBoolean("trigger")
@@ -100,7 +103,7 @@ class WatchListenerService : WearableListenerService() {
 
     private fun showNotification(message: String) {
         val notificationId = 1
-        val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
+        val channelId = "sensor_high_priority_channel" // SensorForegroundService에서 생성한 알림 채널 ID
 
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -120,11 +123,16 @@ class WatchListenerService : WearableListenerService() {
     }
     private fun showCPRNotification(message: String) {
         val notificationId = 2
-        val channelId = "sensor_channel" // SensorForegroundService에서 생성한 알림 채널 ID
+        val channelId = "sensor_high_priority_channel" // 새로 만든 중요도 높은 알림 채널 ID
 
+        // CprGuideActivity를 시작하는 Intent 생성
         val intent = Intent(this, CprGuideActivity::class.java).apply {
-            putExtra("previous_activity", "fromNotification")  // 여기에 데이터를 추가
+            putExtra("previous_activity", "fromNotification")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
+        startActivity(intent) // CprGuideActivity 직접 실행
+
+        // 알림 생성
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -140,4 +148,5 @@ class WatchListenerService : WearableListenerService() {
 
         NotificationManagerCompat.from(this).notify(notificationId, notification)
     }
+
 }

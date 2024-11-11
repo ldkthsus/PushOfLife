@@ -90,4 +90,28 @@ public class AedLocationService {
         }
         return aedList;
     }
+
+    public List<AedAvailableResponseDTO> getAedAvailableDetails(){
+        List<AedAvailableEntity> aedEntityList = aedAvailableRepository.findAll();
+        List<AedAvailableResponseDTO> aedDetailsList = new ArrayList<>();
+        for (AedAvailableEntity aedAvailableEntity : aedEntityList) {
+            AedAvailableResponseDTO aedAvailableResponseDTO = new AedAvailableResponseDTO();
+            aedAvailableResponseDTO.fromEntity(aedAvailableEntity);
+            aedDetailsList.add(aedAvailableResponseDTO);
+        }
+        return aedDetailsList;
+    }
+
+    public List<AllAedResponseDTO> getAllAed(){
+        List<AedEntity> aedEntityList = aedRepository.findAll();
+        List<AllAedResponseDTO> allAedList = new ArrayList<>();
+        for(AedEntity aed : aedEntityList){
+            AedAvailableEntity findAvailable = aedAvailableRepository.findByAedEntity(aed).orElseThrow(()->new RuntimeException("Aed Available Not Found"));
+            AllAedResponseDTO allAedResponseDTO = new AllAedResponseDTO();
+            allAedResponseDTO.fromEntity(aed, findAvailable);
+            allAedList.add(allAedResponseDTO);
+            System.out.println(aed.getId());
+        }
+        return allAedList;
+    }
 }

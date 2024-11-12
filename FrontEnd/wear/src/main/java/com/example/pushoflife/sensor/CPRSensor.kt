@@ -168,7 +168,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             }
 
             val dt = (currentTime - lastTime!!) / 1000f
-            if (dt < 1.0) {
+            if (0.2 < dt) {
                 frequencyTimes.add(dt)  // frequencyTimes에 dt 값 추가
             }
             lastTime = currentTime
@@ -176,7 +176,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             if (!trigger_init && frequencyTimes.size >= 10 && depthList.size >= 10) {
                 trigger_init = true
                 val avgDt = frequencyTimes.average()
-                //Log.d("빈도 측정","frequency : ${frequencyTimes.toString()}")
+                Log.d("빈도 측정","frequency : ${frequencyTimes.toString()}")
                 frequencyTimes.clear()  // 평균을 계산 후 리스트 초기화
 
                 return if (avgDt in 0.45..0.65) {

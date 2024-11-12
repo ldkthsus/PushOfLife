@@ -149,16 +149,16 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
 
         lastDisplacement = displacement
         lastDepth = displacement
-        Log.d("깊이 찍기", "깊이 : ${displacement*100}")
+//        Log.d("깊이 찍기", "깊이 : ${displacement*100}")
         val temp_frequency = frequencyCPR(displacement*100)
         val temp_depth = depthCPR(displacement*100)
         val temp_angle = calculateAngle(gravity[0].toDouble(),gravity[1].toDouble(),gravity[2].toDouble())
 
-        return CPRData(temp_depth, temp_frequency, temp_angle, accZ)// Convert to cm
+        return CPRData(temp_depth, temp_frequency, temp_angle, linearAcc)// Convert to cm
     }
 
     private fun frequencyCPR(displacement: Float): Int {
-        if (displacement > 4.0f && !pussing) {
+        if (displacement > 2.0f && !pussing) {
             pussing = true
             val currentTime = System.currentTimeMillis()
 
@@ -168,7 +168,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             }
 
             val dt = (currentTime - lastTime!!) / 1000f
-            if (dt < 1.0) {
+            if (0.2 < dt) {
                 frequencyTimes.add(dt)  // frequencyTimes에 dt 값 추가
             }
             lastTime = currentTime
@@ -176,7 +176,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             if (!trigger_init && frequencyTimes.size >= 10 && depthList.size >= 10) {
                 trigger_init = true
                 val avgDt = frequencyTimes.average()
-                //Log.d("빈도 측정","frequency : ${frequencyTimes.toString()}")
+                Log.d("빈도 측정","frequency : ${frequencyTimes.toString()}")
                 frequencyTimes.clear()  // 평균을 계산 후 리스트 초기화
 
                 return if (avgDt in 0.45..0.65) {
@@ -187,7 +187,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
                     3 //"빨라요"
                 }
             }
-        } else if (displacement < 1f && pussing) {
+        } else if (displacement == 0f && pussing) {
             pussing = false
         }
         return 0 //"측정중이에요"  // 리스트가 다 채워지지 않았을 때

@@ -25,10 +25,10 @@ var screenColor = false
 @Composable
 fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick: () -> Unit) {
     // 가속도 기록 리스트를 기억
-    val accelerationData = remember { mutableListOf<Float>() }
+    val accelerationData = remember { mutableListOf<Float>().apply { addAll(List(5) { 0f }) } }
 
     // 새로운 가속도 값 추가 및 최대 데이터 크기 제한
-    if (accelerationData.size > 50) { // 최대 50개 데이터 유지
+    if (accelerationData.size > 5) { // 최대 50개 데이터 유지
         accelerationData.removeAt(0)
     }
     accelerationData.add(totalAcceleration)

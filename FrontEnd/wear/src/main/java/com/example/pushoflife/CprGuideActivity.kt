@@ -31,7 +31,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private var feedbackCPR by mutableStateOf(intArrayOf(0, 0, 0))
     private var inputFeedback by mutableStateOf(intArrayOf(0, 0, 0))
     private var feedbackTurn = 1
-    private var totalAcceleration: Float = 0.0f
+    private var totalAcceleration by mutableStateOf(0.0f)
     private var latestGravityValues = floatArrayOf(0.0f, 0.0f, 0.0f)
     private var latestAccelerationValues = floatArrayOf(0.0f, 0.0f, 0.0f)
 
@@ -120,7 +120,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         val tempData = cprSensor.feedbackCPR(latestAccelerationValues, latestGravityValues)
         feedbackCPR = intArrayOf(tempData.depth, tempData.frequency, tempData.angle)
         totalAcceleration = tempData.accZ
-
         if (feedbackCPR.all { it != 0 }) {
             inputFeedback = feedbackCPR.copyOf()
             processFeedback()

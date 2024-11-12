@@ -25,13 +25,18 @@ var screenColor = false
 @Composable
 fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick: () -> Unit) {
     // 가속도 기록 리스트를 기억
+    Log.d("가속도","$totalAcceleration")
     val accelerationData = remember { mutableListOf<Float>().apply { addAll(List(5) { 0f }) } }
 
     // 새로운 가속도 값 추가 및 최대 데이터 크기 제한
-    if (accelerationData.size > 5) { // 최대 50개 데이터 유지
+    if (accelerationData.size > 50) { // 최대 50개 데이터 유지
         accelerationData.removeAt(0)
     }
-    accelerationData.add(totalAcceleration)
+    if (totalAcceleration>1||totalAcceleration<-1){
+        accelerationData.add(totalAcceleration)
+    }else{
+        accelerationData.add(0f)
+    }
 
     // 그라디언트 색상 설정
     val gradientColors = if ((cprFeedback[0] == 2) && (cprFeedback[1] == 2) && (cprFeedback[2] == 2)) {
@@ -48,9 +53,9 @@ fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick:
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = 8.dp),
+                .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Bottom
         ) {
 //            Text(
 //                text = "$totalAcceleration",
@@ -62,7 +67,7 @@ fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick:
 //            Spacer(modifier = Modifier.height(32.dp))
 
             // 그래프 그리기 (투명 배경에 흰색 선 그래프)
-            Canvas(modifier = Modifier.height(100.dp).fillMaxWidth()) {
+            Canvas(modifier = Modifier.height(50.dp).fillMaxWidth()) {
                 val maxData = max(accelerationData.maxOrNull() ?: 1f, 1f)
                 val pointWidth = size.width / (accelerationData.size - 1)
 
@@ -83,19 +88,18 @@ fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick:
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+//            Spacer(modifier = Modifier.height(32.dp))
 
             Box(
                 modifier = Modifier
                     .width(120.dp)
-                    .padding(bottom = 4.dp)
                     .clickable { onExitClick() }, // 클릭 이벤트 처리
                 contentAlignment = Alignment.Center // 가운데 정렬 설정
             ) {
                 Text(
                     text = "종료",
                     color = Color.White, // 텍스트 색상 흰색
-                    modifier = Modifier.padding(8.dp) // 텍스트 주변 패딩
+                    modifier = Modifier.padding(top = 64.dp) // 텍스트 주변 패딩
                 )
             }
         }

@@ -110,7 +110,7 @@ public class AedLocationService {
             AllAedResponseDTO allAedResponseDTO = new AllAedResponseDTO();
             allAedResponseDTO.fromEntity(aed, findAvailable);
             allAedList.add(allAedResponseDTO);
-            System.out.println(aed.getId());
+//            System.out.println(aed.getId());
         }
         return allAedList;
     }

@@ -34,7 +34,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private var totalAcceleration: Float = 0.0f
     private var latestGravityValues = floatArrayOf(0.0f, 0.0f, 0.0f)
     private var latestAccelerationValues = floatArrayOf(0.0f, 0.0f, 0.0f)
-
     private lateinit var previousActivity: String
     private var collectSensorData = false
 
@@ -121,7 +120,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         feedbackCPR = intArrayOf(tempData.depth, tempData.frequency, tempData.angle)
         totalAcceleration = tempData.accZ
 
-        if (feedbackCPR.all { it != 0 }) {
+        if (feedbackCPR.all { it != 0 }) { // 2.1.1 //
             inputFeedback = feedbackCPR.copyOf()
             processFeedback()
         }

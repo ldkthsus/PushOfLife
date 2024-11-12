@@ -215,6 +215,7 @@ fun MainScreen() {
                     modifier = Modifier
                         .fillParentMaxSize()
                         .padding(horizontal = 10.dp),
+
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -222,6 +223,13 @@ fun MainScreen() {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(end = 8.dp)
+                            .clickable {
+                                // 클릭 시 CprGuideActivity로 이동
+                                val intent = Intent(context, CprGuideActivity::class.java).apply{
+                                    putExtra("previous_activity", "MainActivity")  // 이전 액티비티 정보 추가
+                                }
+                                context.startActivity(intent)
+                            }
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.cpr_practice),

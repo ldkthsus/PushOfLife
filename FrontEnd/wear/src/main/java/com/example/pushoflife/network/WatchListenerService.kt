@@ -125,9 +125,14 @@ class WatchListenerService : WearableListenerService() {
         val notificationId = 2
         val channelId = "sensor_high_priority_channel" // 새로 만든 중요도 높은 알림 채널 ID
 
+        // CprGuideActivity를 시작하는 Intent 생성
         val intent = Intent(this, CprGuideActivity::class.java).apply {
-            putExtra("previous_activity", "fromNotification")  // 데이터를 추가
+            putExtra("previous_activity", "fromNotification")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
+        startActivity(intent) // CprGuideActivity 직접 실행
+
+        // 알림 생성
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

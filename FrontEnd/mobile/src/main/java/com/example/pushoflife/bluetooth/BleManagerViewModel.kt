@@ -54,7 +54,7 @@ class BleManagerViewModel(private val bleRepository: BleRepository) : ViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             Log.d(TAG, "연결하기 전에 4초 기다림")
-            delay(4000) // 10-second delay
+            delay(3000) // 10-second delay
             bleRepository.sendLocationToAllDevices(latitude, longitude)
         }
     }

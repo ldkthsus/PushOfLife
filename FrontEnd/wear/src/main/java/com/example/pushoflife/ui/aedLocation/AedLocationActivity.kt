@@ -29,6 +29,7 @@ import com.example.pushoflife.network.MapBoundsResponse
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
 import com.example.pushoflife.CprGuideActivity
@@ -65,6 +66,8 @@ class AedLocationActivity : AppCompatActivity(), TMapGpsManager.OnLocationChange
 
         // FusedLocationProviderClient 초기화 (위치 정보를 제공)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        // 화면이 절대 꺼지지 않도록 설정
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         // tMapViewContainer와 currentLocationButton UI 요소 참조 가져오기
         val tmapViewContainer = findViewById<FrameLayout>(R.id.tmapViewContainer)

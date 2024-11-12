@@ -38,7 +38,7 @@ class SecondActivity : ComponentActivity() {
             screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
         }
 
-        // 화면이 절대 꺼지지 않도록 설정
+        // 화면이 절대 꺼지지 않도록 설a정
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         // MessageSender 초기화

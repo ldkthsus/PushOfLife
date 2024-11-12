@@ -37,7 +37,7 @@ object GravitySensor : SensorEventListener {
         currentX = event.values[0]
         currentY = event.values[1]
         currentZ = event.values[2]
-        Log.d("GravitySensor", "Gravity: x=$currentX, y=$currentY, z=$currentZ")
+//        Log.d("GravitySensor", "Gravity: x=$currentX, y=$currentY, z=$currentZ")
 
         // 리스너를 통해 업데이트 알림
         gravityListener?.onGravityDataChanged(floatArrayOf(currentX, currentY, currentZ))

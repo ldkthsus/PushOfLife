@@ -35,7 +35,7 @@ object LinearAccelerationSensor : SensorEventListener {
         currentX = event.values[0]
         currentY = event.values[1]
         currentZ = event.values[2]
-        Log.d("LinearAccelerationSensor", "Acceleration: x=$currentX, y=$currentY, z=$currentZ")
+//        Log.d("LinearAccelerationSensor", "Acceleration: x=$currentX, y=$currentY, z=$currentZ")
 
         // 리스너를 통해 외부에 데이터 전달
         listener?.onLinearAccelerationDataChanged(getCurrentAccelerationValues())

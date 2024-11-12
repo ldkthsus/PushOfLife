@@ -13,13 +13,18 @@ import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.Wearable
+import android.media.MediaPlayer
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 
 class SecondActivity : ComponentActivity() {
 
+    private lateinit var tts: TextToSpeech
     private lateinit var messageSender: MessageSender
     private var nodeId: String? = null
     private val nodeIdState = mutableStateOf<String?>(null)  // nodeId를 상태로 관리
     private lateinit var sensorServiceIntent: Intent  // Foreground Service Intent 선언
+    private var mediaPlayer: MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +38,7 @@ class SecondActivity : ComponentActivity() {
             screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
         }
 
-        // 화면이 절대 꺼지지 않도록 설정
+        // 화면이 절대 꺼지지 않도록 설a정
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         // MessageSender 초기화
@@ -43,6 +48,12 @@ class SecondActivity : ComponentActivity() {
         getConnectedNodeId { id ->
             nodeIdState.value = id  // nodeId 상태 업데이트
             //Log.d("NodeID", "Connected node ID: ${nodeIdState.value}")
+        }
+
+        // MediaPlayer 초기화 및 사이렌 재생
+        mediaPlayer = MediaPlayer.create(this, R.raw.alarm_sound).apply {
+            isLooping = true  // 반복 재생
+            start()  // 재생 시작
         }
 
         // Compose UI 설정
@@ -81,5 +92,11 @@ class SecondActivity : ComponentActivity() {
             Log.e("NodeID", "Failed to get connected node ID", it)
             onNodeIdReceived(null)
         }
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        // MediaPlayer 자원 해제
+        mediaPlayer?.release()
+        mediaPlayer = null
     }
 }

@@ -149,6 +149,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
 
         lastDisplacement = displacement
         lastDepth = displacement
+        Log.d("깊이 찍기", "깊이 : ${displacement*100}")
         val temp_frequency = frequencyCPR(displacement*100)
         val temp_depth = depthCPR(displacement*100)
         val temp_angle = calculateAngle(gravity[0].toDouble(),gravity[1].toDouble(),gravity[2].toDouble())
@@ -157,7 +158,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
     }
 
     private fun frequencyCPR(displacement: Float): Int {
-        if (displacement > 5.0f && !pussing) {
+        if (displacement > 4.0f && !pussing) {
             pussing = true
             val currentTime = System.currentTimeMillis()
 
@@ -233,7 +234,7 @@ class CPRSensor(private val sampleRate: Float = 100f, private val movingAvgWindo
             total_inv = 0.0
             angle_cnt = 0
             //Log.d("빈도 측정", "angle : $inv_avg")
-            return if (inv_avg in 80.0..100.0) {
+            return if (inv_avg in 75.0..105.0) {
                 2
             } else {
                 1

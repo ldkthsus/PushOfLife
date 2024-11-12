@@ -134,6 +134,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                         )
                     }
                     LaunchApp.launchApp(this, FirstActivity::class.java)
+                    stopSelf()
                     possibleHeart = false
                 }
                 //Log.d("SensorData", "Heart Rate: $heartRate bpm")

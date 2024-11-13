@@ -123,7 +123,7 @@ class SensorForegroundService : Service(), SensorEventListener {
                 }
             }
             Sensor.TYPE_HEART_RATE -> {
-                if (event.values[0] > 5.0f && event.values[0] < 30.0f){
+                if (!possibleFall && event.values[0] > 5.0f && event.values[0] < 30.0f){
                     nodeId?.let {
                         messageSender.sendMessages(
                             nodeId = it,

@@ -123,7 +123,17 @@ class SensorForegroundService : Service(), SensorEventListener {
                 }
             }
             Sensor.TYPE_HEART_RATE -> {
-                if(possibleFall && event.values[0] < 30.0f && !possibleHeart){
+                if (!possibleFall && event.values[0] > 5.0f && event.values[0] < 30.0f){
+                    nodeId?.let {
+                        messageSender.sendMessages(
+                            nodeId = it,
+                            path = "/emergency_path",
+                            message = "심정지 상황 발생"
+                        )
+                    }
+                    LaunchApp.launchApp(this, FirstActivity::class.java)
+                    stopSelf()
+                } else if(possibleFall && event.values[0] < 30.0f && !possibleHeart){
                     // 낙상 감지 + 심정지 확인 후 앱 실행 및 화면 켜기
                     possibleHeart = true
                     nodeId?.let {

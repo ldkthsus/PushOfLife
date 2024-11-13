@@ -7,8 +7,6 @@ import com.example.PushOfLife.repository.AedAvailableRepository;
 import com.example.PushOfLife.repository.AedRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 

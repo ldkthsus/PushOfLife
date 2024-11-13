@@ -99,9 +99,33 @@ fun ServiceScreen(navController: NavController) {
                     description = "현재 위치 주변의 AED 위치와 정보를 확인할 수 있어요",
                     imageId = R.drawable.app_guide_3
                 )
+            }
+            item {
+                ImageBox(
+                    imageId = R.drawable.watch_guide_image
+                )
                 Spacer(modifier = Modifier.height(35.dp))
             }
+
         }
+    }
+}
+
+@Composable
+fun ImageBox(
+    imageId: Int
+){
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        Image(
+            painter = painterResource(id = imageId),
+            contentDescription = "CPR Practice",
+            modifier = Modifier.size(280.dp)
+        )
     }
 }
 
@@ -157,6 +181,7 @@ fun GuideBox(
                 .aspectRatio(16 / 9f)
         )
     }
+
 }
 
 @Preview(showBackground = true)

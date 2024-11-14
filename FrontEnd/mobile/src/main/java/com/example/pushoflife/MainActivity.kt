@@ -406,7 +406,7 @@ class MainActivity : ComponentActivity() {
             userPreferences.allowDetection.collect { allowDetection ->
                 val serviceIntent = Intent(this@MainActivity, FallDetectionService::class.java)
                 isFallDetectionEnabled = allowDetection
-                if (allowDetection) {
+                if (isFallDetectionEnabled) {
                     startForegroundService(serviceIntent)
                     Log.d("MainActivity", "Fall detection service started.")
                 } else {

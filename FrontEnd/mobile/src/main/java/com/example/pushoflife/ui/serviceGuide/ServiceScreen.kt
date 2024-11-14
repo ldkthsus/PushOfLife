@@ -102,7 +102,7 @@ fun ServiceScreen(navController: NavController) {
             }
             item {
                 ImageBox(
-                    imageId = R.drawable.watch_guide_image
+                    imageId = R.drawable.cpr_guide_image
                 )
                 Spacer(modifier = Modifier.height(35.dp))
             }
@@ -118,7 +118,7 @@ fun ImageBox(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(bottom = 16.dp),
         horizontalAlignment = Alignment.End
     ) {
         Image(

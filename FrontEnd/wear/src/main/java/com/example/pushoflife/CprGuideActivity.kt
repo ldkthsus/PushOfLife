@@ -209,5 +209,6 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         stopAudio()
         GravitySensor.stop()
         LinearAccelerationSensor.stop()
+        HeartRateSensor.stop()
     }
 }

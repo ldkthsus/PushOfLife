@@ -18,9 +18,11 @@ import com.example.pushoflife.sensor.utils.GravitySensor
 import com.example.pushoflife.sensor.utils.LinearAccelerationSensor
 import com.example.pushoflife.sensor.CPRSensor
 import android.view.WindowManager
+import com.example.pushoflife.sensor.utils.HeartRateSensor
+
 
 class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
-    GravitySensor.GravitySensorListener, LinearAccelerationSensor.LinearAccelerationListener {
+    GravitySensor.GravitySensorListener, LinearAccelerationSensor.LinearAccelerationListener, HeartRateSensor.HeartRateListener {
 
     private lateinit var cprSensor: CPRSensor
     private lateinit var tts: TextToSpeech
@@ -34,8 +36,10 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private var totalAcceleration by mutableStateOf(0.0f)
     private var latestGravityValues = floatArrayOf(0.0f, 0.0f, 0.0f)
     private var latestAccelerationValues = floatArrayOf(0.0f, 0.0f, 0.0f)
+    private var latestHeartRate : Float = 0.0f
     private lateinit var previousActivity: String
     private var collectSensorData = false
+    private var collectHeartData = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +78,9 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         if (collectSensorData) checkAndUpdateCprFeedback()
     }
 
+    override fun onHeartRateDataChanged(heartRate: Float) {
+        totalAcceleration = heartRate
+    }
     // TTS 초기화 후 실행할 작업 정의
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
@@ -101,6 +108,8 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
                     runOnUiThread { startMetronome() }
                     if (previousActivity != "SecondActivity") {
                         startSensorDataCollection() // 필요한 경우에만 센서 데이터 수집 시작
+                    } else {
+                        startHeartData()
                     }
                 }
             }
@@ -115,6 +124,11 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         LinearAccelerationSensor.initialize(this, this)
         cprSensor = CPRSensor()
         collectSensorData = true
+    }
+
+    private fun startHeartData() {
+        HeartRateSensor.initialize(this, this)
+        collectHeartData = true
     }
 
     private fun checkAndUpdateCprFeedback() {

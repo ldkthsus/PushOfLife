@@ -97,7 +97,8 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     }
 
     private fun startCprGuide() {
-        val guideText = "시작. 무릎을 꿇은 채로 세워 주세요... 박자에 맞춰 5cm 깊이로 흉부 압박 시작합니다. 3,2,1."
+        val guideText = "심폐소생술 가이드를 시작합니다." + "무릎을 꿇은 채로 세워 주세요." +"명치와 젖꼭지 사이 중앙에 손꿈치를 대 주세요."+
+              "박자에 맞춰 5cm 깊이로 흉부 압박 시작합니다. 3,2,1."
 
         tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}

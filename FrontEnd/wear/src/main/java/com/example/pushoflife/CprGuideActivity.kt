@@ -34,6 +34,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
     private var inputFeedback by mutableStateOf(intArrayOf(0, 0, 0))
     private var feedbackTurn = 1
     private var totalAcceleration by mutableStateOf(0.0f)
+    private var isPatient by mutableStateOf(false)
     private var latestGravityValues = floatArrayOf(0.0f, 0.0f, 0.0f)
     private var latestAccelerationValues = floatArrayOf(0.0f, 0.0f, 0.0f)
     private var latestHeartRate : Float = 0.0f
@@ -61,7 +62,7 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
                     finish()
                 },
                 cprFeedback = inputFeedback,
-                isPatient = false
+                isPatient = isPatient
             )
         }
     }
@@ -86,7 +87,11 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
         if (status == TextToSpeech.SUCCESS) {
             tts.language = Locale.KOREAN
             when (previousActivity) {
-                "SecondActivity" -> startCprGuide() // 가이드 TTS 후 메트로놈만
+                "SecondActivity" -> {
+                    startHeartData()
+                    isPatient=true
+                    startCprGuide()
+                } // 가이드 TTS 후 메트로놈만
                 "fromNotification" -> startSensorDataCollection() // 센서 데이터 수집 및 피드백 TTS만
                 "CprWaitingActivity", "MainActivity" -> {
                     startCprGuide() // 가이드 TTS 후 메트로놈 시작, 센서 데이터 수집 포함
@@ -108,8 +113,10 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
                     runOnUiThread { startMetronome() }
                     if (previousActivity != "SecondActivity") {
                         startSensorDataCollection() // 필요한 경우에만 센서 데이터 수집 시작
+                        isPatient=false
                     } else {
-                        startHeartData()
+
+
                     }
                 }
             }

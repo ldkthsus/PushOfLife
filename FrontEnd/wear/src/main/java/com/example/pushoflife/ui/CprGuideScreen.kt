@@ -16,10 +16,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import com.example.pushoflife.theme.wearColorPalette
+import kotlinx.coroutines.delay
 import kotlin.math.max
+import androidx.compose.runtime.*
 var screenColor = false
 
 @Composable
@@ -46,6 +50,17 @@ fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick:
     } else {
         listOf(wearColorPalette.error, Color.Black)
     }
+    // 점 개수를 애니메이션으로 변경하기 위한 remember 및 LaunchedEffect
+    var dotCount by remember { mutableStateOf(1) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            dotCount = (dotCount % 3) + 1 // 점의 개수 1, 2, 3 순환
+            delay(500L) // 0.5초마다 점 개수 변경
+        }
+    }
+
+    // 점 개수에 따라 "측정 중" 텍스트 생성
+    val measuringText = ".".repeat(dotCount)
 
     Box(
         modifier = Modifier
@@ -59,15 +74,18 @@ fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick:
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom
         ) {
-//            Text(
-//                text = "$totalAcceleration",
-//                fontSize = 18.sp,
-//                color = Color.White, // 텍스트 색상
-//                modifier = Modifier.padding(vertical = 24.dp),
-//            )
-//
-//            Spacer(modifier = Modifier.height(32.dp))
+            if(isPatient) {
+            Text(
 
+                if (totalAcceleration.toInt() == 0) measuringText else "${totalAcceleration.toInt()} bpm",
+                fontSize = 36.sp,
+                color = Color.White, // 텍스트 색상
+                fontFamily = PretendardSemiBold,
+                modifier = Modifier.padding(top = 24.dp),
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+        } else{
             // 그래프 그리기 (투명 배경에 흰색 선 그래프)
             Canvas(modifier = Modifier.height(50.dp).fillMaxWidth()) {
                 val maxData = max(accelerationData.maxOrNull() ?: 1f, 1f)
@@ -89,6 +107,7 @@ fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick:
                     )
                 }
             }
+        }
 
 //            Spacer(modifier = Modifier.height(32.dp))
 
@@ -101,7 +120,11 @@ fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick:
                 Text(
                     text = "종료",
                     color = Color.White, // 텍스트 색상 흰색
-                    modifier = Modifier.padding(top = 64.dp) // 텍스트 주변 패딩
+                    modifier = if (isPatient) {
+                        Modifier.padding(top = 12.dp) // 조건이 참일 때
+                    } else {
+                        Modifier.padding(top = 64.dp) // 조건이 거짓일 때
+                    }
                 )
             }
         }

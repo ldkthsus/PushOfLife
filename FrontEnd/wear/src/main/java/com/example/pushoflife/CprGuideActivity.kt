@@ -56,7 +56,8 @@ class CprGuideActivity : ComponentActivity(), TextToSpeech.OnInitListener,
                     stopAudio()
                     finish()
                 },
-                cprFeedback = inputFeedback
+                cprFeedback = inputFeedback,
+                isPatient = false
             )
         }
     }

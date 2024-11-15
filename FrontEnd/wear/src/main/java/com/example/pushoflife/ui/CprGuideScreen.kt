@@ -23,7 +23,7 @@ import kotlin.math.max
 var screenColor = false
 
 @Composable
-fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick: () -> Unit) {
+fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick: () -> Unit,isPatient:Boolean) {
     // 가속도 기록 리스트를 기억
 //    Log.d("가속도","$totalAcceleration")
     val accelerationData = remember { mutableListOf<Float>().apply { addAll(List(5) { 0f }) } }
@@ -39,7 +39,9 @@ fun CprGuideScreen(totalAcceleration: Float, cprFeedback: IntArray, onExitClick:
     }
 
     // 그라디언트 색상 설정
-    val gradientColors = if ((cprFeedback[0] == 2) && (cprFeedback[1] == 2) && (cprFeedback[2] == 2)) {
+    val gradientColors = if(isPatient){
+        listOf(wearColorPalette.primary,Color.Black)
+    } else if ((cprFeedback[0] == 2) && (cprFeedback[1] == 2) && (cprFeedback[2] == 2)) {
         listOf(wearColorPalette.secondary, Color.Black)
     } else {
         listOf(wearColorPalette.error, Color.Black)

@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="mobile">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-14T06:41:53.792287700Z">
+        <DropdownSelection timestamp="2024-11-15T10:40:17.493829800Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.137.63:39085;connection=e50e6e09" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=R3CN70ARHPT" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-14T03:44:37.574805600Z">
+        <DropdownSelection timestamp="2024-11-15T10:38:16.940281700Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.137.95:36141;connection=29d3e916" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.137.53:44335;connection=32a81c14" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -26,10 +26,10 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-14T03:44:37.574805600Z">
+        <DropdownSelection timestamp="2024-11-15T10:38:16.940281700Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.137.95:36141;connection=29d3e916" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.137.53:44335;connection=32a81c14" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -37,10 +37,10 @@
       </SelectionState>
       <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-14T03:44:37.574805600Z">
+        <DropdownSelection timestamp="2024-11-15T10:38:16.940281700Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Default" identifier="serial=192.168.137.95:36141;connection=29d3e916" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.137.53:44335;connection=32a81c14" />
             </handle>
           </Target>
         </DropdownSelection>

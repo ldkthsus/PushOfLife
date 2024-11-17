@@ -193,7 +193,7 @@ Log.d("CPR가이드","$guideText")
                 // 중력 기반 가속도 계산
                 val acceleration = calculateAcceleration(linearAccelerationValues, gravityValues)
 
-                if (acceleration > 10 && !isFallDetected) { // 임계값 설정
+                if (acceleration > 25 && !isFallDetected) { // 임계값 설정
                     isFallDetected = true
                     Log.d("FallDetectionService", "Fall detected! Triggering siren.")
                     triggerSiren()
